@@ -267,7 +267,7 @@
     <div id="footer-container"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/api.js"></script> 
+    <script src="assets/js/api.js"></script>
     <script src="assets/js/app.js"></script>
     
     <script>
@@ -392,82 +392,79 @@
                 return emailRegex.test(email);
             }
             
-            // === MANEJO DEL FORMULARIO (con backend) ===
+            // === MANEJO DEL FORMULARIO (integrado con backend) ===
             authForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                
-                const email = emailInput.value.trim();
-                const password = passwordInput.value;
-                const name = nameInput.value.trim();
             
-                // Validación básica
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+            const name = nameInput.value.trim();
+            
+              // Validación básica
                 if (!email || !password || (!isLoginMode && !name)) {
-                    showNotification('Por favor completa todos los campos obligatorios.', 'warning');
-                    return;
+                showNotification('Por favor completa todos los campos obligatorios.', 'warning');
+                return;
                 }
-            
-                // En modo registro NO permitimos "admin" como correo
-                if (!isLoginMode && email.toLowerCase() === 'admin') {
-                    showNotification('No puedes registrarte con el nombre "admin".', 'warning');
-                    return;
-                }
-            
-                // Validar formato de correo (excepto el caso especial "admin" que ya manejabas)
-                if (!isValidEmailOrAdmin(email)) {
-                    const msg = isLoginMode
-                        ? 'Ingresa un correo válido o usa "admin" solo si tu usuario administrador existe en el sistema.'
-                        : 'Ingresa un correo electrónico válido para el registro.';
-                    showNotification(msg, 'warning');
-                    return;
-                }
-            
-                try {
-                    if (isLoginMode) {
-                        // ===== LOGIN contra backend =====
-                        const body = { email, password };
-                        const data = await apiPost('/auth/login', body);
-                        // esperamos algo tipo: { token, user: { name, email, role, ... } }
-                    
-                        if (data.token) {
-                            localStorage.setItem('ecomarket_token', data.token);
-                        }
-                        if (data.user) {
-                            localStorage.setItem('ecomarket_user', JSON.stringify(data.user));
-                            localStorage.setItem('ecomarket_logged_in', 'true');
-                        }
-                    
-                        const userName = data.user?.name || 'Usuario';
-                        const isAdmin = data.user && (data.user.role === 'admin' || data.user.isAdmin);
-                    
-                        showNotification(`¡Bienvenido ${userName}! Iniciando sesión...`, 'success');
-                    
-                        setTimeout(() => {
-                            window.location.href = isAdmin ? 'admin.html' : 'index.html';
-                        }, 1200);
-                    
-                    } else {
-                        // ===== REGISTRO contra backend =====
-                        const body = { name, email, password };
-                        const data = await apiPost('/auth/register', body);
-                        // depende de tu backend: algunos devuelven token, otros solo mensaje
-                    
-                        showNotification('Cuenta creada correctamente. Ahora puedes iniciar sesión.', 'success');
-                    
-                        // Si tu backend devuelve token y user, podrías loguear directo:
-                        // if (data.token && data.user) { ...login automático... }
-                    
-                        // Cambiamos a modo login y dejamos el correo ya escrito
-                        switchMode(true);
-                        emailInput.value = email;
-                        passwordInput.value = '';
-                    }
                 
+              // En registro NO permitimos "admin"
+                if (!isLoginMode && email.toLowerCase() === 'admin') {
+                showNotification('No puedes registrarte con el nombre "admin".', 'warning');
+                return;
+                }
+                
+              // Validar formato de correo (manteniendo tu función de validación)
+                if (!isValidEmailOrAdmin(email)) {
+                const msg = isLoginMode
+                    ? 'Ingresa un correo válido o usa "admin" solo si tu usuario admin ya existe en el sistema.'
+                    : 'Ingresa un correo electrónico válido para el registro.';
+                showNotification(msg, 'warning');
+                return;
+                }
+                
+                try {
+                if (isLoginMode) {
+                  // ===== LOGIN contra backend =====
+                    const body = { email, password };
+                    const data = await apiPost('/auth/login', body);
+                  // asumo que el backend responde { token, user: { name, email, role, ... } }
+                
+                    if (data.token) {
+                    localStorage.setItem('ecomarket_token', data.token);
+                    }
+                    if (data.user) {
+                    localStorage.setItem('ecomarket_user', JSON.stringify(data.user));
+                    localStorage.setItem('ecomarket_logged_in', 'true');
+                    }
+                    
+                    const userName = data.user?.name || 'Usuario';
+                    const isAdmin = data.user && (data.user.role === 'admin' || data.user.isAdmin);
+                    
+                    showNotification(`¡Bienvenido ${userName}! Iniciando sesión...`, 'success');
+                    
+                    setTimeout(() => {
+                    window.location.href = isAdmin ? 'admin.html' : 'index.html';
+                    }, 1200);
+                    
+                } else {
+                  // ===== REGISTRO contra backend =====
+                    const body = { name, email, password };
+                    const data = await apiPost('/auth/register', body);
+                  // muchos backends de ejemplo devuelven { message: 'Usuario creado' } o similar
+                
+                    showNotification('Cuenta creada correctamente. Ahora puedes iniciar sesión.', 'success');
+                
+                  // Cambiamos a modo login y dejamos el correo escrito
+                    switchMode(true);
+                    emailInput.value = email;
+                    passwordInput.value = '';
+                }
+            
                 } catch (err) {
-                    console.error(err);
-                    showNotification(err.message || 'Error al procesar la solicitud. Intenta nuevamente.', 'error');
+                console.error(err);
+                showNotification(err.message || 'Error al procesar la solicitud.', 'error');
                 }
             });
-            
+
 
             // === MODAL DE RECUPERAR CONTRASEÑA ===
             const forgotPasswordLink = document.getElementById('forgotPassword');
