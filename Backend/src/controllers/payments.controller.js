@@ -1,46 +1,60 @@
-import Payment from '../models/payment.model.js';
-import Order from '../models/order.js';
+import { WebpayPlus } from "transbank-sdk";
 
+// Esto configura SANDBOX automáticamente
+WebpayPlus.configureForTesting();
 
-export const createPayment = async (req, res) => {
+// FRONT y BACK para los redirect (ajusta cuando subas a producción)
+const BACKEND_BASE_URL = process.env.BACKEND_BASE_URL || "http://localhost:3000";
+const FRONTEND_BASE_URL = process.env.FRONTEND_BASE_URL || "https://ecomarket-five.vercel.app/index.html"; 
+// o la URL de Vercel cuando la tengas
+
+// POST /api/payments/create-transaction
+export const createTransaction = async (req, res) => {
     try {
-    const { orderId, method, amount } = req.body;
-    if (!orderId || !method || !amount)
-        return res.status(400).json({ message: 'Datos incompletos' });
+        const { buyOrder, sessionId, amount } = req.body;
 
-
-    const order = await Order.findById(orderId);
-    if (!order) return res.status(404).json({ message: 'Pedido no encontrado' });
-
-
-    const approved = Math.random() > 0.1; // 90% de aprobación
-    const status = approved ? 'APROBADO' : 'RECHAZADO';
-
-    const payment = await Payment.create({
-        user: req.user.id,
-        order: orderId,
-        method,
+    const tx = new WebpayPlus.Transaction();
+    const response = await tx.create(
+        buyOrder,
+        sessionId,
         amount,
-        status
-    });
+        `${BACKEND_BASE_URL}/api/payments/commit`
+    );
 
-
-        if (approved) {
-        order.status = 'PAGADO';
-        await order.save();
-    }
-
-    res.status(201).json({ message: 'Pago procesado', payment });
-    } catch (error) {
-    res.status(500).json({ message: 'Error procesando el pago', error: error.message });
+    // response = { token, url }
+    return res.json(response);
+        } catch (error) {
+    console.error("Error creando transacción Webpay:", error);
+    return res
+        .status(500)
+        .json({ message: "Error creando transacción Webpay" });
     }
 };
 
+// POST /api/payments/commit  (return_url)
+export const commitTransaction = async (req, res) => {
+    try {
+        const token = req.body.token_ws || req.query.token_ws;
 
-export const listPayments = async (req, res) => {
-    const payments = await Payment.find()
-    .populate('user', 'name email')
-    .populate('order', 'total status')
-    .sort({ createdAt: -1 });
-    res.json(payments);
+    const tx = new WebpayPlus.Transaction();
+    const result = await tx.commit(token);
+
+    console.log("Resultado Webpay:", result);
+
+    // Aquí podrías actualizar tu Order en Mongo:
+    // - result.buy_order
+    // - result.amount
+    // - result.response_code (0 = OK)
+
+    if (result.response_code === 0) {
+      // Pago OK
+        return res.redirect(`${FRONTEND_BASE_URL}/checkout-success.html`);
+    } else {
+      // Pago rechazado
+        return res.redirect(`${FRONTEND_BASE_URL}/checkout-error.html`);
+    }
+    } catch (error) {
+    console.error("Error en commit Webpay:", error);
+    return res.redirect(`${FRONTEND_BASE_URL}/checkout-error.html`);
+    }
 };

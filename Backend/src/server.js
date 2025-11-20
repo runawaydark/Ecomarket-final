@@ -11,6 +11,7 @@ import cartRoutes from './routes/cart.routes.js';
 import orderRoutes from './routes/orders.routes.js';
 import categoryRoutes from './routes/category.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import paymentsRoutes from "./src/routes/payments.routes.js";
 
 dotenv.config();
 
@@ -41,13 +42,14 @@ connectDB(MONGODB_URI)
     .then(() => {
         attachMongoEvents();
 
-        // prefix API
+        // prefijo API
         app.use('/api/auth', authRoutes);
         app.use('/api/products', productRoutes);
         app.use('/api/cart', cartRoutes);
         app.use('/api/orders', orderRoutes);
         app.use('/api/category', categoryRoutes);
         app.use('/api/admin', adminRoutes);
+        app.use("/api/payments", paymentsRoutes);
 
         const PORT = process.env.PORT || 3000;
         app.listen(PORT, () => {
