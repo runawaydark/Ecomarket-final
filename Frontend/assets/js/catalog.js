@@ -1,15 +1,15 @@
 /* =============================================
-   ECOMARKET - SISTEMA DE CATÁLOGO DE PRODUCTOS
-   =============================================
-   
-   FUNCIONALIDADES:
-   - Gestión de productos y localStorage
-   - Sistema de filtros avanzados
-   - Paginación dinámica
-   - Carrito de compras
-   - Vistas grid/lista
-   - Notificaciones toast
-   
+    ECOMARKET - SISTEMA DE CATÁLOGO DE PRODUCTOS
+    =============================================
+    
+    FUNCIONALIDADES:
+    - Gestión de productos y localStorage
+    - Sistema de filtros avanzados
+    - Paginación dinámica
+    - Carrito de compras
+    - Vistas grid/lista
+    - Notificaciones toast
+    
    ============================================= */
 
 // =============================================
@@ -220,21 +220,46 @@ let currentView = 'grid';
 /**
  * Inicializa productos en localStorage si no existen
  */
-function initializeProducts() {
-    if (!localStorage.getItem('ecomarket_products')) {
-        localStorage.setItem('ecomarket_products', JSON.stringify(defaultProducts));
-        console.log('Productos inicializados en localStorage');
+// Nueva variable global para almacenar los productos reales del backend
+let backendProducts = [];
+
+// Sobrescribir initializeProducts() para cargar desde backend
+async function initializeProducts() {
+    try {
+        backendProducts = await apiGet("/products"); // Llamada real al backend
+
+        // Normalizar campos para que coincidan con el sistema actual
+        backendProducts = backendProducts.map(p => ({
+            id: p._id, // tu backend usa _id
+            name: p.name,
+            category: p.category?.toLowerCase() || "general",
+            description: p.description || "",
+            price: p.price,
+            originalPrice: p.originalPrice || null,
+            unit: p.unit || "unidad",
+            stock: p.stock || 0,
+            maxStock: p.maxStock || 100,
+            image: p.imageUrl || "https://via.placeholder.com/300",
+            rating: p.rating || 4.0,
+            reviews: p.reviews || 0,
+            isNew: p.isNew || false,
+            isOffer: p.isOffer || false,
+            available: p.stock > 0
+        }));
+
+        console.log("Productos cargados desde backend:", backendProducts);
+
+    } catch (error) {
+        console.error("Error cargando productos del backend:", error);
+        showToast("Error cargando productos desde el servidor", "error");
     }
 }
 
-/**
- * Obtiene productos del localStorage
- * @returns {Array} Array de productos
- */
+// Sobrescribir getProducts() para devolver los del backend
 function getProducts() {
-    const products = localStorage.getItem('ecomarket_products');
-    return products ? JSON.parse(products) : defaultProducts;
+    return backendProducts.length > 0 ? backendProducts : defaultProducts;
 }
+
 
 /**
  * Guarda productos en localStorage y dispara evento de actualización

@@ -267,6 +267,7 @@
     <div id="footer-container"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/api.js"></script> 
     <script src="assets/js/app.js"></script>
     
     <script>
@@ -391,162 +392,82 @@
                 return emailRegex.test(email);
             }
             
-            // === CREAR USUARIO DE PRUEBA AUTOMÁTICAMENTE ===
-            function createTestUser() {
-                const testUser = {
-                    id: 'test-user-001',
-                    name: 'Usuario Prueba',
-                    email: 'usuario@prueba.com',
-                    password: '1234',
-                    type: 'user'
-                };
-                
-                // Guardar en localStorage como usuario registrado
-                let registeredUsers = JSON.parse(localStorage.getItem('ecomarket_registered_users')) || [];
-                
-                // Verificar si ya existe
-                const existingUser = registeredUsers.find(user => user.email === testUser.email);
-                if (!existingUser) {
-                    registeredUsers.push(testUser);
-                    localStorage.setItem('ecomarket_registered_users', JSON.stringify(registeredUsers));
-                    console.log('Usuario de prueba creado:', testUser);
-                }
-            }
-            
-            // === FUNCIÓN PARA VALIDAR CREDENCIALES ===
-            function validateUserCredentials(email, password) {
-                const registeredUsers = JSON.parse(localStorage.getItem('ecomarket_registered_users')) || [];
-                return registeredUsers.find(user => user.email === email && user.password === password);
-            }
-
-            // === MANEJO DEL FORMULARIO ===
-            authForm.addEventListener('submit', (e) => {
+            // === MANEJO DEL FORMULARIO (con backend) ===
+            authForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 
-                // Obtener datos del formulario
-                const email = document.getElementById('email').value.trim();
-                const password = document.getElementById('password').value;
-                const name = document.getElementById('name').value.trim();
-
-                // Validar campos básicos
-                if (!email || !password) {
+                const email = emailInput.value.trim();
+                const password = passwordInput.value;
+                const name = nameInput.value.trim();
+            
+                // Validación básica
+                if (!email || !password || (!isLoginMode && !name)) {
                     showNotification('Por favor completa todos los campos obligatorios.', 'warning');
                     return;
                 }
-
-                if (isLoginMode) {
-                    // Verificar si es login de admin
-                    if (email.toLowerCase() === 'admin' && password === '1234') {
-                        // Login de administrador exitoso
-                        localStorage.setItem('ecomarket_user_type', 'admin');
-                        localStorage.setItem('ecomarket_user_email', 'admin');
-                        localStorage.setItem('ecomarket_logged_in', 'true');
-                        
-                        showNotification('¡Bienvenido Admin! Iniciando sesión...', 'success');
-                        setTimeout(() => {
-                            window.location.href = 'admin.html';
-                        }, 1500);
-                        return;
-                    } else if (email.toLowerCase() === 'admin' && password !== '1234') {
-                        // Admin con contraseña incorrecta
-                        showNotification('Contraseña de administrador incorrecta. La contraseña correcta es "1234".', 'error');
-                        return;
-                    } else {
-                        // Login de usuario normal - validar formato de email
-                        if (!isValidEmailOrAdmin(email)) {
-                            showNotification('Por favor ingresa un correo electrónico válido o usa "admin" para acceso administrativo.', 'warning');
-                            return;
+            
+                // En modo registro NO permitimos "admin" como correo
+                if (!isLoginMode && email.toLowerCase() === 'admin') {
+                    showNotification('No puedes registrarte con el nombre "admin".', 'warning');
+                    return;
+                }
+            
+                // Validar formato de correo (excepto el caso especial "admin" que ya manejabas)
+                if (!isValidEmailOrAdmin(email)) {
+                    const msg = isLoginMode
+                        ? 'Ingresa un correo válido o usa "admin" solo si tu usuario administrador existe en el sistema.'
+                        : 'Ingresa un correo electrónico válido para el registro.';
+                    showNotification(msg, 'warning');
+                    return;
+                }
+            
+                try {
+                    if (isLoginMode) {
+                        // ===== LOGIN contra backend =====
+                        const body = { email, password };
+                        const data = await apiPost('/auth/login', body);
+                        // esperamos algo tipo: { token, user: { name, email, role, ... } }
+                    
+                        if (data.token) {
+                            localStorage.setItem('ecomarket_token', data.token);
                         }
-                        
-                        // Validar credenciales con usuarios registrados
-                        const validUser = validateUserCredentials(email, password);
-                        if (validUser) {
-                            // Login exitoso
-                            localStorage.setItem('ecomarket_user_type', 'user');
-                            localStorage.setItem('ecomarket_user_email', validUser.email);
-                            localStorage.setItem('ecomarket_user_name', validUser.name);
+                        if (data.user) {
+                            localStorage.setItem('ecomarket_user', JSON.stringify(data.user));
                             localStorage.setItem('ecomarket_logged_in', 'true');
-                            
-                            // Guardar usuario actual completo
-                            localStorage.setItem('ecomarket_current_user', JSON.stringify({
-                                id: validUser.id,
-                                name: validUser.name,
-                                email: validUser.email
-                            }));
-                            
-                            // Personalizar mensaje según el usuario
-                            let welcomeMessage = `¡Bienvenido ${validUser.name}! Iniciando sesión...`;
-                            
-                            showNotification(welcomeMessage, 'success');
-                            setTimeout(() => {
-                                window.location.href = 'index.html';
-                            }, 1500);
-                            return;
-                        } else {
-                            showNotification('Credenciales incorrectas. Para pruebas usa: usuario@prueba.com / 1234', 'error');
-                            return;
                         }
-                    }
-                } else {
-                    // Lógica de registro - NO permitir "admin" como registro
-                    if (email.toLowerCase() === 'admin') {
-                        showNotification('No puedes registrarte con el nombre "admin". Este está reservado para administradores.', 'warning');
-                        return;
-                    }
                     
-                    // Validar formato de email para registro
-                    if (!isValidEmailOrAdmin(email)) {
-                        showNotification('Por favor ingresa un correo electrónico válido para el registro.', 'warning');
-                        return;
-                    }
+                        const userName = data.user?.name || 'Usuario';
+                        const isAdmin = data.user && (data.user.role === 'admin' || data.user.isAdmin);
                     
-                    if (name && email && password.length >= 4) {
-                        // Verificar si el email ya está registrado
-                        let registeredUsers = JSON.parse(localStorage.getItem('ecomarket_registered_users')) || [];
-                        const existingUser = registeredUsers.find(user => user.email === email);
-                        
-                        if (existingUser) {
-                            showNotification('Este correo electrónico ya está registrado. Intenta iniciar sesión.', 'warning');
-                            return;
-                        }
-                        
-                        // Crear nuevo usuario
-                        const newUser = {
-                            id: 'user-' + Date.now(),
-                            name: name,
-                            email: email,
-                            password: password,
-                            type: 'user'
-                        };
-                        
-                        // Guardar en lista de usuarios registrados
-                        registeredUsers.push(newUser);
-                        localStorage.setItem('ecomarket_registered_users', JSON.stringify(registeredUsers));
-                        
-                        // Login automático después del registro
-                        localStorage.setItem('ecomarket_user_type', 'user');
-                        localStorage.setItem('ecomarket_user_email', newUser.email);
-                        localStorage.setItem('ecomarket_user_name', newUser.name);
-                        localStorage.setItem('ecomarket_logged_in', 'true');
-                        
-                        // Guardar usuario actual completo
-                        localStorage.setItem('ecomarket_current_user', JSON.stringify({
-                            id: newUser.id,
-                            name: newUser.name,
-                            email: newUser.email
-                        }));
-                        
-                        showNotification(`¡Bienvenido ${name}! Cuenta creada exitosamente. Iniciando sesión...`, 'success');
+                        showNotification(`¡Bienvenido ${userName}! Iniciando sesión...`, 'success');
+                    
                         setTimeout(() => {
-                            window.location.href = 'index.html';
-                        }, 1500);
-                        return;
+                            window.location.href = isAdmin ? 'admin.html' : 'index.html';
+                        }, 1200);
+                    
                     } else {
-                        showNotification('Por favor completa todos los campos. La contraseña debe tener al menos 4 caracteres.', 'warning');
-                        return;
+                        // ===== REGISTRO contra backend =====
+                        const body = { name, email, password };
+                        const data = await apiPost('/auth/register', body);
+                        // depende de tu backend: algunos devuelven token, otros solo mensaje
+                    
+                        showNotification('Cuenta creada correctamente. Ahora puedes iniciar sesión.', 'success');
+                    
+                        // Si tu backend devuelve token y user, podrías loguear directo:
+                        // if (data.token && data.user) { ...login automático... }
+                    
+                        // Cambiamos a modo login y dejamos el correo ya escrito
+                        switchMode(true);
+                        emailInput.value = email;
+                        passwordInput.value = '';
                     }
+                
+                } catch (err) {
+                    console.error(err);
+                    showNotification(err.message || 'Error al procesar la solicitud. Intenta nuevamente.', 'error');
                 }
             });
+            
 
             // === MODAL DE RECUPERAR CONTRASEÑA ===
             const forgotPasswordLink = document.getElementById('forgotPassword');
@@ -582,18 +503,12 @@
                 console.log('📧 [SIMULADO] Correo enviado a:', email);
                 console.log('🔗 [SIMULADO] Enlace:', resetLink);
                 
-                // En un entorno real, aquí harías:
-                // fetch('/api/forgot-password', {
-                //     method: 'POST',
-                //     body: JSON.stringify({ email }),
-                //     headers: { 'Content-Type': 'application/json' }
-                // });
             });
 
             // Función para generar token simulado
             function generateResetToken() {
                 return Math.random().toString(36).substring(2, 15) + 
-                       Math.random().toString(36).substring(2, 15);
+                    Math.random().toString(36).substring(2, 15);
             }
 
             // Reset modal cuando se cierre
@@ -611,8 +526,7 @@
                 }
             }, 500);
             
-            // === INICIALIZAR USUARIO DE PRUEBA ===
-            createTestUser();
+
         });
     </script>
     </body>
