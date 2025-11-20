@@ -1,0 +1,619 @@
+
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceder - EcoMarket</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="assets/css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    <style>
+        .auth-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .auth-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .auth-tabs {
+            border-bottom: 2px solid #f8f9fa;
+            margin-bottom: 30px;
+        }
+        .auth-tab {
+            background: none;
+            border: none;
+            padding: 15px 30px;
+            color: #6c757d;
+            font-weight: 600;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.3s ease;
+        }
+        .auth-tab.active {
+            color: #008c5a;
+            background: #f8f9fa;
+            border-bottom: 3px solid #008c5a;
+        }
+        .password-toggle-btn {
+            border-left: none;
+            background: transparent;
+            color: #6c757d;
+        }
+        .password-toggle-btn:hover {
+            color: #008c5a;
+            background: transparent;
+        }
+        .welcome-title {
+            font-family: 'Dancing Script', cursive;
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: #008c5a;
+            text-shadow: 2px 2px 4px rgba(0,140,90,0.3);
+            margin-bottom: 10px;
+            text-align: center;
+            line-height: 1.2;
+        }
+        .welcome-subtitle {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.1rem;
+            color: #6c757d;
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 400;
+        }
+        .eco-highlight {
+            color: #28a745;
+            font-weight: 600;
+        }
+        /* Fix para el botón hamburguesa en móvil - OVERRIDE de style.css */
+        .navbar-toggler {
+            border: 1px solid rgba(255,255,255,0.3) !important;
+            padding: 4px 8px !important;
+            background: transparent !important;
+        }
+        .navbar-toggler:focus {
+            box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25) !important;
+        }
+        .navbar-toggler-icon {
+            background-color: transparent !important;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.9%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2.5' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+            width: 1.5em !important;
+            height: 1.5em !important;
+            border-radius: 0 !important;
+        }
+        @media (max-width: 768px) {
+            .welcome-title {
+                font-size: 2.5rem;
+            }
+            .welcome-subtitle {
+                font-size: 1rem;
+            }
+        }
+    </style>
+    </head>
+    <body>
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top" style="background-color: #008c5a;">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="index.html">EcoMarket</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link" href="catalogo.html">Catálogo</a></li>
+                    <li class="nav-item"><a class="nav-link" href="nosotros.html">Nosotros</a></li>
+                    <li class="nav-item"><a class="nav-link" href="contacto.html">Contacto</a></li>
+                </ul>
+                <div class="d-flex align-items-center gap-3">
+                    <a href="#" class="text-white"><i class="bi bi-person fs-5"></i></a>
+                    <a href="carrito.html" class="text-white position-relative">
+                        <i class="bi bi-cart fs-5"></i>
+                        <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none;">
+                            0
+                        </span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- FORMULARIO DE AUTENTICACIÓN -->
+    <div class="auth-container d-flex justify-content-center align-items-center py-5">
+        <div class="auth-card p-5" style="width: 100%; max-width: 450px;">
+            
+            <!-- TÍTULO DE BIENVENIDA -->
+            <div class="text-center mb-4">
+                <h1 class="welcome-title">¡Bienvenido!</h1>
+                <p class="welcome-subtitle">
+                    Accede a <span class="eco-highlight">EcoMarket</span> y disfruta de productos frescos y naturales 🌱
+                </p>
+            </div>
+            
+            <!-- TABS PARA CAMBIAR ENTRE LOGIN Y REGISTRO -->
+            <div class="auth-tabs text-center mb-4">
+                <button type="button" class="auth-tab active" id="loginTab">Iniciar Sesión</button>
+                <button type="button" class="auth-tab" id="registerTab">Registrarse</button>
+            </div>
+
+            <!-- FORMULARIO -->
+            <form id="authForm">
+                <!-- CAMPO NOMBRE (solo visible en registro) -->
+                <div class="mb-3" id="nameField" style="display: none;">
+                    <label for="name" class="form-label">Nombre completo</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                        <input type="text" class="form-control" id="name" placeholder="Ingresa tu nombre completo">
+                    </div>
+                    <div class="invalid-feedback">Por favor, ingresa tu nombre.</div>
+                </div>
+
+                <!-- CAMPO EMAIL -->
+                <div class="mb-3">
+                    <label for="email" class="form-label">Correo electrónico</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                        <input type="text" class="form-control" id="email" placeholder="correo@ejemplo.com o admin" required>
+                    </div>
+                    <div class="invalid-feedback">Ingresa un correo válido o "admin" para acceso administrativo.</div>
+                </div>
+
+                <!-- CAMPO CONTRASEÑA -->
+                <div class="mb-3">
+                    <label for="password" class="form-label">Contraseña</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                        <input type="password" class="form-control" id="password" placeholder="••••••••" required>
+                        <button class="btn btn-outline-secondary password-toggle-btn" type="button" id="togglePassword">
+                            <i class="bi bi-eye" id="toggleIcon"></i>
+                        </button>
+                    </div>
+                    <div class="invalid-feedback">La contraseña es obligatoria.</div>
+                </div>
+
+                <!-- BOTÓN PRINCIPAL -->
+                <button type="submit" class="btn btn-success w-100 mb-3" id="submitBtn">
+                    Iniciar Sesión
+                </button>
+
+                <!-- ENLACES ADICIONALES -->
+                <div class="text-center">
+                    <div class="mb-2">
+                        <a href="#" class="text-muted text-decoration-none" id="forgotPassword" style="display: block;">¿Olvidaste tu contraseña?</a>
+                    </div>
+                    
+                    <a href="index.html" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-arrow-left"></i> Volver al inicio
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL PARA RECUPERAR CONTRASEÑA -->
+    <div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-labelledby="forgotPasswordModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="forgotPasswordModalLabel">
+                        <i class="bi bi-key-fill me-2"></i>Recuperar Contraseña
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div id="forgotPasswordForm">
+                        <div class="text-center mb-4">
+                            <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                <i class="bi bi-envelope-at-fill text-success" style="font-size: 2rem;"></i>
+                            </div>
+                            <h6 class="mt-3 mb-2">¿Olvidaste tu contraseña?</h6>
+                            <p class="text-muted small">
+                                Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
+                            </p>
+                        </div>
+                        
+                        <form id="resetPasswordForm">
+                            <div class="mb-3">
+                                <label for="resetEmail" class="form-label">Correo electrónico</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-envelope"></i>
+                                    </span>
+                                    <input type="email" class="form-control" id="resetEmail" placeholder="tu-email@ejemplo.com" required>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-send-fill me-2"></i>Enviar enlace de recuperación
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                    Cancelar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- CONFIRMACIÓN DE ENVÍO -->
+                    <div id="resetConfirmation" style="display: none;">
+                        <div class="text-center">
+                            <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                                <i class="bi bi-check-circle-fill text-success" style="font-size: 2rem;"></i>
+                            </div>
+                            <h6 class="text-success mb-2">¡Correo enviado!</h6>
+                            <p class="text-muted small mb-4">
+                                Hemos enviado un enlace de recuperación a <strong id="sentEmailAddress"></strong>
+                            </p>
+                            <div class="alert alert-info small">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Revisa tu bandeja de entrada y spam. El enlace expira en 24 horas.
+                            </div>
+                            <button type="button" class="btn btn-outline-secondary w-100" data-bs-dismiss="modal">
+                                Entendido
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Container - El footer se carga dinámicamente -->
+    <div id="footer-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/app.js"></script>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // === ELEMENTOS DEL DOM ===
+            const loginTab = document.getElementById('loginTab');
+            const registerTab = document.getElementById('registerTab');
+            const nameField = document.getElementById('nameField');
+            const nameInput = document.getElementById('name');
+            const submitBtn = document.getElementById('submitBtn');
+            const forgotPassword = document.getElementById('forgotPassword');
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('toggleIcon');
+            const authForm = document.getElementById('authForm');
+            const emailInput = document.getElementById('email');
+
+            let isLoginMode = true;
+
+            // === VALIDACIÓN DINÁMICA DEL EMAIL ===
+            emailInput.addEventListener('input', function() {
+                const value = this.value.trim();
+                const lowerValue = value.toLowerCase();
+                
+                // Si está escribiendo "admin", cambiar el placeholder y remover validación de email
+                if (lowerValue === 'admin') {
+                    this.placeholder = 'admin (acceso administrativo)';
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                    this.setCustomValidity(''); // Limpiar validación personalizada
+                } else if (lowerValue.startsWith('adm') && lowerValue.length < 5) {
+                    this.placeholder = 'admin (acceso administrativo)';
+                    this.classList.remove('is-invalid', 'is-valid');
+                } else if (value.includes('@')) {
+                    this.placeholder = 'correo@ejemplo.com';
+                    // Validar formato de email
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (emailRegex.test(value)) {
+                        this.classList.remove('is-invalid');
+                        this.classList.add('is-valid');
+                    } else {
+                        this.classList.remove('is-valid');
+                        this.classList.add('is-invalid');
+                    }
+                } else if (value.length > 0) {
+                    this.placeholder = 'correo@ejemplo.com o admin';
+                    this.classList.remove('is-valid', 'is-invalid');
+                } else {
+                    this.placeholder = 'correo@ejemplo.com o admin';
+                    this.classList.remove('is-valid', 'is-invalid');
+                }
+            });
+
+            // === VALIDACIÓN ESPECÍFICA PARA MODO REGISTRO ===
+            function updateEmailValidationForMode() {
+                if (!isLoginMode && emailInput.value.toLowerCase() === 'admin') {
+                    emailInput.classList.remove('is-valid');
+                    emailInput.classList.add('is-invalid');
+                    emailInput.placeholder = 'No puedes usar "admin" para registro';
+                } else if (!isLoginMode) {
+                    emailInput.placeholder = 'correo@ejemplo.com';
+                } else {
+                    emailInput.placeholder = 'correo@ejemplo.com o admin';
+                }
+            }
+
+            // === FUNCIÓN PARA CAMBIAR ENTRE LOGIN Y REGISTRO ===
+            function switchMode(isLogin) {
+                isLoginMode = isLogin;
+                
+                if (isLogin) {
+                    // Modo Login
+                    loginTab.classList.add('active');
+                    registerTab.classList.remove('active');
+                    nameField.style.display = 'none';
+                    nameInput.removeAttribute('required');
+                    submitBtn.textContent = 'Iniciar Sesión';
+                    forgotPassword.style.display = 'block';
+                    document.title = 'Iniciar Sesión - EcoMarket';
+                } else {
+                    // Modo Registro
+                    registerTab.classList.add('active');
+                    loginTab.classList.remove('active');
+                    nameField.style.display = 'block';
+                    nameInput.setAttribute('required', 'required');
+                    submitBtn.textContent = 'Crear Cuenta';
+                    forgotPassword.style.display = 'none';
+                    document.title = 'Registrarse - EcoMarket';
+                }
+                
+                // Actualizar validación del email según el modo
+                updateEmailValidationForMode();
+            }
+
+            // === EVENTOS DE LOS TABS ===
+            loginTab.addEventListener('click', () => switchMode(true));
+            registerTab.addEventListener('click', () => switchMode(false));
+
+            // === FUNCIÓN PARA MOSTRAR/OCULTAR CONTRASEÑA ===
+            togglePassword.addEventListener('click', () => {
+                const isPassword = passwordInput.type === 'password';
+                
+                if (isPassword) {
+                    passwordInput.type = 'text';
+                    toggleIcon.classList.remove('bi-eye');
+                    toggleIcon.classList.add('bi-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    toggleIcon.classList.remove('bi-eye-slash');
+                    toggleIcon.classList.add('bi-eye');
+                }
+            });
+
+            // === FUNCIÓN PARA VALIDAR EMAIL ===
+            function isValidEmailOrAdmin(email) {
+                // Si es "admin", es válido
+                if (email.toLowerCase() === 'admin') {
+                    return true;
+                }
+                // Si no es admin, debe ser un email válido
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return emailRegex.test(email);
+            }
+            
+            // === CREAR USUARIO DE PRUEBA AUTOMÁTICAMENTE ===
+            function createTestUser() {
+                const testUser = {
+                    id: 'test-user-001',
+                    name: 'Usuario Prueba',
+                    email: 'usuario@prueba.com',
+                    password: '1234',
+                    type: 'user'
+                };
+                
+                // Guardar en localStorage como usuario registrado
+                let registeredUsers = JSON.parse(localStorage.getItem('ecomarket_registered_users')) || [];
+                
+                // Verificar si ya existe
+                const existingUser = registeredUsers.find(user => user.email === testUser.email);
+                if (!existingUser) {
+                    registeredUsers.push(testUser);
+                    localStorage.setItem('ecomarket_registered_users', JSON.stringify(registeredUsers));
+                    console.log('Usuario de prueba creado:', testUser);
+                }
+            }
+            
+            // === FUNCIÓN PARA VALIDAR CREDENCIALES ===
+            function validateUserCredentials(email, password) {
+                const registeredUsers = JSON.parse(localStorage.getItem('ecomarket_registered_users')) || [];
+                return registeredUsers.find(user => user.email === email && user.password === password);
+            }
+
+            // === MANEJO DEL FORMULARIO ===
+            authForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                // Obtener datos del formulario
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+                const name = document.getElementById('name').value.trim();
+
+                // Validar campos básicos
+                if (!email || !password) {
+                    showNotification('Por favor completa todos los campos obligatorios.', 'warning');
+                    return;
+                }
+
+                if (isLoginMode) {
+                    // Verificar si es login de admin
+                    if (email.toLowerCase() === 'admin' && password === '1234') {
+                        // Login de administrador exitoso
+                        localStorage.setItem('ecomarket_user_type', 'admin');
+                        localStorage.setItem('ecomarket_user_email', 'admin');
+                        localStorage.setItem('ecomarket_logged_in', 'true');
+                        
+                        showNotification('¡Bienvenido Admin! Iniciando sesión...', 'success');
+                        setTimeout(() => {
+                            window.location.href = 'admin.html';
+                        }, 1500);
+                        return;
+                    } else if (email.toLowerCase() === 'admin' && password !== '1234') {
+                        // Admin con contraseña incorrecta
+                        showNotification('Contraseña de administrador incorrecta. La contraseña correcta es "1234".', 'error');
+                        return;
+                    } else {
+                        // Login de usuario normal - validar formato de email
+                        if (!isValidEmailOrAdmin(email)) {
+                            showNotification('Por favor ingresa un correo electrónico válido o usa "admin" para acceso administrativo.', 'warning');
+                            return;
+                        }
+                        
+                        // Validar credenciales con usuarios registrados
+                        const validUser = validateUserCredentials(email, password);
+                        if (validUser) {
+                            // Login exitoso
+                            localStorage.setItem('ecomarket_user_type', 'user');
+                            localStorage.setItem('ecomarket_user_email', validUser.email);
+                            localStorage.setItem('ecomarket_user_name', validUser.name);
+                            localStorage.setItem('ecomarket_logged_in', 'true');
+                            
+                            // Guardar usuario actual completo
+                            localStorage.setItem('ecomarket_current_user', JSON.stringify({
+                                id: validUser.id,
+                                name: validUser.name,
+                                email: validUser.email
+                            }));
+                            
+                            // Personalizar mensaje según el usuario
+                            let welcomeMessage = `¡Bienvenido ${validUser.name}! Iniciando sesión...`;
+                            
+                            showNotification(welcomeMessage, 'success');
+                            setTimeout(() => {
+                                window.location.href = 'index.html';
+                            }, 1500);
+                            return;
+                        } else {
+                            showNotification('Credenciales incorrectas. Para pruebas usa: usuario@prueba.com / 1234', 'error');
+                            return;
+                        }
+                    }
+                } else {
+                    // Lógica de registro - NO permitir "admin" como registro
+                    if (email.toLowerCase() === 'admin') {
+                        showNotification('No puedes registrarte con el nombre "admin". Este está reservado para administradores.', 'warning');
+                        return;
+                    }
+                    
+                    // Validar formato de email para registro
+                    if (!isValidEmailOrAdmin(email)) {
+                        showNotification('Por favor ingresa un correo electrónico válido para el registro.', 'warning');
+                        return;
+                    }
+                    
+                    if (name && email && password.length >= 4) {
+                        // Verificar si el email ya está registrado
+                        let registeredUsers = JSON.parse(localStorage.getItem('ecomarket_registered_users')) || [];
+                        const existingUser = registeredUsers.find(user => user.email === email);
+                        
+                        if (existingUser) {
+                            showNotification('Este correo electrónico ya está registrado. Intenta iniciar sesión.', 'warning');
+                            return;
+                        }
+                        
+                        // Crear nuevo usuario
+                        const newUser = {
+                            id: 'user-' + Date.now(),
+                            name: name,
+                            email: email,
+                            password: password,
+                            type: 'user'
+                        };
+                        
+                        // Guardar en lista de usuarios registrados
+                        registeredUsers.push(newUser);
+                        localStorage.setItem('ecomarket_registered_users', JSON.stringify(registeredUsers));
+                        
+                        // Login automático después del registro
+                        localStorage.setItem('ecomarket_user_type', 'user');
+                        localStorage.setItem('ecomarket_user_email', newUser.email);
+                        localStorage.setItem('ecomarket_user_name', newUser.name);
+                        localStorage.setItem('ecomarket_logged_in', 'true');
+                        
+                        // Guardar usuario actual completo
+                        localStorage.setItem('ecomarket_current_user', JSON.stringify({
+                            id: newUser.id,
+                            name: newUser.name,
+                            email: newUser.email
+                        }));
+                        
+                        showNotification(`¡Bienvenido ${name}! Cuenta creada exitosamente. Iniciando sesión...`, 'success');
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 1500);
+                        return;
+                    } else {
+                        showNotification('Por favor completa todos los campos. La contraseña debe tener al menos 4 caracteres.', 'warning');
+                        return;
+                    }
+                }
+            });
+
+            // === MODAL DE RECUPERAR CONTRASEÑA ===
+            const forgotPasswordLink = document.getElementById('forgotPassword');
+            const resetPasswordForm = document.getElementById('resetPasswordForm');
+            const resetConfirmation = document.getElementById('resetConfirmation');
+            const forgotPasswordFormDiv = document.getElementById('forgotPasswordForm');
+            
+            // Abrir modal al hacer click en "¿Olvidaste tu contraseña?"
+            forgotPassword.addEventListener('click', (e) => {
+                e.preventDefault();
+                const modal = new bootstrap.Modal(document.getElementById('forgotPasswordModal'));
+                modal.show();
+            });
+
+            // Manejar envío del formulario de recuperación
+            resetPasswordForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const email = document.getElementById('resetEmail').value;
+                
+                // Simular envío del correo (aquí iría la llamada al backend)
+                console.log('Enviando correo de recuperación a:', email);
+                
+                // Mostrar confirmación
+                document.getElementById('sentEmailAddress').textContent = email;
+                forgotPasswordFormDiv.style.display = 'none';
+                resetConfirmation.style.display = 'block';
+                
+                // Simular creación del enlace de recuperación
+                const resetToken = generateResetToken();
+                const resetLink = `${window.location.origin}${window.location.pathname.replace('login.html', 'reset-password.html')}?token=${resetToken}&email=${encodeURIComponent(email)}`;
+                
+                console.log('Enlace de recuperación generado:', resetLink);
+                console.log('📧 [SIMULADO] Correo enviado a:', email);
+                console.log('🔗 [SIMULADO] Enlace:', resetLink);
+                
+                // En un entorno real, aquí harías:
+                // fetch('/api/forgot-password', {
+                //     method: 'POST',
+                //     body: JSON.stringify({ email }),
+                //     headers: { 'Content-Type': 'application/json' }
+                // });
+            });
+
+            // Función para generar token simulado
+            function generateResetToken() {
+                return Math.random().toString(36).substring(2, 15) + 
+                       Math.random().toString(36).substring(2, 15);
+            }
+
+            // Reset modal cuando se cierre
+            document.getElementById('forgotPasswordModal').addEventListener('hidden.bs.modal', () => {
+                resetPasswordForm.reset();
+                forgotPasswordFormDiv.style.display = 'block';
+                resetConfirmation.style.display = 'none';
+            });
+
+            // === CARGAR FOOTER ===
+            setTimeout(() => {
+                const footer = document.querySelector('#footer-container footer');
+                if (!footer && typeof loadFooter === 'function') {
+                    loadFooter();
+                }
+            }, 500);
+            
+            // === INICIALIZAR USUARIO DE PRUEBA ===
+            createTestUser();
+        });
+    </script>
+    </body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Pedidos de Prueba - EcoMarket</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Crear Pedidos de Prueba</h2>
+        <p class="text-muted">Haz clic en el botón para crear algunos pedidos de prueba y probar el sistema.</p>
+        
+        <button id="createTestOrders" class="btn btn-primary">Crear Pedidos de Prueba</button>
+        <button id="clearOrders" class="btn btn-danger ms-2">Limpiar Todos los Pedidos</button>
+        
+        <div id="results" class="mt-4"></div>
+    </div>
+
+    <script>
+        // Número máximo de usuarios para limpiar historiales
+        const MAX_USER_ID = 10;
+
+        // Función para crear pedidos de prueba
+        function createTestOrders() {
+            // Crear usuario de prueba si no existe
+            const testUser = {
+                id: 1,
+                name: 'Juan Pérez',
+                email: 'juan@test.com'
+            };
+            localStorage.setItem('ecomarket_current_user', JSON.stringify(testUser));
+
+            const testOrders = [
+                {
+                    id: 'ORD' + Date.now(),
+                    date: new Date().toISOString(),
+                    status: 'confirmado',
+                    customer: {
+                        id: testUser.id,
+                        name: testUser.name,
+                        email: testUser.email,
+                        phone: '+57 300 123 4567'
+                    },
+                    delivery: {
+                        address: 'Calle 123 #45-67, Barrio Centro',
+                        city: 'Bogotá',
+                        notes: 'Timbre rojo, apartamento 401'
+                    },
+                    payment: {
+                        method: 'credit-card'
+                    },
+                    items: [
+                        { name: 'Manzanas Rojas', quantity: 2, unit: 'kg', price: 4500 },
+                        { name: 'Bananas', quantity: 1, unit: 'racimo', price: 3200 },
+                        { name: 'Lechuga Fresca', quantity: 1, unit: 'unidad', price: 2800 }
+                    ],
+                    total: 15000,
+                    lastUpdated: new Date().toISOString()
+                },
+                {
+                    id: 'ORD' + (Date.now() + 1000),
+                    date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+                    status: 'procesando',
+                    customer: {
+                        id: testUser.id,
+                        name: testUser.name,
+                        email: testUser.email,
+                        phone: '+57 300 123 4567'
+                    },
+                    delivery: {
+                        address: 'Carrera 45 #12-34',
+                        city: 'Medellín',
+                        notes: ''
+                    },
+                    payment: {
+                        method: 'bank-transfer'
+                    },
+                    items: [
+                        { name: 'Tomates Cherry', quantity: 3, unit: 'libras', price: 3500 },
+                        { name: 'Zanahorias', quantity: 2, unit: 'kg', price: 2800 },
+                        { name: 'Apio', quantity: 1, unit: 'paquete', price: 1800 }
+                    ],
+                    total: 22900,
+                    lastUpdated: new Date().toISOString()
+                },
+                {
+                    id: 'ORD' + (Date.now() + 2000),
+                    date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+                    status: 'entregado',
+                    customer: {
+                        id: testUser.id,
+                        name: testUser.name,
+                        email: testUser.email,
+                        phone: '+57 300 123 4567'
+                    },
+                    delivery: {
+                        address: 'Avenida Principal #89-12',
+                        city: 'Cali',
+                        notes: 'Casa azul con jardín'
+                    },
+                    payment: {
+                        method: 'cash-on-delivery'
+                    },
+                    items: [
+                        { name: 'Frutillas Premium', quantity: 2, unit: 'canastas', price: 8500 },
+                        { name: 'Aguacate Hass', quantity: 4, unit: 'unidades', price: 12000 }
+                    ],
+                    total: 29000,
+                    lastUpdated: new Date().toISOString()
+                }
+            ];
+
+            // Guardar en historial general
+            let allOrders = JSON.parse(localStorage.getItem('ecomarket_orders')) || [];
+            allOrders = [...testOrders, ...allOrders];
+            localStorage.setItem('ecomarket_orders', JSON.stringify(allOrders));
+
+            // Guardar en historial del usuario
+            localStorage.setItem('ecomarket_user_orders_' + testUser.id, JSON.stringify(testOrders));
+
+            document.getElementById('results').innerHTML = `
+                <div class="alert alert-success">
+                    <h5>¡Pedidos de prueba creados exitosamente!</h5>
+                    <p>Se crearon ${testOrders.length} pedidos de prueba:</p>
+                    <ul>
+                        <li><strong>Pedido 1:</strong> Estado "Confirmado" - $15.000</li>
+                        <li><strong>Pedido 2:</strong> Estado "Procesando" - $22.900</li>
+                        <li><strong>Pedido 3:</strong> Estado "Entregado" - $29.000</li>
+                    </ul>
+                    <p class="mb-0">
+                        <a href="pedidos.html" class="btn btn-success me-2">Ver Mis Pedidos</a>
+                        <a href="admin.html" class="btn btn-primary">Ver Panel Admin</a>
+                    </p>
+                </div>
+            `;
+        }
+
+        // Función para limpiar todos los pedidos
+        function clearAllOrders() {
+            if (confirm('¿Estás seguro de que deseas eliminar todos los pedidos? Esta acción no se puede deshacer.')) {
+                localStorage.removeItem('ecomarket_orders');
+                // Limpiar también historiales específicos de usuarios (asumimos IDs 1-MAX_USER_ID)
+                for (let i = 1; i <= MAX_USER_ID; i++) {
+                    localStorage.removeItem('ecomarket_user_orders_' + i);
+                }
+                
+                document.getElementById('results').innerHTML = `
+                    <div class="alert alert-warning">
+                        <h5>Todos los pedidos han sido eliminados</h5>
+                        <p>Se han limpiado todos los pedidos del sistema.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Event listeners
+        document.getElementById('createTestOrders').addEventListener('click', createTestOrders);
+        document.getElementById('clearOrders').addEventListener('click', clearAllOrders);
+    </script>
+</body>
+</html>

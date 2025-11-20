@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Logout</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        button { padding: 10px 15px; margin: 5px; }
+        .notification { 
+            position: fixed; 
+            top: 20px; 
+            right: 20px; 
+            padding: 15px; 
+            border-radius: 5px; 
+            color: white;
+            z-index: 9999;
+        }
+        .success { background: #28a745; }
+        .info { background: #17a2b8; }
+        .warning { background: #ffc107; color: #212529; }
+        .error { background: #dc3545; }
+    </style>
+</head>
+<body>
+    <h1>Test de Función Logout</h1>
+    
+    <p>Estado actual del localStorage:</p>
+    <div id="storage-status"></div>
+    
+    <button onclick="setAdminAuth()">Configurar Autenticación Admin</button>
+    <button onclick="testLogout()">Probar Logout</button>
+    <button onclick="checkStatus()">Verificar Estado</button>
+
+    <script>
+        // Función de notificación simplificada
+        function showNotification(message, type = 'success', duration = 4000) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, duration);
+        }
+
+        // Función de confirmación simplificada
+        function showConfirmation(message, onConfirm, onCancel = null) {
+            const result = confirm(message);
+            if (result) {
+                onConfirm();
+            } else if (onCancel) {
+                onCancel();
+            }
+        }
+
+        // Función logout copiada de admin.html
+        function logout() {
+            console.log('logout() llamada');
+            showConfirmation(
+                '¿Estás seguro de que deseas cerrar sesión?',
+                function() {
+                    console.log('Confirmando logout');
+                    // Confirmar logout
+                    localStorage.removeItem('ecomarket_logged_in');
+                    localStorage.removeItem('ecomarket_user_type');
+                    localStorage.removeItem('ecomarket_user_email');
+                    localStorage.removeItem('ecomarket_user_name');
+                    localStorage.removeItem('ecomarket_current_user');
+                    
+                    showNotification('Sesión cerrada correctamente', 'info');
+                    setTimeout(() => {
+                        console.log('Redirigiendo a login.html');
+                        // En lugar de redireccionar, solo mostraremos un mensaje
+                        showNotification('Redirección a login.html', 'success');
+                    }, 1500);
+                },
+                function() {
+                    console.log('Logout cancelado');
+                    // Cancelar logout
+                    showNotification('Sesión mantenida', 'info', 2000);
+                }
+            );
+        }
+
+        function setAdminAuth() {
+            localStorage.setItem('ecomarket_logged_in', 'true');
+            localStorage.setItem('ecomarket_user_type', 'admin');
+            localStorage.setItem('ecomarket_user_email', 'admin@ecomarket.com');
+            localStorage.setItem('ecomarket_user_name', 'Administrador');
+            localStorage.setItem('ecomarket_current_user', JSON.stringify({
+                id: '1',
+                name: 'Administrador',
+                email: 'admin@ecomarket.com'
+            }));
+            checkStatus();
+        }
+
+        function testLogout() {
+            logout();
+        }
+
+        function checkStatus() {
+            const status = {
+                logged_in: localStorage.getItem('ecomarket_logged_in'),
+                user_type: localStorage.getItem('ecomarket_user_type'),
+                user_email: localStorage.getItem('ecomarket_user_email'),
+                user_name: localStorage.getItem('ecomarket_user_name'),
+                current_user: localStorage.getItem('ecomarket_current_user')
+            };
+            
+            document.getElementById('storage-status').innerHTML = '<pre>' + JSON.stringify(status, null, 2) + '</pre>';
+        }
+
+        // Inicializar
+        window.onload = checkStatus;
+    </script>
+</body>
+</html>

@@ -1,0 +1,1766 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Gestión de Productos | EcoMarket</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="assets/css/style.css" rel="stylesheet">
+    <style>
+        .admin-container {
+            background: linear-gradient(135deg, #f1f3f4 0%, #e8eaed 100%);
+            min-height: 100vh;
+            padding: 1rem 0;
+        }
+        
+        .admin-header {
+            background: linear-gradient(135deg, #008c5a, #00b374);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        /* Responsive styles for mobile */
+        @media (max-width: 768px) {
+            .admin-container {
+                padding: 0.5rem 0;
+            }
+            
+            .admin-header {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .admin-header h1 {
+                font-size: 1.5rem !important;
+            }
+            
+            .stats-cards {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 0.5rem;
+                margin-bottom: 1rem;
+            }
+            
+            .stat-card {
+                padding: 1rem !important;
+            }
+            
+            .stat-icon {
+                font-size: 2rem !important;
+            }
+            
+            .stat-number {
+                font-size: 1.4rem !important;
+            }
+            
+            .admin-section {
+                margin-bottom: 1rem !important;
+                padding: 1rem !important;
+            }
+            
+            /* Form responsive adjustments */
+            .row .col-md-4,
+            .row .col-md-6 {
+                margin-bottom: 0.5rem;
+            }
+            
+            .form-label {
+                font-size: 0.9rem;
+                margin-bottom: 0.3rem;
+            }
+            
+            .form-control {
+                font-size: 0.9rem;
+                padding: 0.5rem;
+            }
+            
+            .input-group-text {
+                font-size: 0.9rem;
+                padding: 0.5rem;
+            }
+            
+            /* Product cards responsive */
+            .product-card {
+                margin-bottom: 1rem;
+            }
+            
+            .product-card .card-body {
+                padding: 0.75rem !important;
+            }
+            
+            .product-card h5 {
+                font-size: 1rem !important;
+            }
+            
+            .product-card .btn {
+                font-size: 0.8rem;
+                padding: 0.25rem 0.5rem;
+            }
+            
+            /* Make buttons stack on mobile */
+            .btn-group {
+                flex-direction: column !important;
+                gap: 0.25rem;
+            }
+            
+            .btn-group .btn {
+                border-radius: 0.375rem !important;
+                margin: 0 !important;
+            }
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            border: 1px solid rgba(0, 140, 90, 0.1);
+        }
+        
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: #008c5a;
+        }
+        
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .admin-section {
+            background: #ffffff;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border: 2px solid #f1f3f4;
+            position: relative;
+        }
+        
+        .admin-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #008c5a 0%, #00a862 100%);
+            border-radius: 15px 15px 0 0;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #008c5a, #00b374);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary-custom:hover {
+            background: linear-gradient(135deg, #007a50, #009d66);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 140, 90, 0.3);
+        }
+        
+        .product-item {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .product-item:hover {
+            border-color: #008c5a;
+            box-shadow: 0 4px 15px rgba(0, 140, 90, 0.1);
+        }
+        
+        .product-form {
+            background: #ffffff;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .form-control {
+            background-color: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .form-control:focus {
+            background-color: #ffffff;
+            border-color: #008c5a;
+            box-shadow: 0 0 0 3px rgba(0, 140, 90, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1);
+            outline: none;
+        }
+        
+        .form-control:hover {
+            border-color: #ced4da;
+            background-color: #ffffff;
+        }
+        
+        .form-control::placeholder {
+            color: #6c757d;
+            opacity: 0.8;
+        }
+        
+        /* Estilos específicos para inputs de números */
+        input[type="number"].form-control {
+            background-image: linear-gradient(45deg, transparent 49%, #f8f9fa 49%, #f8f9fa 51%, transparent 51%);
+            background-size: 20px 20px;
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+        }
+        
+        /* Estilos para select */
+        select.form-control {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.75rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+        
+        /* Estilos para textarea */
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        /* Labels mejorados */
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Contenedor de campos mejorado */
+        .mb-3 {
+            position: relative;
+        }
+        
+        /* Estilos para checkboxes mejorados */
+        .form-check-input {
+            width: 1.2rem;
+            height: 1.2rem;
+            margin-top: 0.25rem;
+            border: 2px solid #dee2e6;
+            border-radius: 4px;
+            background-color: #ffffff;
+        }
+        
+        .form-check-input:checked {
+            background-color: #008c5a;
+            border-color: #008c5a;
+        }
+        
+        .form-check-input:focus {
+            border-color: #008c5a;
+            box-shadow: 0 0 0 3px rgba(0, 140, 90, 0.15);
+        }
+        
+        .form-check-label {
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        /* Botones mejorados */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Estilos para secciones colapsables */
+        .section-header[data-bs-toggle="collapse"] {
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            padding: 0.5rem;
+            margin: -0.5rem;
+        }
+        
+        .section-header[data-bs-toggle="collapse"]:hover {
+            background-color: rgba(0, 140, 90, 0.05);
+        }
+        
+        .collapse-icon {
+            transition: transform 0.3s ease;
+            color: #008c5a;
+        }
+        
+        .section-header[aria-expanded="true"] .collapse-icon {
+            transform: rotate(180deg);
+        }
+
+        /* Estilos para tarjetas de pedidos */
+        .order-card {
+            background: #ffffff;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .order-card:hover {
+            border-color: #008c5a;
+            box-shadow: 0 4px 15px rgba(0, 140, 90, 0.1);
+        }
+        
+        .order-status {
+            position: absolute;
+            top: -10px;
+            right: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .order-total {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #008c5a;
+        }
+        
+        .order-items {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+        }
+        
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.25rem;
+        }
+        
+        .order-item:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Estilos para gráficos y reportes */
+        .report-chart {
+            background: #ffffff;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .progress-category {
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .category-item:last-child {
+            border-bottom: none;
+        }
+        
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .ranking-item:last-child {
+            border-bottom: none;
+        }
+        
+        .ranking-number {
+            background: #008c5a;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+        
+        .ranking-number.gold {
+            background: #ffc107;
+            color: #000;
+        }
+        
+        .ranking-number.silver {
+            background: #6c757d;
+        }
+        
+        .ranking-number.bronze {
+            background: #fd7e14;
+        }
+
+        /* Animaciones para las tarjetas */
+        .admin-section {
+            transition: all 0.3s ease;
+        }
+        
+        .admin-section:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Badges de estado mejorados */
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-confirmado {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .status-procesando {
+            background-color: #fff3e0;
+            color: #f57c00;
+        }
+        
+        .status-enviado {
+            background-color: #f3e5f5;
+            color: #7b1fa2;
+        }
+        
+        .status-entregado {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="container">
+            <!-- Header -->
+            <div class="admin-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1><i class="bi bi-gear-fill"></i> Panel de Administración</h1>
+                        <p class="mb-0">Gestiona los productos del catálogo EcoMarket</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="catalogo.html" class="btn btn-light">
+                            <i class="bi bi-eye"></i> Ver Catálogo
+                        </a>
+                        <button class="btn btn-outline-light" onclick="logout()">
+                            <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estadísticas -->
+            <div class="stats-cards">
+                <div class="stat-card">
+                    <div class="stat-icon">📦</div>
+                    <div class="stat-number" id="total-products">0</div>
+                    <div class="stat-label">Total Productos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-number" id="in-stock">0</div>
+                    <div class="stat-label">En Stock</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⚠️</div>
+                    <div class="stat-number" id="low-stock">0</div>
+                    <div class="stat-label">Poco Stock</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-number" id="avg-price">$0</div>
+                    <div class="stat-label">Precio Promedio</div>
+                </div>
+            </div>
+
+            <!-- Formulario para agregar/editar productos -->
+            <div class="admin-section">
+                <div class="section-header" data-bs-toggle="collapse" data-bs-target="#collapse-add-product" aria-expanded="false" aria-controls="collapse-add-product" style="cursor: pointer;">
+                    <h3><i class="bi bi-plus-circle"></i> Agregar/Editar Producto <i class="bi bi-chevron-down ms-2 collapse-icon"></i></h3>
+                    <button class="btn btn-secondary" onclick="clearForm()" data-bs-toggle="tooltip" title="Limpiar todos los campos">
+                        <i class="bi bi-x-circle"></i> Limpiar Formulario
+                    </button>
+                </div>
+                
+                <div class="collapse" id="collapse-add-product">
+                
+                <form class="product-form" id="product-form">
+                    <input type="hidden" id="product-id">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nombre del Producto *</label>
+                            <input type="text" class="form-control" id="product-name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Categoría *</label>
+                            <select class="form-control" id="product-category" required>
+                                <option value="">Seleccionar categoría</option>
+                                <option value="frutas">Frutas</option>
+                                <option value="verduras">Verduras</option>
+                                <option value="despensa">Despensa</option>
+                                <option value="ofertas">Ofertas</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Descripción *</label>
+                        <textarea class="form-control" id="product-description" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 col-12 mb-3">
+                            <label class="form-label">Precio oferta *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="product-price" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-12 mb-3">
+                            <label class="form-label">Precio Original</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="product-original-price">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-12 mb-3">
+                            <label class="form-label">Unidad *</label>
+                            <select class="form-control" id="product-unit" required>
+                                <option value="kg">Kilogramo (kg)</option>
+                                <option value="unidad">Unidad</option>
+                                <option value="litro">Litro</option>
+                                <option value="paquete">Paquete</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 col-12 mb-3">
+                            <label class="form-label">Stock Actual *</label>
+                            <input type="number" class="form-control" id="product-stock" min="0" required>
+                        </div>
+                        <div class="col-md-4 col-12 mb-3">
+                            <label class="form-label">Stock Máximo *</label>
+                            <input type="number" class="form-control" id="product-max-stock" min="1" required>
+                        </div>
+                        <div class="col-md-4 col-12 mb-3">
+                            <label class="form-label">Calificación</label>
+                            <input type="number" class="form-control" id="product-rating" min="0" max="5" step="0.1" value="4.0">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 col-12 mb-3">
+                            <label class="form-label">URL de Imagen</label>
+                            <input type="url" class="form-control" id="product-image" placeholder="https://ejemplo.com/imagen.jpg">
+                        </div>
+                        <div class="col-md-6 col-12 mb-3">
+                            <label class="form-label">Número de Reseñas</label>
+                            <input type="number" class="form-control" id="product-reviews" min="0" value="0">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6 col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="product-is-new">
+                                <label class="form-check-label" for="product-is-new">
+                                    Producto Nuevo
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="product-available" checked>
+                                <label class="form-check-label" for="product-available">
+                                    Disponible
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary-custom">
+                        <i class="bi bi-save"></i> <span id="form-btn-text">Guardar Producto</span>
+                    </button>
+                </form>
+                </div>
+            </div>
+
+            <!-- Lista de productos existentes -->
+            <div class="admin-section">
+                <div class="section-header" data-bs-toggle="collapse" data-bs-target="#collapse-products" aria-expanded="false" aria-controls="collapse-products" style="cursor: pointer;">
+                    <h3><i class="bi bi-list-ul"></i> Productos Existentes <i class="bi bi-chevron-down ms-2 collapse-icon"></i></h3>
+                    <button class="btn btn-warning" onclick="resetToDefaults()" data-bs-toggle="tooltip" title="Restaurar productos por defecto">
+                        <i class="bi bi-arrow-clockwise"></i> Restaurar Valores por Defecto
+                    </button>
+                </div>
+                
+                <div class="collapse" id="collapse-products">
+                    <div id="products-list">
+                        <!-- Los productos se cargan dinámicamente aquí -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gestión de Pedidos Pendientes -->
+            <div class="admin-section">
+                <div class="section-header" data-bs-toggle="collapse" data-bs-target="#collapse-orders" aria-expanded="false" aria-controls="collapse-orders" style="cursor: pointer;">
+                    <h3><i class="bi bi-clock-history"></i> Pedidos Pendientes <i class="bi bi-chevron-down ms-2 collapse-icon"></i></h3>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-success btn-sm" onclick="refreshOrders()" data-bs-toggle="tooltip" title="Actualizar lista de pedidos">
+                            <i class="bi bi-arrow-clockwise"></i> Actualizar
+                        </button>
+                        <span class="badge bg-warning text-dark fs-6" id="pending-orders-count">0</span>
+                    </div>
+                </div>
+                
+                <div class="collapse" id="collapse-orders">
+                    <!-- Filtros de pedidos -->
+                    <div class="mb-3 p-3 bg-light rounded">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <label class="form-label">Filtrar por estado:</label>
+                                <select class="form-control form-control-sm" id="order-status-filter" onchange="filterOrders()">
+                                    <option value="">Todos los estados</option>
+                                    <option value="confirmado">Confirmados</option>
+                                    <option value="procesando">Procesando</option>
+                                    <option value="enviado">Enviados</option>
+                                    <option value="entregado">Entregados</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Método de pago:</label>
+                                <select class="form-control form-control-sm" id="payment-filter" onchange="filterOrders()">
+                                    <option value="">Todos los métodos</option>
+                                    <option value="credit-card">Tarjeta de Crédito</option>
+                                    <option value="bank-transfer">Transferencia</option>
+                                    <option value="cash-on-delivery">Contra Entrega</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Buscar cliente:</label>
+                                <input type="text" class="form-control form-control-sm" id="customer-search" placeholder="Nombre o email..." onkeyup="filterOrders()">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">&nbsp;</label>
+                                <button class="btn btn-outline-secondary btn-sm w-100" onclick="clearOrderFilters()">
+                                    <i class="bi bi-x"></i> Limpiar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="orders-list">
+                        <!-- Los pedidos se cargan dinámicamente aquí -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informes y Estadísticas -->
+            <div class="admin-section">
+                <div class="section-header" data-bs-toggle="collapse" data-bs-target="#collapse-reports" aria-expanded="false" aria-controls="collapse-reports" style="cursor: pointer;">
+                    <h3><i class="bi bi-graph-up"></i> Informes y Estadísticas <i class="bi bi-chevron-down ms-2 collapse-icon"></i></h3>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-info btn-sm" onclick="generateReport()" data-bs-toggle="tooltip" title="Generar nuevo informe">
+                            <i class="bi bi-file-earmark-bar-graph"></i> Generar Informe
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm" onclick="exportReport()" data-bs-toggle="tooltip" title="Exportar datos">
+                            <i class="bi bi-download"></i> Exportar
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="collapse" id="collapse-reports">
+                    <!-- Métricas principales -->
+                    <div class="row mb-4">
+                        <div class="col-md-3 mb-3">
+                            <div class="stat-card">
+                                <div class="stat-icon text-primary">📊</div>
+                                <div class="stat-number" id="total-sales">$0</div>
+                                <div class="stat-label">Ventas Totales</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="stat-card">
+                                <div class="stat-icon text-success">🏆</div>
+                                <div class="stat-number" id="best-seller">-</div>
+                                <div class="stat-label">Más Vendido</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="stat-card">
+                                <div class="stat-icon text-info">👤</div>
+                                <div class="stat-number" id="top-customer">-</div>
+                                <div class="stat-label">Cliente Top</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="stat-card">
+                                <div class="stat-icon text-warning">📦</div>
+                                <div class="stat-number" id="pending-deliveries">0</div>
+                                <div class="stat-label">Pendientes</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tablas de reportes -->
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="bi bi-trophy"></i> Top 5 Productos Más Vendidos</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="top-products-list">
+                                        <!-- Lista generada dinámicamente -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="bi bi-people"></i> Top 5 Clientes</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="top-customers-list">
+                                        <!-- Lista generada dinámicamente -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resumen de pedidos por categoría -->
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Ventas por Categoría</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row" id="category-stats">
+                                <!-- Estadísticas por categoría generadas dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Sistema de administración de productos
+        let isEditing = false;
+        
+        // Obtener productos del localStorage
+        function getProducts() {
+            const products = localStorage.getItem('ecomarket_products');
+            return products ? JSON.parse(products) : [];
+        }
+        
+        // Guardar productos en localStorage
+        function saveProducts(products) {
+            localStorage.setItem('ecomarket_products', JSON.stringify(products));
+            // Trigger evento para actualizar catálogo
+            window.dispatchEvent(new CustomEvent('productsUpdated', { detail: products }));
+        }
+        
+        // Generar ID único para nuevo producto
+        function generateId() {
+            return 'prod_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+        
+        // Actualizar estadísticas
+        function updateStats() {
+            const products = getProducts();
+            const totalProducts = products.length;
+            const inStock = products.filter(p => p.stock > 5).length;
+            const lowStock = products.filter(p => p.stock <= 5 && p.stock > 0).length;
+            const avgPrice = products.length > 0 ? 
+                Math.round(products.reduce((sum, p) => sum + p.price, 0) / products.length) : 0;
+            
+            document.getElementById('total-products').textContent = totalProducts;
+            document.getElementById('in-stock').textContent = inStock;
+            document.getElementById('low-stock').textContent = lowStock;
+            document.getElementById('avg-price').textContent = '$' + avgPrice.toLocaleString();
+        }
+        
+        // Renderizar lista de productos
+        function renderProductsList() {
+            const products = getProducts();
+            const container = document.getElementById('products-list');
+            
+            if (products.length === 0) {
+                container.innerHTML = '<div class="text-center text-muted py-5">' +
+                    '<i class="bi bi-inbox" style="font-size: 3rem;"></i>' +
+                    '<h5>No hay productos registrados</h5>' +
+                    '<p>Agrega tu primer producto usando el formulario de arriba</p>' +
+                    '</div>';
+                return;
+            }
+            
+            container.innerHTML = products.map(product => `
+                <div class="product-item">
+                    <div class="row align-items-center">
+                        <div class="col-md-2">
+                            <img src="${product.image || 'https://via.placeholder.com/80x60/008c5a/ffffff?text=Sin+Img'}" 
+                                 class="img-fluid rounded" alt="${product.name}" style="height: 60px; object-fit: cover;">
+                        </div>
+                        <div class="col-md-3">
+                            <h6 class="mb-1">${product.name}</h6>
+                            <span class="badge bg-secondary">${product.category}</span>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="fw-bold text-success">$${product.price.toLocaleString()}</div>
+                            <small class="text-muted">por ${product.unit}</small>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="d-flex align-items-center">
+                                <span class="me-2">${product.stock}</span>
+                                <div class="progress" style="width: 60px; height: 8px;">
+                                    <div class="progress-bar ${product.stock > 5 ? 'bg-success' : 'bg-warning'}" 
+                                         style="width: ${(product.stock / product.maxStock) * 100}%"></div>
+                                </div>
+                            </div>
+                            <small class="text-muted">de ${product.maxStock}</small>
+                        </div>
+                        <div class="col-md-1 text-center">
+                            <span class="badge ${product.available ? 'bg-success' : 'bg-secondary'}">
+                                ${product.available ? 'Activo' : 'Inactivo'}
+                            </span>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="editProduct('${product.id}')">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct('${product.id}')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Limpiar formulario
+        function clearForm() {
+            document.getElementById('product-form').reset();
+            document.getElementById('product-id').value = '';
+            document.getElementById('product-available').checked = true;
+            document.getElementById('product-rating').value = 4.0;
+            document.getElementById('product-reviews').value = 0;
+            document.getElementById('form-btn-text').textContent = 'Guardar Producto';
+            isEditing = false;
+        }
+        
+        // Editar producto
+        function editProduct(productId) {
+            const products = getProducts();
+            const product = products.find(p => p.id === productId);
+            
+            if (!product) return;
+            
+            document.getElementById('product-id').value = product.id;
+            document.getElementById('product-name').value = product.name;
+            document.getElementById('product-category').value = product.category;
+            document.getElementById('product-description').value = product.description;
+            document.getElementById('product-price').value = product.price;
+            document.getElementById('product-original-price').value = product.originalPrice || '';
+            document.getElementById('product-unit').value = product.unit;
+            document.getElementById('product-stock').value = product.stock;
+            document.getElementById('product-max-stock').value = product.maxStock;
+            document.getElementById('product-rating').value = product.rating;
+            document.getElementById('product-image').value = product.image || '';
+            document.getElementById('product-reviews').value = product.reviews;
+            document.getElementById('product-is-new').checked = product.isNew;
+            document.getElementById('product-available').checked = product.available;
+            
+            document.getElementById('form-btn-text').textContent = 'Actualizar Producto';
+            isEditing = true;
+            
+            // Scroll al formulario
+            document.getElementById('product-form').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Eliminar producto
+        function deleteProduct(productId) {
+            if (!confirm('¿Estás seguro de que deseas eliminar este producto?')) return;
+            
+            const products = getProducts();
+            const updatedProducts = products.filter(p => p.id !== productId);
+            saveProducts(updatedProducts);
+            renderProductsList();
+            updateStats();
+            
+            alert('Producto eliminado correctamente');
+        }
+        
+        // Restaurar productos por defecto
+        function resetToDefaults() {
+            if (!confirm('¿Estás seguro? Esto eliminará todos los productos actuales y restaurará los valores por defecto.')) return;
+            
+            // Productos por defecto (mismos que en catalog.js)
+            const defaultProducts = [
+                {
+                    id: 'frutillas',
+                    name: 'Frutillas Frescas Premium',
+                    category: 'frutas',
+                    description: 'Frutillas de temporada, dulces y jugosas. Perfectas para postres y desayunos saludables.',
+                    price: 1600,
+                    originalPrice: 2000,
+                    unit: 'kg',
+                    stock: 15,
+                    maxStock: 20,
+                    image: 'assets/img/frutillas.jpg',
+                    rating: 4.5,
+                    reviews: 24,
+                    isNew: false,
+                    isOffer: true,
+                    available: true
+                },
+                {
+                    id: 'lechuga',
+                    name: 'Lechuga Criolla Fresca',
+                    category: 'verduras',
+                    description: 'Lechuga criolla de hoja verde, crujiente y fresca. Ideal para ensaladas y hamburguesas.',
+                    price: 1200,
+                    originalPrice: null,
+                    unit: 'unidad',
+                    stock: 25,
+                    maxStock: 30,
+                    image: 'assets/img/lechuga.jpg',
+                    rating: 4.0,
+                    reviews: 18,
+                    isNew: false,
+                    isOffer: false,
+                    available: true
+                },
+                {
+                    id: 'tomates',
+                    name: 'Tomates Cherry Orgánicos',
+                    category: 'verduras',
+                    description: 'Tomates cherry orgánicos, dulces y jugosos. Perfectos para ensaladas y snacks saludables.',
+                    price: 2800,
+                    originalPrice: null,
+                    unit: 'kg',
+                    stock: 3,
+                    maxStock: 20,
+                    image: 'assets/img/tomates.jpg',
+                    rating: 5.0,
+                    reviews: 32,
+                    isNew: false,
+                    isOffer: false,
+                    available: true
+                },
+                {
+                    id: 'zanahorias',
+                    name: 'Zanahorias Baby Premium',
+                    category: 'verduras',
+                    description: 'Zanahorias baby tiernas y dulces. Ideales para cocinar o consumir crudas como snack saludable.',
+                    price: 1800,
+                    originalPrice: null,
+                    unit: 'kg',
+                    stock: 20,
+                    maxStock: 25,
+                    image: 'assets/img/zanahoria.jpg',
+                    rating: 4.2,
+                    reviews: 12,
+                    isNew: true,
+                    isOffer: false,
+                    available: true
+                }
+            ];
+            
+            saveProducts(defaultProducts);
+            renderProductsList();
+            updateStats();
+            clearForm();
+            
+            alert('Productos restaurados a valores por defecto');
+        }
+        
+        // Manejar envío del formulario
+        document.getElementById('product-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                id: document.getElementById('product-id').value || generateId(),
+                name: document.getElementById('product-name').value.trim(),
+                category: document.getElementById('product-category').value,
+                description: document.getElementById('product-description').value.trim(),
+                price: parseInt(document.getElementById('product-price').value),
+                originalPrice: document.getElementById('product-original-price').value ? 
+                              parseInt(document.getElementById('product-original-price').value) : null,
+                unit: document.getElementById('product-unit').value,
+                stock: parseInt(document.getElementById('product-stock').value),
+                maxStock: parseInt(document.getElementById('product-max-stock').value),
+                rating: parseFloat(document.getElementById('product-rating').value),
+                image: document.getElementById('product-image').value.trim() || null,
+                reviews: parseInt(document.getElementById('product-reviews').value) || 0,
+                isNew: document.getElementById('product-is-new').checked,
+                available: document.getElementById('product-available').checked
+            };
+            
+            // Validaciones básicas
+            if (formData.price <= 0) {
+                alert('El precio debe ser mayor a 0');
+                return;
+            }
+            
+            if (formData.stock > formData.maxStock) {
+                alert('El stock actual no puede ser mayor al stock máximo');
+                return;
+            }
+            
+            // Calcular si es oferta
+            formData.isOffer = formData.originalPrice && formData.originalPrice > formData.price;
+            
+            const products = getProducts();
+            
+            if (isEditing) {
+                // Actualizar producto existente
+                const index = products.findIndex(p => p.id === formData.id);
+                if (index !== -1) {
+                    products[index] = formData;
+                    alert('Producto actualizado correctamente');
+                }
+            } else {
+                // Agregar nuevo producto
+                products.push(formData);
+                alert('Producto agregado correctamente');
+            }
+            
+            saveProducts(products);
+            renderProductsList();
+            updateStats();
+            clearForm();
+        });
+        
+        // Función para cerrar sesión
+        function logout() {
+            if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                localStorage.removeItem('ecomarket_logged_in');
+                localStorage.removeItem('ecomarket_user_type');
+                localStorage.removeItem('ecomarket_user_email');
+                localStorage.removeItem('ecomarket_user_name');
+                
+                alert('Sesión cerrada correctamente');
+                window.location.href = 'login.html';
+            }
+        }
+        
+        // Verificar autenticación
+        function checkAuth() {
+            const isLoggedIn = localStorage.getItem('ecomarket_logged_in') === 'true';
+            const userType = localStorage.getItem('ecomarket_user_type');
+            
+            if (!isLoggedIn || userType !== 'admin') {
+                alert('Acceso denegado. Debes iniciar sesión como administrador.');
+                window.location.href = 'login.html';
+                return false;
+            }
+            return true;
+        }
+
+        // ========================
+        // GESTIÓN DE PEDIDOS
+        // ========================
+        
+        // Obtener pedidos del localStorage
+        function getOrders() {
+            const orders = localStorage.getItem('ecomarket_orders');
+            return orders ? JSON.parse(orders) : [];
+        }
+        
+        // Renderizar lista de pedidos
+        function renderOrdersList() {
+            const orders = getOrders();
+            const container = document.getElementById('orders-list');
+            const pendingCount = document.getElementById('pending-orders-count');
+            
+            // Filtrar pedidos pendientes (no entregados)
+            const pendingOrders = orders.filter(order => order.status !== 'entregado');
+            pendingCount.textContent = pendingOrders.length;
+            
+            if (orders.length === 0) {
+                container.innerHTML = '<div class="text-center text-muted py-5">' +
+                    '<i class="bi bi-inbox" style="font-size: 3rem;"></i>' +
+                    '<h5>No hay pedidos registrados</h5>' +
+                    '<p>Los pedidos aparecerán aquí cuando los clientes realicen compras</p>' +
+                    '</div>';
+                return;
+            }
+            
+            let ordersHtml = '';
+            orders.forEach(order => {
+                let itemsHtml = '';
+                order.items.forEach(item => {
+                    itemsHtml += '<div class="order-item">' +
+                        '<span>' + item.name + ' (' + item.quantity + ' ' + item.unit + ')</span>' +
+                        '<span>$' + (item.price * item.quantity).toLocaleString() + '</span>' +
+                        '</div>';
+                });
+                
+                ordersHtml += '<div class="order-card">' +
+                    '<div class="order-status">' +
+                    '<span class="status-badge status-' + order.status + '">' + order.status + '</span>' +
+                    '</div>' +
+                    '<div class="row">' +
+                    '<div class="col-md-3">' +
+                    '<strong>Pedido #' + order.id + '</strong><br>' +
+                    '<small class="text-muted">' + new Date(order.date).toLocaleDateString() + '</small><br>' +
+                    '<small class="text-muted">' + new Date(order.date).toLocaleTimeString() + '</small>' +
+                    '</div>' +
+                    '<div class="col-md-3">' +
+                    '<strong>Cliente:</strong><br>' +
+                    order.customer.name + '<br>' +
+                    '<small class="text-muted">' + order.customer.email + '</small><br>' +
+                    '<small class="text-muted">' + order.customer.phone + '</small>' +
+                    '</div>' +
+                    '<div class="col-md-3">' +
+                    '<strong>Entrega:</strong><br>' +
+                    order.delivery.address + '<br>' +
+                    '<small class="text-muted">' + order.delivery.city + '</small><br>' +
+                    '<small class="text-muted">Pago: ' + getPaymentMethodName(order.payment.method) + '</small>' +
+                    '</div>' +
+                    '<div class="col-md-3 text-end">' +
+                    '<div class="order-total">Total: $' + order.total.toLocaleString() + '</div>' +
+                    '<div class="mt-2">' +
+                    '<button class="btn btn-sm btn-outline-primary me-1" onclick="viewOrderDetails(\'' + order.id + '\')">' +
+                    '<i class="bi bi-eye"></i> Ver' +
+                    '</button>' +
+                    '<div class="btn-group">' +
+                    '<button class="btn btn-sm btn-success dropdown-toggle" data-bs-toggle="dropdown">' +
+                    '<i class="bi bi-gear"></i>' +
+                    '</button>' +
+                    '<ul class="dropdown-menu">' +
+                    '<li><a class="dropdown-item" onclick="updateOrderStatus(\'' + order.id + '\', \'confirmado\')">Confirmar</a></li>' +
+                    '<li><a class="dropdown-item" onclick="updateOrderStatus(\'' + order.id + '\', \'procesando\')">Procesar</a></li>' +
+                    '<li><a class="dropdown-item" onclick="updateOrderStatus(\'' + order.id + '\', \'enviado\')">Enviar</a></li>' +
+                    '<li><a class="dropdown-item" onclick="updateOrderStatus(\'' + order.id + '\', \'entregado\')">Entregar</a></li>' +
+                    '<li><hr class="dropdown-divider"></li>' +
+                    '<li><a class="dropdown-item text-danger" onclick="cancelOrder(\'' + order.id + '\')">Cancelar</a></li>' +
+                    '</ul>' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="order-items mt-3">' +
+                    '<strong>Productos:</strong>' +
+                    itemsHtml +
+                    '</div>' +
+                    '</div>';
+            });
+            
+            container.innerHTML = ordersHtml;
+        }
+        
+        // Obtener nombre del método de pago
+        function getPaymentMethodName(method) {
+            const methods = {
+                'credit-card': 'Tarjeta de Crédito',
+                'bank-transfer': 'Transferencia Bancaria',
+                'cash-on-delivery': 'Contra Entrega'
+            };
+            return methods[method] || method;
+        }
+        
+        // Actualizar estado de pedido
+        function updateOrderStatus(orderId, newStatus) {
+            const orders = getOrders();
+            const orderIndex = orders.findIndex(o => o.id === orderId);
+            
+            if (orderIndex !== -1) {
+                orders[orderIndex].status = newStatus;
+                orders[orderIndex].lastUpdated = new Date().toISOString();
+                localStorage.setItem('ecomarket_orders', JSON.stringify(orders));
+                renderOrdersList();
+                updateReportsData();
+                alert('Pedido actualizado a: ' + newStatus);
+            }
+        }
+        
+        // Ver detalles del pedido
+        function viewOrderDetails(orderId) {
+            const orders = getOrders();
+            const order = orders.find(o => o.id === orderId);
+            
+            if (!order) return;
+            
+            let itemsHtml = '';
+            order.items.forEach(item => {
+                itemsHtml += '<tr>' +
+                    '<td>' + item.name + '</td>' +
+                    '<td>' + item.quantity + ' ' + item.unit + '</td>' +
+                    '<td>$' + item.price.toLocaleString() + '</td>' +
+                    '<td>$' + (item.price * item.quantity).toLocaleString() + '</td>' +
+                    '</tr>';
+            });
+            
+            let lastUpdatedHtml = '';
+            if (order.lastUpdated) {
+                lastUpdatedHtml = '<p><strong>Última Actualización:</strong> ' + new Date(order.lastUpdated).toLocaleString() + '</p>';
+            }
+            
+            const modalHTML = '<div class="modal fade" id="orderDetailsModal" tabindex="-1">' +
+                '<div class="modal-dialog modal-lg">' +
+                '<div class="modal-content">' +
+                '<div class="modal-header">' +
+                '<h5 class="modal-title">Detalles del Pedido #' + order.id + '</h5>' +
+                '<button type="button" class="btn-close" data-bs-dismiss="modal"></button>' +
+                '</div>' +
+                '<div class="modal-body">' +
+                '<div class="row mb-3">' +
+                '<div class="col-md-6">' +
+                '<h6>Información del Cliente</h6>' +
+                '<p><strong>Nombre:</strong> ' + order.customer.name + '<br>' +
+                '<strong>Email:</strong> ' + order.customer.email + '<br>' +
+                '<strong>Teléfono:</strong> ' + order.customer.phone + '</p>' +
+                '</div>' +
+                '<div class="col-md-6">' +
+                '<h6>Información de Entrega</h6>' +
+                '<p><strong>Dirección:</strong> ' + order.delivery.address + '<br>' +
+                '<strong>Ciudad:</strong> ' + order.delivery.city + '<br>' +
+                '<strong>Estado:</strong> <span class="status-badge status-' + order.status + '">' + order.status + '</span></p>' +
+                '</div>' +
+                '</div>' +
+                '<h6>Productos</h6>' +
+                '<div class="table-responsive">' +
+                '<table class="table table-sm">' +
+                '<thead>' +
+                '<tr>' +
+                '<th>Producto</th>' +
+                '<th>Cantidad</th>' +
+                '<th>Precio Unit.</th>' +
+                '<th>Subtotal</th>' +
+                '</tr>' +
+                '</thead>' +
+                '<tbody>' +
+                itemsHtml +
+                '</tbody>' +
+                '<tfoot>' +
+                '<tr class="table-success">' +
+                '<th colspan="3">Total</th>' +
+                '<th>$' + order.total.toLocaleString() + '</th>' +
+                '</tr>' +
+                '</tfoot>' +
+                '</table>' +
+                '</div>' +
+                '<div class="mt-3">' +
+                '<p><strong>Método de Pago:</strong> ' + getPaymentMethodName(order.payment.method) + '</p>' +
+                '<p><strong>Fecha:</strong> ' + new Date(order.date).toLocaleString() + '</p>' +
+                lastUpdatedHtml +
+                '</div>' +
+                '</div>' +
+                '<div class="modal-footer">' +
+                '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>' +
+                '<button type="button" class="btn btn-primary" onclick="printOrder(\'' + order.id + '\')">Imprimir</button>' +
+                '</div>' +
+                '</div>' +
+                '</div>' +
+                '</div>';
+            
+            // Remover modal existente si lo hay
+            const existingModal = document.getElementById('orderDetailsModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Agregar modal al DOM
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // Mostrar modal
+            const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
+            modal.show();
+        }
+        
+        // Cancelar pedido
+        function cancelOrder(orderId) {
+            if (!confirm('¿Estás seguro de que deseas cancelar este pedido?')) return;
+            
+            const orders = getOrders();
+            const updatedOrders = orders.filter(o => o.id !== orderId);
+            localStorage.setItem('ecomarket_orders', JSON.stringify(updatedOrders));
+            renderOrdersList();
+            updateReportsData();
+            alert('Pedido cancelado correctamente');
+        }
+        
+        // Filtrar pedidos
+        function filterOrders() {
+            const statusFilter = document.getElementById('order-status-filter').value;
+            const paymentFilter = document.getElementById('payment-filter').value;
+            const customerSearch = document.getElementById('customer-search').value.toLowerCase();
+            
+            const orders = getOrders();
+            let filteredOrders = orders;
+            
+            if (statusFilter) {
+                filteredOrders = filteredOrders.filter(order => order.status === statusFilter);
+            }
+            
+            if (paymentFilter) {
+                filteredOrders = filteredOrders.filter(order => order.payment.method === paymentFilter);
+            }
+            
+            if (customerSearch) {
+                filteredOrders = filteredOrders.filter(order => 
+                    order.customer.name.toLowerCase().includes(customerSearch) ||
+                    order.customer.email.toLowerCase().includes(customerSearch)
+                );
+            }
+            
+            renderFilteredOrders(filteredOrders);
+        }
+        
+        // Renderizar pedidos filtrados
+        function renderFilteredOrders(filteredOrders) {
+            const container = document.getElementById('orders-list');
+            
+            if (filteredOrders.length === 0) {
+                container.innerHTML = '<div class="text-center text-muted py-3">' +
+                    '<i class="bi bi-search" style="font-size: 2rem;"></i>' +
+                    '<h6>No se encontraron pedidos con esos criterios</h6>' +
+                    '<p>Intenta ajustar los filtros</p>' +
+                    '</div>';
+                return;
+            }
+            
+            // Usar la misma lógica de renderizado pero con los pedidos filtrados
+            let ordersHtml = '';
+            filteredOrders.forEach(order => {
+                let itemsHtml = '';
+                order.items.forEach(item => {
+                    itemsHtml += '<div class="order-item">' +
+                        '<span>' + item.name + ' (' + item.quantity + ' ' + item.unit + ')</span>' +
+                        '<span>$' + (item.price * item.quantity).toLocaleString() + '</span>' +
+                        '</div>';
+                });
+                
+                ordersHtml += '<div class="order-card">' +
+                    '<div class="order-status">' +
+                    '<span class="status-badge status-' + order.status + '">' + order.status + '</span>' +
+                    '</div>' +
+                    '<div class="row">' +
+                    '<div class="col-md-3">' +
+                    '<strong>Pedido #' + order.id + '</strong><br>' +
+                    '<small class="text-muted">' + new Date(order.date).toLocaleDateString() + '</small><br>' +
+                    '<small class="text-muted">' + new Date(order.date).toLocaleTimeString() + '</small>' +
+                    '</div>' +
+                    '<div class="col-md-3">' +
+                    '<strong>Cliente:</strong><br>' +
+                    order.customer.name + '<br>' +
+                    '<small class="text-muted">' + order.customer.email + '</small><br>' +
+                    '<small class="text-muted">' + order.customer.phone + '</small>' +
+                    '</div>' +
+                    '<div class="col-md-3">' +
+                    '<strong>Entrega:</strong><br>' +
+                    order.delivery.address + '<br>' +
+                    '<small class="text-muted">' + order.delivery.city + '</small><br>' +
+                    '<small class="text-muted">Pago: ' + getPaymentMethodName(order.payment.method) + '</small>' +
+                    '</div>' +
+                    '<div class="col-md-3 text-end">' +
+                    '<div class="order-total">Total: $' + order.total.toLocaleString() + '</div>' +
+                    '<div class="mt-2">' +
+                    '<button class="btn btn-sm btn-outline-primary me-1" onclick="viewOrderDetails(\'' + order.id + '\')">' +
+                    '<i class="bi bi-eye"></i> Ver' +
+                    '</button>' +
+                    '<div class="btn-group">' +
+                    '<button class="btn btn-sm btn-success dropdown-toggle" data-bs-toggle="dropdown">' +
+                    '<i class="bi bi-gear"></i>' +
+                    '</button>' +
+                    '<ul class="dropdown-menu">' +
+                    '<li><a class="dropdown-item" onclick="updateOrderStatus(\'' + order.id + '\', \'confirmado\')">Confirmar</a></li>' +
+                    '<li><a class="dropdown-item" onclick="updateOrderStatus(\'' + order.id + '\', \'procesando\')">Procesar</a></li>' +
+                    '<li><a class="dropdown-item" onclick="updateOrderStatus(\'' + order.id + '\', \'enviado\')">Enviar</a></li>' +
+                    '<li><a class="dropdown-item" onclick="updateOrderStatus(\'' + order.id + '\', \'entregado\')">Entregar</a></li>' +
+                    '<li><hr class="dropdown-divider"></li>' +
+                    '<li><a class="dropdown-item text-danger" onclick="cancelOrder(\'' + order.id + '\')">Cancelar</a></li>' +
+                    '</ul>' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="order-items mt-3">' +
+                    '<strong>Productos:</strong>' +
+                    itemsHtml +
+                    '</div>' +
+                    '</div>';
+            });
+            
+            container.innerHTML = ordersHtml;
+        }
+        
+        // Limpiar filtros de pedidos
+        function clearOrderFilters() {
+            document.getElementById('order-status-filter').value = '';
+            document.getElementById('payment-filter').value = '';
+            document.getElementById('customer-search').value = '';
+            renderOrdersList();
+        }
+        
+        // Actualizar lista de pedidos
+        function refreshOrders() {
+            renderOrdersList();
+            alert('Lista de pedidos actualizada');
+        }
+
+        // ========================
+        // INFORMES Y ESTADÍSTICAS
+        // ========================
+        
+        // Generar datos de reporte
+        function generateReportData() {
+            const orders = getOrders();
+            const products = getProducts();
+            
+            // Calcular ventas totales
+            const totalSales = orders.reduce((sum, order) => sum + order.total, 0);
+            
+            // Productos más vendidos
+            const productSales = {};
+            orders.forEach(order => {
+                order.items.forEach(item => {
+                    if (!productSales[item.name]) {
+                        productSales[item.name] = { quantity: 0, revenue: 0 };
+                    }
+                    productSales[item.name].quantity += item.quantity;
+                    productSales[item.name].revenue += item.price * item.quantity;
+                });
+            });
+            
+            const topProducts = Object.entries(productSales)
+                .sort((a, b) => b[1].quantity - a[1].quantity)
+                .slice(0, 5);
+            
+            // Clientes top
+            const customerPurchases = {};
+            orders.forEach(order => {
+                const email = order.customer.email;
+                if (!customerPurchases[email]) {
+                    customerPurchases[email] = {
+                        name: order.customer.name,
+                        email: email,
+                        orders: 0,
+                        total: 0
+                    };
+                }
+                customerPurchases[email].orders++;
+                customerPurchases[email].total += order.total;
+            });
+            
+            const topCustomers = Object.values(customerPurchases)
+                .sort((a, b) => b.total - a.total)
+                .slice(0, 5);
+            
+            // Ventas por categoría
+            const categorySales = {};
+            orders.forEach(order => {
+                order.items.forEach(item => {
+                    const product = products.find(p => p.name === item.name);
+                    if (product) {
+                        const category = product.category;
+                        if (!categorySales[category]) {
+                            categorySales[category] = { quantity: 0, revenue: 0 };
+                        }
+                        categorySales[category].quantity += item.quantity;
+                        categorySales[category].revenue += item.price * item.quantity;
+                    }
+                });
+            });
+            
+            // Pedidos pendientes
+            const pendingDeliveries = orders.filter(order => order.status !== 'entregado').length;
+            
+            return {
+                totalSales,
+                topProducts,
+                topCustomers,
+                categorySales,
+                pendingDeliveries,
+                bestSeller: topProducts.length > 0 ? topProducts[0][0] : 'N/A',
+                topCustomer: topCustomers.length > 0 ? topCustomers[0].name : 'N/A'
+            };
+        }
+        
+        // Actualizar datos de reportes
+        function updateReportsData() {
+            const data = generateReportData();
+            
+            // Actualizar métricas principales
+            document.getElementById('total-sales').textContent = '$' + data.totalSales.toLocaleString();
+            document.getElementById('best-seller').textContent = data.bestSeller;
+            document.getElementById('top-customer').textContent = data.topCustomer;
+            document.getElementById('pending-deliveries').textContent = data.pendingDeliveries;
+            
+            // Renderizar top productos
+            const topProductsList = document.getElementById('top-products-list');
+            if (data.topProducts.length === 0) {
+                topProductsList.innerHTML = '<p class="text-muted">No hay datos disponibles</p>';
+            } else {
+                let productsHtml = '';
+                data.topProducts.forEach((product, index) => {
+                    let rankingClass = '';
+                    if (index === 0) rankingClass = 'gold';
+                    else if (index === 1) rankingClass = 'silver';
+                    else if (index === 2) rankingClass = 'bronze';
+                    
+                    productsHtml += '<div class="ranking-item">' +
+                        '<div class="ranking-number ' + rankingClass + '">' + (index + 1) + '</div>' +
+                        '<div class="flex-grow-1">' +
+                        '<strong>' + product[0] + '</strong><br>' +
+                        '<small class="text-muted">' + product[1].quantity + ' unidades vendidas</small>' +
+                        '</div>' +
+                        '<div class="text-end">' +
+                        '<strong>$' + product[1].revenue.toLocaleString() + '</strong>' +
+                        '</div>' +
+                        '</div>';
+                });
+                topProductsList.innerHTML = productsHtml;
+            }
+            
+            // Renderizar top clientes
+            const topCustomersList = document.getElementById('top-customers-list');
+            if (data.topCustomers.length === 0) {
+                topCustomersList.innerHTML = '<p class="text-muted">No hay datos disponibles</p>';
+            } else {
+                let customersHtml = '';
+                data.topCustomers.forEach((customer, index) => {
+                    let rankingClass = '';
+                    if (index === 0) rankingClass = 'gold';
+                    else if (index === 1) rankingClass = 'silver';
+                    else if (index === 2) rankingClass = 'bronze';
+                    
+                    customersHtml += '<div class="ranking-item">' +
+                        '<div class="ranking-number ' + rankingClass + '">' + (index + 1) + '</div>' +
+                        '<div class="flex-grow-1">' +
+                        '<strong>' + customer.name + '</strong><br>' +
+                        '<small class="text-muted">' + customer.email + '</small><br>' +
+                        '<small class="text-muted">' + customer.orders + ' pedidos</small>' +
+                        '</div>' +
+                        '<div class="text-end">' +
+                        '<strong>$' + customer.total.toLocaleString() + '</strong>' +
+                        '</div>' +
+                        '</div>';
+                });
+                topCustomersList.innerHTML = customersHtml;
+            }
+            
+            // Renderizar estadísticas por categoría
+            const categoryStats = document.getElementById('category-stats');
+            const categories = Object.entries(data.categorySales);
+            const maxRevenue = Math.max(...categories.map(cat => cat[1].revenue));
+            
+            if (categories.length === 0) {
+                categoryStats.innerHTML = '<div class="col-12"><p class="text-muted">No hay datos disponibles</p></div>';
+            } else {
+                let categoriesHtml = '';
+                categories.forEach(([category, stats]) => {
+                    categoriesHtml += '<div class="col-md-6 mb-3">' +
+                        '<div class="category-item">' +
+                        '<div class="flex-grow-1">' +
+                        '<strong class="text-capitalize">' + category + '</strong>' +
+                        '<div class="progress progress-category mt-1">' +
+                        '<div class="progress-bar bg-success" style="width: ' + ((stats.revenue / maxRevenue) * 100) + '%"></div>' +
+                        '</div>' +
+                        '<small class="text-muted">' + stats.quantity + ' productos vendidos</small>' +
+                        '</div>' +
+                        '<div class="text-end ms-3">' +
+                        '<strong>$' + stats.revenue.toLocaleString() + '</strong>' +
+                        '</div>' +
+                        '</div>' +
+                        '</div>';
+                });
+                categoryStats.innerHTML = categoriesHtml;
+            }
+        }
+        
+        // Generar informe
+        function generateReport() {
+            updateReportsData();
+            alert('Informe actualizado con los datos más recientes');
+        }
+        
+        // Exportar informe
+        function exportReport() {
+            const data = generateReportData();
+            const reportData = {
+                fecha: new Date().toISOString(),
+                resumen: {
+                    ventasTotales: data.totalSales,
+                    productoMasVendido: data.bestSeller,
+                    clienteTop: data.topCustomer,
+                    pedidosPendientes: data.pendingDeliveries
+                },
+                topProductos: data.topProducts,
+                topClientes: data.topCustomers,
+                ventasPorCategoria: data.categorySales
+            };
+            
+            const dataStr = JSON.stringify(reportData, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `informe_ecomarket_${new Date().toISOString().split('T')[0]}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            alert('Informe exportado correctamente');
+        }
+        
+        // Imprimir pedido
+        function printOrder(orderId) {
+            const orders = getOrders();
+            const order = orders.find(o => o.id === orderId);
+            
+            if (!order) return;
+            
+            const printWindow = window.open('', '', 'height=600,width=800');
+            printWindow.document.write('<html><head><title>Pedido #' + order.id + '</title>' +
+                '<style>' +
+                'body { font-family: Arial, sans-serif; margin: 20px; }' +
+                '.header { text-align: center; border-bottom: 2px solid #008c5a; padding-bottom: 10px; }' +
+                '.info { margin: 20px 0; }' +
+                'table { width: 100%; border-collapse: collapse; margin: 20px 0; }' +
+                'th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }' +
+                'th { background-color: #008c5a; color: white; }' +
+                '.total { font-weight: bold; background-color: #f0f8ff; }' +
+                '</style></head><body>' +
+                '<div class="header">' +
+                '<h1>EcoMarket</h1>' +
+                '<h2>Pedido #' + order.id + '</h2>' +
+                '</div>' +
+                '<div class="info">' +
+                '<p><strong>Fecha:</strong> ' + new Date(order.date).toLocaleString() + '</p>' +
+                '<p><strong>Cliente:</strong> ' + order.customer.name + '</p>' +
+                '<p><strong>Email:</strong> ' + order.customer.email + '</p>' +
+                '<p><strong>Teléfono:</strong> ' + order.customer.phone + '</p>' +
+                '<p><strong>Dirección:</strong> ' + order.delivery.address + ', ' + order.delivery.city + '</p>' +
+                '<p><strong>Estado:</strong> ' + order.status + '</p>' +
+                '</div>' +
+                '<table><thead><tr>' +
+                '<th>Producto</th><th>Cantidad</th><th>Precio Unitario</th><th>Subtotal</th>' +
+                '</tr></thead><tbody>' +
+                order.items.map(item => 
+                    '<tr>' +
+                    '<td>' + item.name + '</td>' +
+                    '<td>' + item.quantity + ' ' + item.unit + '</td>' +
+                    '<td>$' + item.price.toLocaleString() + '</td>' +
+                    '<td>$' + (item.price * item.quantity).toLocaleString() + '</td>' +
+                    '</tr>'
+                ).join('') +
+                '</tbody><tfoot>' +
+                '<tr class="total">' +
+                '<td colspan="3">Total</td>' +
+                '<td>$' + order.total.toLocaleString() + '</td>' +
+                '</tr></tfoot></table>' +
+                '<div class="info">' +
+                '<p><strong>Método de Pago:</strong> ' + getPaymentMethodName(order.payment.method) + '</p>' +
+                '</div></body></html>');
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+        }
+
+        // Los datos de pedidos se cargarán desde localStorage cuando los usuarios hagan compras reales
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verificar autenticación antes de cargar el panel
+            if (!checkAuth()) {
+                return;
+            }
+            
+            // El sistema cargará los pedidos reales desde localStorage
+            
+            renderProductsList();
+            updateStats();
+            renderOrdersList();
+            updateReportsData();
+            
+            // Inicializar tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            
+            // Agregar efectos de animación a las secciones colapsables
+            document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(element => {
+                element.addEventListener('click', function() {
+                    const icon = this.querySelector('.collapse-icon');
+                    if (icon) {
+                        icon.style.transform = this.getAttribute('aria-expanded') === 'true' ? 'rotate(0deg)' : 'rotate(180deg)';
+                    }
+                });
+            });
+            
+            // Mostrar información del usuario logueado
+            const userEmail = localStorage.getItem('ecomarket_user_email');
+            if (userEmail) {
+                console.log('Panel de administración inicializado para:', userEmail);
+            }
+        });
+    </script>
+</body>
+</html>

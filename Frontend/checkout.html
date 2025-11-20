@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - EcoMarket</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="assets/css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <style>
+        /* Ajuste para navbar sticky */
+        body {
+            padding-top: 0 !important;
+            margin-top: 0 !important;
+        }
+        
+        /* Contenedor principal con espaciado para navbar */
+        .checkout-container {
+            margin-top: 80px; /* Espacio para navbar sticky */
+            padding-top: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .checkout-container {
+                margin-top: 70px !important; /* Menos espacio en tablet */
+                padding-top: 0.5rem;
+            }
+            
+            .checkout-title {
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+            }
+            
+            .breadcrumb-mobile {
+                font-size: 0.875rem;
+                margin-bottom: 1rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .checkout-container {
+                margin-top: 65px !important; /* Aún menos espacio en móvil */
+                padding-left: 1rem;
+                padding-right: 1rem;
+                padding-top: 0.5rem;
+            }
+        }
+        /* Sistema de Notificaciones Elegante */
+        .notification {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            margin-bottom: 12px;
+            padding: 16px 20px;
+            border-left: 4px solid;
+            animation: slideInRight 0.4s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .notification.success {
+            border-left-color: #22c55e;
+        }
+        
+        .notification.error {
+            border-left-color: #ef4444;
+        }
+        
+        .notification.warning {
+            border-left-color: #f59e0b;
+        }
+        
+        .notification.info {
+            border-left-color: #3b82f6;
+        }
+        
+        .notification-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+        
+        .notification-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        
+        .notification-content {
+            flex: 1;
+        }
+        
+        .notification-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+        
+        .notification-message {
+            font-size: 13px;
+            color: #6b7280;
+            line-height: 1.4;
+        }
+        
+        .notification-close {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+        }
+        
+        .notification-close:hover {
+            color: #4b5563;
+        }
+        
+        .notification-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: rgba(0, 0, 0, 0.1);
+            animation: progress 4s linear;
+        }
+        
+        .notification.success .notification-progress {
+            background: #22c55e;
+        }
+        
+        .notification.error .notification-progress {
+            background: #ef4444;
+        }
+        
+        .notification.warning .notification-progress {
+            background: #f59e0b;
+        }
+        
+        .notification.info .notification-progress {
+            background: #3b82f6;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes slideOutRight {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+        }
+        
+        @keyframes progress {
+            from {
+                width: 100%;
+            }
+            to {
+                width: 0%;
+            }
+        }
+        
+        .notification.fade-out {
+            animation: slideOutRight 0.3s ease-in forwards;
+        }
+    </style>
+    </head>
+    <body>
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top" style="background-color: #008c5a;">
+        <div class="container-fluid">
+        <!-- Logo -->
+        <a class="navbar-brand fw-bold" href="index.html">EcoMarket</a>
+
+        <!-- Iconos fijos a la derecha (siempre visibles) -->
+        <div class="d-flex align-items-center gap-2 order-lg-3">
+            <!-- Dropdown Usuario -->
+            <div class="dropdown">
+            <a href="#" class="text-white" role="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-person fs-5"></i>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                <li><a class="dropdown-item" href="login.html">Iniciar sesión</a></li>
+                <li><a class="dropdown-item" href="pedidos.html">Mis pedidos</a></li>
+                <li><a class="dropdown-item" href="carrito.html">Ver carrito</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item d-none" id="logoutBtn" href="#">Cerrar sesión</a></li>
+            </ul>
+            </div>
+
+            <!-- Carrito -->
+            <a href="carrito.html" class="text-white position-relative">
+            <i class="bi bi-cart fs-5"></i>
+            <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none;">0</span>  
+            </a>
+        </div>
+
+        <!-- Botón Hamburguesa -->
+        <button class="navbar-toggler custom-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="custom-toggler-icon">
+            <span></span>
+            <span></span>
+            <span></span>
+            </span>
+        </button>
+
+        <!-- Links del menú -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item"><a class="nav-link" href="index.html">Inicio</a></li>
+            <li class="nav-item"><a class="nav-link" href="catalogo.html">Catálogo</a></li>
+            <li class="nav-item"><a class="nav-link" href="nosotros.html">Nosotros</a></li>
+            <li class="nav-item"><a class="nav-link active" href="#">Checkout</a></li>
+            </ul>
+        </div>
+        </div>
+    </nav>
+
+    <!-- SISTEMA DE NOTIFICACIONES -->
+    <div id="notification-container" style="position: fixed; top: 90px; right: 20px; z-index: 9999; width: 350px;"></div>
+
+    <!-- CONTENIDO CHECKOUT -->
+    <div class="container checkout-container py-3 py-md-5">
+        <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb" class="breadcrumb-mobile mb-2 mb-md-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="index.html" class="text-decoration-none text-success">Inicio</a></li>
+                <li class="breadcrumb-item"><a href="carrito.html" class="text-decoration-none text-success">Carrito</a></li>
+                <li class="breadcrumb-item active text-muted" aria-current="page">Checkout</li>
+            </ol>
+            </nav>
+            
+            <div class="d-flex align-items-center mb-3 mb-md-4">
+            <div class="me-3">
+                <div class="bg-success rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                <i class="bi bi-credit-card text-white fs-5"></i>
+                </div>
+            </div>
+            <div>
+                <h2 class="mb-1 fw-bold checkout-title">Finalizar compra</h2>
+                <p class="text-muted mb-0 small">Completa tu pedido de manera segura</p>
+            </div>
+            </div>
+        </div>
+        </div>
+
+        <div class="row g-4">
+        <!-- Columna izquierda - Resumen y datos -->
+        <div class="col-lg-8">
+            <!-- Resumen del pedido -->
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px;">
+            <div class="card-header bg-success text-white" style="border-radius: 16px 16px 0 0;">
+                <h5 class="mb-0 fw-semibold">
+                <i class="bi bi-basket3 me-2"></i>Resumen del pedido
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <div id="checkout-items">
+                <!-- Los productos se cargarán dinámicamente -->
+                </div>
+            </div>
+            </div>
+
+            <!-- Datos de envío -->
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px;">
+            <div class="card-header" style="background: linear-gradient(135deg, #17a2b8, #20c997); border-radius: 16px 16px 0 0;">
+                <h5 class="mb-0 fw-semibold text-white">
+                <i class="bi bi-truck me-2"></i>Datos de envío
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <div id="shipping-info" class="mb-3">
+                <!-- Los datos de envío se cargarán dinámicamente -->
+                </div>
+                <a href="carrito.html" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-pencil me-1"></i>Editar datos
+                </a>
+            </div>
+            </div>
+
+            <!-- Método de pago -->
+            <div class="card border-0 shadow-sm" style="border-radius: 16px;">
+            <div class="card-header" style="background: linear-gradient(135deg, #ffc107, #fd7e14); border-radius: 16px 16px 0 0;">
+                <h5 class="mb-0 fw-semibold text-dark">
+                <i class="bi bi-credit-card me-2"></i>Método de pago
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <!-- Selección de método de pago -->
+                <div class="mb-4">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                    <div class="form-check payment-method-card">
+                        <input class="form-check-input" type="radio" name="paymentMethod" id="creditCard" value="credit" checked>
+                        <label class="form-check-label w-100" for="creditCard">
+                        <div class="text-center p-3">
+                            <i class="bi bi-credit-card fs-2 text-success mb-2"></i>
+                            <div class="fw-semibold">Tarjeta</div>
+                            <small class="text-muted">Crédito/Débito</small>
+                        </div>
+                        </label>
+                    </div>
+                    </div>
+                    <div class="col-md-4">
+                    <div class="form-check payment-method-card">
+                        <input class="form-check-input" type="radio" name="paymentMethod" id="transfer" value="transfer">
+                        <label class="form-check-label w-100" for="transfer">
+                        <div class="text-center p-3">
+                            <i class="bi bi-bank fs-2 text-info mb-2"></i>
+                            <div class="fw-semibold">Transferencia</div>
+                            <small class="text-muted">Bancaria</small>
+                        </div>
+                        </label>
+                    </div>
+                    </div>
+                    <div class="col-md-4">
+                    <div class="form-check payment-method-card">
+                        <input class="form-check-input" type="radio" name="paymentMethod" id="cashOnDelivery" value="cash">
+                        <label class="form-check-label w-100" for="cashOnDelivery">
+                        <div class="text-center p-3">
+                            <i class="bi bi-cash fs-2 text-warning mb-2"></i>
+                            <div class="fw-semibold">Efectivo</div>
+                            <small class="text-muted">Contra entrega</small>
+                        </div>
+                        </label>
+                    </div>
+                    </div>
+                </div>
+                </div>
+
+                <!-- Formulario de tarjeta -->
+                <div id="cardForm">
+                <div class="row g-3">
+                    <div class="col-12">
+                    <label for="cardNumber" class="form-label fw-semibold">Número de tarjeta</label>
+                    <input type="text" id="cardNumber" class="form-control form-control-lg" placeholder="1111 2222 3333 4444" maxlength="19">
+                    </div>
+                    <div class="col-12">
+                    <label for="cardName" class="form-label fw-semibold">Nombre del titular</label>
+                    <input type="text" id="cardName" class="form-control form-control-lg" placeholder="Como aparece en la tarjeta">
+                    </div>
+                    <div class="col-md-6">
+                    <label for="expiry" class="form-label fw-semibold">Fecha de expiración</label>
+                    <input type="text" id="expiry" class="form-control form-control-lg" placeholder="MM/AA" maxlength="5">
+                    </div>
+                    <div class="col-md-6">
+                    <label for="cvv" class="form-label fw-semibold">CVV</label>
+                    <input type="password" id="cvv" class="form-control form-control-lg" placeholder="123" maxlength="3">
+                    </div>
+                </div>
+                </div>
+
+                <!-- Información para transferencia -->
+                <div id="transferInfo" style="display: none;">
+                <div class="alert alert-info d-flex align-items-start">
+                    <i class="bi bi-info-circle fs-4 me-3 text-info"></i>
+                    <div>
+                    <h6 class="fw-semibold mb-2">Datos para transferencia bancaria</h6>
+                    <div class="row g-2">
+                        <div class="col-sm-6"><strong>Banco:</strong> Banco EcoMarket</div>
+                        <div class="col-sm-6"><strong>Cuenta corriente:</strong> 123-456789-00</div>
+                        <div class="col-sm-6"><strong>RUT:</strong> 12.345.678-9</div>
+                        <div class="col-sm-6"><strong>Email:</strong> pagos@ecomarket.com</div>
+                    </div>
+                    </div>
+                </div>
+                </div>
+
+                <!-- Información para pago contra entrega -->
+                <div id="cashInfo" style="display: none;">
+                <div class="alert alert-warning d-flex align-items-start">
+                    <i class="bi bi-exclamation-triangle fs-4 me-3 text-warning"></i>
+                    <div>
+                    <h6 class="fw-semibold mb-2">Pago contra entrega</h6>
+                    <p class="mb-0">Podrás pagar cuando recibas tu pedido. Asegúrate de tener el monto exacto disponible.</p>
+                    </div>
+                </div>
+                </div>
+            </div>
+            </div>
+        </div>
+
+        <!-- Columna derecha - Resumen de compra -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm sticky-top" style="top: 100px; border-radius: 16px;">
+            <div class="card-header bg-success text-white" style="border-radius: 16px 16px 0 0;">
+                <h5 class="mb-0 fw-semibold">
+                <i class="bi bi-calculator me-2"></i>Total del pedido
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                <span class="fw-medium">Subtotal:</span>
+                <span class="fw-semibold" id="checkout-subtotal">$0</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                <span class="fw-medium">Descuentos:</span>
+                <span class="text-success fw-semibold" id="checkout-discount">-$0</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                <span class="fw-medium">Envío:</span>
+                <span class="fw-semibold" id="checkout-shipping">$2.500</span>
+                </div>
+                
+                <div class="bg-light rounded p-3 mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-bold fs-5">Total a pagar:</span>
+                    <span class="fw-bold fs-4 text-success" id="checkoutTotal">$0</span>
+                </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                <button type="button" class="btn btn-success btn-lg fw-semibold py-3" onclick="processPayment()" style="border-radius: 12px;">
+                    <i class="bi bi-shield-check me-2"></i>Confirmar pedido
+                </button>
+                <a href="carrito.html" class="btn btn-outline-secondary fw-medium" style="border-radius: 12px;">
+                    <i class="bi bi-arrow-left me-1"></i>Volver al carrito
+                </a>
+                </div>
+
+                <div class="text-center mt-3">
+                <small class="text-muted">
+                    <i class="bi bi-shield-fill-check me-1"></i>
+                    Compra 100% segura y protegida
+                </small>
+                </div>
+            </div>
+            </div>
+        </div>
+        </div>
+    </div>
+
+  <!-- Modal de éxito -->
+  <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 16px;">
+        <div class="modal-body text-center p-5">
+          <div class="mb-4">
+            <div class="bg-success rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+              <i class="bi bi-check-lg text-white" style="font-size: 2.5rem;"></i>
+            </div>
+          </div>
+          <h4 class="fw-bold text-success mb-3">¡Pedido realizado exitosamente!</h4>
+          <p class="text-muted mb-4">Tu pedido <strong id="orderNumber">#</strong> ha sido confirmado. Recibirás un email con los detalles de tu compra.</p>
+          
+          <div class="d-grid gap-2">
+            <button type="button" class="btn btn-success btn-lg" onclick="goToOrders()">
+              <i class="bi bi-bag-check me-2"></i>Ver mis pedidos
+            </button>
+            <button type="button" class="btn btn-outline-secondary" onclick="goToHome()">
+              <i class="bi bi-house me-2"></i>Ir al inicio
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Container - El footer se carga dinámicamente -->
+  <div id="footer-container"></div>    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/app.js"></script>
+    <script src="assets/js/footer.js"></script>
+    
+    <script>
+        let cart = [];
+        let products = [];
+        let shippingData = null;
+        const SHIPPING_COST = 2500;
+        const FREE_SHIPPING_THRESHOLD = 15000;
+
+    // Inicializar checkout
+    document.addEventListener('DOMContentLoaded', function() {
+      // Validar que el usuario esté logueado
+      if (!checkUserAuthentication()) {
+        return;
+      }
+      
+      initializeUsers();
+      loadCheckoutData();
+      loadProducts();
+      renderCheckoutSummary();
+      setupPaymentMethodHandlers();
+      formatCardInputs();
+      updateCartCount();
+    });
+    
+    // Sistema de Notificaciones Elegante
+    function showNotification(message, type = 'info', duration = 4000) {
+      const container = document.getElementById('notification-container');
+      const notificationId = 'notification-' + Date.now();
+      
+      const icons = {
+        success: '<i class="bi bi-check-circle-fill text-success"></i>',
+        error: '<i class="bi bi-x-circle-fill text-danger"></i>', 
+        warning: '<i class="bi bi-exclamation-triangle-fill text-warning"></i>',
+        info: '<i class="bi bi-info-circle-fill text-info"></i>'
+      };
+      
+      const titles = {
+        success: '¡Éxito!',
+        error: 'Error',
+        warning: 'Atención',
+        info: 'Información'
+      };
+      
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.id = notificationId;
+      notification.innerHTML = `
+        <div class="notification-header">
+          <div class="d-flex align-items-start">
+            <div class="notification-icon">
+              ${icons[type]}
+            </div>
+            <div class="notification-content">
+              <div class="notification-title">${titles[type]}</div>
+              <div class="notification-message">${message}</div>
+            </div>
+          </div>
+          <button class="notification-close" onclick="closeNotification('${notificationId}')">×</button>
+        </div>
+        <div class="notification-progress"></div>
+      `;
+      
+      container.appendChild(notification);
+      
+      // Auto-remover después del duration
+      setTimeout(() => {
+        closeNotification(notificationId);
+      }, duration);
+      
+      return notificationId;
+    }
+    
+    function closeNotification(notificationId) {
+      const notification = document.getElementById(notificationId);
+      if (notification) {
+        notification.classList.add('fade-out');
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+          }
+        }, 300);
+      }
+    }
+    
+    // Función para verificar autenticación
+    function checkUserAuthentication() {
+      const currentUser = JSON.parse(localStorage.getItem('ecomarket_current_user'));
+      const isLoggedIn = localStorage.getItem('ecomarket_logged_in') === 'true';
+      
+      if (!currentUser || !isLoggedIn) {
+        showNotification('Debes iniciar sesión para acceder al checkout. Redirigiendo...', 'error', 3000);
+        setTimeout(() => {
+          window.location.href = 'login.html';
+        }, 3000);
+        return false;
+      }
+      
+      return true;
+    }
+
+    // Inicializar usuarios de prueba
+    function initializeUsers() {
+      const users = localStorage.getItem('ecomarket_users');
+      if (!users) {
+        const defaultUsers = [
+          {
+            id: 1,
+            email: 'usuario@ecomarket.com',
+            password: '123456',
+            name: 'Usuario Demo',
+            phone: '+56 9 1234 5678'
+          },
+          {
+            id: 2,
+            email: 'test@test.com',
+            password: 'test',
+            name: 'Test User',
+            phone: '+56 9 8765 4321'
+          }
+        ];
+        localStorage.setItem('ecomarket_users', JSON.stringify(defaultUsers));
+        
+        // Simular usuario logueado para pruebas
+        localStorage.setItem('ecomarket_current_user', JSON.stringify(defaultUsers[0]));
+      }
+    }        // Cargar datos del checkout
+        function loadCheckoutData() {
+        // Cargar carrito desde localStorage
+        const checkoutCart = localStorage.getItem('ecomarket_checkout_cart');
+        const regularCart = localStorage.getItem('ecomarket_cart');
+        
+        cart = checkoutCart ? JSON.parse(checkoutCart) : (regularCart ? JSON.parse(regularCart) : []);
+        
+        // Cargar datos de envío
+        const savedShipping = localStorage.getItem('ecomarket_shipping');
+        shippingData = savedShipping ? JSON.parse(savedShipping) : null;
+        
+        // Si no hay carrito, redirigir
+        if (cart.length === 0) {
+            showToast('No hay productos en el carrito', 'warning');
+            setTimeout(() => {
+            window.location.href = 'carrito.html';
+            }, 2000);
+            return;
+        }
+        
+        // Si no hay datos de envío, redirigir al carrito
+        if (!shippingData) {
+            showToast('Por favor complete los datos de envío', 'warning');
+            setTimeout(() => {
+            window.location.href = 'carrito.html';
+            }, 2000);
+            return;
+        }
+        }
+
+        // Cargar productos
+        function loadProducts() {
+        const savedProducts = localStorage.getItem('ecomarket_products');
+        products = savedProducts ? JSON.parse(savedProducts) : [];
+        }
+
+        // Renderizar resumen del checkout
+        function renderCheckoutSummary() {
+        renderCheckoutItems();
+        renderShippingInfo();
+        updateCheckoutTotals();
+        }
+
+        // Renderizar productos en el checkout
+        function renderCheckoutItems() {
+        const container = document.getElementById('checkout-items');
+        
+        if (cart.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center py-4">No hay productos en el carrito</p>';
+            return;
+        }
+
+        const itemsHTML = cart.map(item => {
+            const product = products.find(p => p.id === item.productId);
+            if (!product) return '';
+            
+            const itemTotal = product.price * item.quantity;
+            const hasDiscount = product.originalPrice && product.originalPrice > product.price;
+            
+            return `
+            <div class="d-flex align-items-center py-3 border-bottom">
+                <div class="position-relative me-3">
+                <img src="${product.image}" class="rounded" alt="${product.name}" style="width: 70px; height: 70px; object-fit: cover;">
+                ${product.isOffer ? '<span class="badge bg-danger position-absolute top-0 end-0" style="font-size: 0.6rem;">OFERTA</span>' : ''}
+                </div>
+                <div class="flex-grow-1">
+                <h6 class="mb-1 fw-semibold">${product.name}</h6>
+                <p class="text-muted mb-1 small">${product.description.substring(0, 60)}...</p>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="badge bg-light text-dark">${product.category}</span>
+                    <small class="text-muted">Cantidad: ${item.quantity} ${product.unit}</small>
+                </div>
+                ${hasDiscount ? `<small class="text-muted text-decoration-line-through">Precio anterior: $${product.originalPrice.toLocaleString()}</small>` : ''}
+                </div>
+                <div class="text-end">
+                <div class="fw-bold text-success fs-5">$${itemTotal.toLocaleString()}</div>
+                <small class="text-muted">$${product.price.toLocaleString()} c/u</small>
+                </div>
+            </div>
+            `;
+        }).join('');
+        
+        container.innerHTML = itemsHTML;
+        }
+
+        // Renderizar información de envío
+        function renderShippingInfo() {
+        const container = document.getElementById('shipping-info');
+        
+        if (!shippingData) {
+            container.innerHTML = '<p class="text-danger">No se encontraron datos de envío</p>';
+            return;
+        }
+        
+        container.innerHTML = `
+            <div class="row g-3">
+            <div class="col-md-6">
+                <div class="d-flex align-items-center mb-2">
+                <i class="bi bi-person-circle text-success me-2"></i>
+                <strong>${shippingData.name}</strong>
+                </div>
+                <div class="d-flex align-items-center mb-2">
+                <i class="bi bi-telephone text-success me-2"></i>
+                <span>${shippingData.phone}</span>
+                </div>
+                <div class="d-flex align-items-center">
+                <i class="bi bi-geo-alt text-success me-2"></i>
+                <span>${shippingData.city}</span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex align-items-start mb-2">
+                <i class="bi bi-house text-success me-2 mt-1"></i>
+                <span>${shippingData.address}</span>
+                </div>
+                ${shippingData.postal ? `
+                <div class="d-flex align-items-center mb-2">
+                    <i class="bi bi-mailbox text-success me-2"></i>
+                    <span>CP: ${shippingData.postal}</span>
+                </div>
+                ` : ''}
+                ${shippingData.reference ? `
+                <div class="d-flex align-items-start">
+                    <i class="bi bi-info-circle text-success me-2 mt-1"></i>
+                    <small class="text-muted">${shippingData.reference}</small>
+                </div>
+                ` : ''}
+            </div>
+            </div>
+        `;
+        }
+
+        // Actualizar totales del checkout
+        function updateCheckoutTotals() {
+        const subtotal = cart.reduce((sum, item) => {
+            const product = products.find(p => p.id === item.productId);
+            return sum + (product ? product.price * item.quantity : 0);
+        }, 0);
+        
+        const originalSubtotal = cart.reduce((sum, item) => {
+            const product = products.find(p => p.id === item.productId);
+            const price = product?.originalPrice || product?.price || 0;
+            return sum + (price * item.quantity);
+        }, 0);
+        
+        const discount = originalSubtotal - subtotal;
+        const shippingCost = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
+        const total = subtotal + shippingCost;
+        
+        document.getElementById('checkout-subtotal').textContent = `$${subtotal.toLocaleString()}`;
+        document.getElementById('checkout-discount').textContent = discount > 0 ? `-$${discount.toLocaleString()}` : '$0';
+        document.getElementById('checkout-shipping').textContent = shippingCost === 0 ? 'GRATIS' : `$${shippingCost.toLocaleString()}`;
+        document.getElementById('checkoutTotal').textContent = `$${total.toLocaleString()}`;
+        }
+
+        // Configurar manejadores de métodos de pago
+        function setupPaymentMethodHandlers() {
+        const paymentMethods = document.querySelectorAll('input[name="paymentMethod"]');
+        
+        paymentMethods.forEach(method => {
+            method.addEventListener('change', function() {
+            // Remover clase activa de todas las tarjetas
+            document.querySelectorAll('.payment-method-card').forEach(card => {
+                card.classList.remove('active-payment');
+            });
+            
+            // Agregar clase activa a la tarjeta seleccionada
+            this.closest('.payment-method-card').classList.add('active-payment');
+            
+            // Ocultar todos los formularios
+            document.getElementById('cardForm').style.display = 'none';
+            document.getElementById('transferInfo').style.display = 'none';
+            document.getElementById('cashInfo').style.display = 'none';
+            
+            // Mostrar el formulario correspondiente
+            switch(this.value) {
+                case 'credit':
+                document.getElementById('cardForm').style.display = 'block';
+                break;
+                case 'transfer':
+                document.getElementById('transferInfo').style.display = 'block';
+                break;
+                case 'cash':
+                document.getElementById('cashInfo').style.display = 'block';
+                break;
+            }
+            });
+        });
+        
+        // Activar el primer método por defecto
+        document.querySelector('input[name="paymentMethod"]:checked').closest('.payment-method-card').classList.add('active-payment');
+        }
+
+        // Formatear inputs de tarjeta
+        function formatCardInputs() {
+        const cardNumber = document.getElementById('cardNumber');
+        const expiry = document.getElementById('expiry');
+        
+        // Formatear número de tarjeta
+        cardNumber.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\s/g, '');
+            let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+            e.target.value = formattedValue;
+        });
+        
+        // Formatear fecha de expiración
+        expiry.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length >= 2) {
+            value = value.substring(0, 2) + '/' + value.substring(2, 4);
+            }
+            e.target.value = value;
+        });
+        
+        // Solo números en CVV
+        document.getElementById('cvv').addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/\D/g, '');
+        });
+        }
+
+        // Procesar pago
+        function processPayment() {
+            // Verificar que el usuario esté logueado
+            const currentUser = localStorage.getItem('ecomarket_current_user');
+            if (!currentUser) {
+                showToast('Debes iniciar sesión para completar tu pedido', 'warning', 4000);
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+                return;
+            }
+
+            const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+            
+            // Validar según método de pago
+            if (selectedPaymentMethod === 'credit') {
+                if (!validateCardForm()) {
+                    return;
+                }
+            }
+            
+            // Simular procesamiento
+            const submitBtn = document.querySelector('button[onclick="processPayment()"]');
+            const originalText = submitBtn.innerHTML;
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Procesando pedido...';
+            
+            // Mostrar mensaje de procesamiento
+            showToast('Procesando tu pedido...', 'info', 2000);
+            
+            setTimeout(() => {
+                // Guardar pedido en historial
+                const orderId = saveOrderToHistory();
+                
+                // Limpiar carrito después de compra exitosa
+                localStorage.removeItem('ecomarket_cart');
+                localStorage.removeItem('ecomarket_checkout_cart');
+                
+                // Mostrar mensaje de éxito con detalles
+                showSuccessModal(orderId);
+                
+            }, 2000);
+        }
+
+        // Validar formulario de tarjeta
+        function validateCardForm() {
+        const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
+        const cardName = document.getElementById('cardName').value.trim();
+        const expiry = document.getElementById('expiry').value;
+        const cvv = document.getElementById('cvv').value;
+        
+        if (cardNumber.length < 16) {
+            showToast('El número de tarjeta debe tener 16 dígitos', 'error');
+            document.getElementById('cardNumber').focus();
+            return false;
+        }
+        
+        if (!cardName) {
+            showToast('El nombre del titular es requerido', 'error');
+            document.getElementById('cardName').focus();
+            return false;
+        }
+        
+        if (!/^\d{2}\/\d{2}$/.test(expiry)) {
+            showToast('La fecha de expiración debe tener formato MM/AA', 'error');
+            document.getElementById('expiry').focus();
+            return false;
+        }
+        
+        if (cvv.length < 3) {
+            showToast('El CVV debe tener al menos 3 dígitos', 'error');
+            document.getElementById('cvv').focus();
+            return false;
+        }
+        
+        return true;
+        }
+
+        // Calcular total del pedido
+        function calculateOrderTotal(cartItems) {
+            const subtotal = cartItems.reduce((sum, item) => {
+                const product = products.find(p => p.id === item.productId);
+                const price = product ? parseFloat(product.price) : parseFloat(item.price) || 0;
+                const quantity = parseInt(item.quantity) || 1;
+                return sum + (price * quantity);
+            }, 0);
+            
+            const shippingCost = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
+            return subtotal + shippingCost;
+        }
+
+        // Guardar pedido en historial
+        function saveOrderToHistory() {
+            // Cargar productos para obtener información completa
+            loadProducts();
+            
+            const currentUser = JSON.parse(localStorage.getItem('ecomarket_current_user'));
+            if (!currentUser) {
+                showNotification('Debes iniciar sesión para completar la compra. Redirigiendo...', 'error', 3000);
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 3000);
+                return null;
+            }
+            
+            // Obtener datos de envío del localStorage (guardados en carrito)
+            const shippingData = JSON.parse(localStorage.getItem('ecomarket_shipping'));
+            if (!shippingData) {
+                showNotification('Debes completar los datos de envío primero. Redirigiendo al carrito...', 'warning', 3000);
+                setTimeout(() => {
+                    window.location.href = 'carrito.html';
+                }, 3000);
+                return null;
+            }
+            
+            const orderId = 'ORD' + Date.now();
+            const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+            
+            // Obtener método de pago legible
+            const paymentMethods = {
+                'credit': 'credit-card',
+                'transfer': 'bank-transfer', 
+                'cash': 'cash-on-delivery'
+            };
+            
+            // Usar los datos del formulario de envío
+            const customerName = shippingData.name || currentUser.name;
+            const customerPhone = shippingData.phone || '+57 300 000 0000';
+            
+            const order = {
+                id: orderId,
+                date: new Date().toISOString(),
+                status: 'confirmado',
+                customer: {
+                    id: currentUser.id,
+                    name: customerName,
+                    email: currentUser.email,
+                    phone: customerPhone
+                },
+                delivery: {
+                    address: shippingData.address,
+                    city: shippingData.city,
+                    postal: shippingData.postal || '',
+                    notes: shippingData.reference || ''
+                },
+                payment: {
+                    method: paymentMethods[selectedPaymentMethod] || selectedPaymentMethod
+                },
+                items: cart.map(item => {
+                    // Obtener información completa del producto
+                    const product = products.find(p => p.id === item.productId);
+                    return {
+                        name: product ? product.name : (item.name || 'Producto sin nombre'),
+                        quantity: item.quantity || 1,
+                        unit: product ? product.unit : (item.unit || 'unidad'),
+                        price: product ? parseFloat(product.price) : parseFloat(item.price) || 0,
+                        productId: item.productId || item.id || 'unknown'
+                    };
+                }),
+                total: calculateOrderTotal(cart), // Calcular total directamente
+                lastUpdated: new Date().toISOString()
+            };
+            
+            // Guardar en historial de pedidos (para admin y usuarios)
+            let orderHistory = JSON.parse(localStorage.getItem('ecomarket_orders')) || [];
+            orderHistory.unshift(order);
+            localStorage.setItem('ecomarket_orders', JSON.stringify(orderHistory));
+            
+            // Guardar también en historial específico del usuario (para compatibilidad)
+            let userOrders = JSON.parse(localStorage.getItem('ecomarket_user_orders_' + currentUser.id)) || [];
+            userOrders.unshift(order);
+            localStorage.setItem('ecomarket_user_orders_' + currentUser.id, JSON.stringify(userOrders));
+            
+            return orderId;
+        }
+
+        // Actualizar contador del carrito
+        function updateCartCount() {
+        const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+        const cartCountElement = document.getElementById('cart-count');
+        if (cartCountElement) {
+            cartCountElement.textContent = totalItems;
+            cartCountElement.style.display = totalItems > 0 ? 'block' : 'none';
+        }
+        }
+
+        // Mostrar modal de éxito
+        function showSuccessModal(orderId) {
+            document.getElementById('orderNumber').textContent = '#' + orderId;
+            const modal = new bootstrap.Modal(document.getElementById('successModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+            modal.show();
+        }
+
+        // Ir a mis pedidos
+        function goToOrders() {
+            window.location.href = 'pedidos.html';
+        }
+
+        // Ir al inicio
+        function goToHome() {
+            window.location.href = 'index.html';
+        }
+
+        // Mostrar notificación
+        // Unified notification function that replaces both showToast and alert
+        function showToast(message, type = 'success', duration = 3000) {
+            // Use our elegant notification system
+            showNotification(message, type, duration);
+        }
+    </script>
+    
+    <style>
+        
+        @keyframes slideInRight {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideOutRight {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+        }
+
+        .payment-method-card {
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        }
+
+        .payment-method-card:hover {
+        border-color: #008c5a;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 140, 90, 0.1);
+        }
+
+        .payment-method-card.active-payment {
+        border-color: #008c5a;
+        background: linear-gradient(135deg, #f8fff8, #e8f5e8);
+        box-shadow: 0 4px 15px rgba(0, 140, 90, 0.2);
+        }
+
+        .payment-method-card .form-check-input {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        }
+
+        .payment-method-card label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 120px;
+        }
+
+        .payment-method-card .text-center {
+        width: 100%;
+        }
+
+        .form-control:focus {
+        border-color: #008c5a;
+        box-shadow: 0 0 0 0.2rem rgba(0, 140, 90, 0.25);
+        }
+
+        .sticky-top {
+        z-index: 1020;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+        .container {
+            margin-top: 60px !important;
+        }
+        
+        .sticky-top {
+            position: relative !important;
+            top: auto !important;
+            margin-top: 2rem;
+        }
+        
+        .payment-method-card {
+            margin-bottom: 1rem;
+        }
+        }
+    </style>
+    </body>
+</html>

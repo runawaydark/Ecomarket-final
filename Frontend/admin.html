@@ -1,0 +1,2788 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Gestión de Productos | EcoMarket</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="assets/css/style.css" rel="stylesheet">
+    <style>
+        .admin-container {
+            background: linear-gradient(135deg, #f1f3f4 0%, #e8eaed 100%);
+            min-height: 100vh;
+            padding: 1rem 0;
+        }
+        
+        .admin-header {
+            background: linear-gradient(135deg, #008c5a, #00b374);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .stat-card:hover {
+            border-color: #008c5a;
+            box-shadow: 0 8px 25px rgba(0, 140, 90, 0.15);
+            transform: translateY(-3px);
+        }
+        
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #008c5a;
+            margin-bottom: 0.25rem;
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Arreglar problema del precio total cortado */
+        .order-card .col-md-3:last-child {
+            min-width: 160px;
+        }
+
+        @media (max-width: 991px) {
+            .order-card .col-md-3 {
+                margin-bottom: 10px;
+            }
+            
+            .order-total {
+                font-size: 1.1rem;
+                margin-bottom: 5px;
+            }
+        }
+
+        /* Responsive styles for mobile */
+        @media (max-width: 768px) {
+            .admin-container {
+                padding: 0.2rem;
+            }
+            
+            .container {
+                padding: 0 0.5rem;
+            }
+            
+            .admin-header {
+                padding: 0.8rem;
+                margin-bottom: 0.8rem;
+                border-radius: 8px;
+            }
+            
+            .admin-header h1 {
+                font-size: 1.2rem !important;
+                margin-bottom: 0.3rem;
+            }
+            
+            .admin-header p {
+                font-size: 0.85rem;
+                margin-bottom: 0;
+            }
+            
+            /* Botones del header más pequeños */
+            .admin-header .btn {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
+                margin-left: 0.3rem;
+            }
+            
+            /* Stats cards más compactas */
+            .stats-cards {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.4rem;
+                margin-bottom: 0.8rem;
+            }
+            
+            .stat-card {
+                padding: 0.6rem !important;
+                border-radius: 8px;
+            }
+            
+            .stat-icon {
+                font-size: 1.5rem !important;
+                margin-bottom: 0.3rem;
+            }
+            
+            .stat-number {
+                font-size: 1.1rem !important;
+                margin-bottom: 0.2rem;
+            }
+            
+            .stat-label {
+                font-size: 0.75rem !important;
+            }
+            
+            /* Secciones de administración más compactas */
+            .admin-section {
+                margin-bottom: 0.8rem !important;
+                padding: 0.8rem !important;
+                border-radius: 8px;
+            }
+            
+            .admin-section h2 {
+                font-size: 1.1rem !important;
+                margin-bottom: 0.8rem;
+            }
+            
+            /* Botones de acción más pequeños */
+            .action-buttons .btn {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.6rem;
+                margin: 0.2rem;
+            }
+            
+            /* Formularios más compactos */
+            .row .col-md-4,
+            .row .col-md-6,
+            .row .col-md-3 {
+                margin-bottom: 0.4rem;
+            }
+            
+            .form-label {
+                font-size: 0.85rem;
+                margin-bottom: 0.2rem;
+            }
+            
+            .form-control {
+                font-size: 0.9rem;
+                padding: 0.5rem;
+            }
+            
+            .input-group-text {
+                font-size: 0.9rem;
+                padding: 0.5rem;
+            }
+            
+            /* Product cards responsive */
+            .product-card {
+                margin-bottom: 1rem;
+            }
+            
+            .product-card .card-body {
+                padding: 0.75rem !important;
+            }
+            
+            .product-card h5 {
+                font-size: 1rem !important;
+            }
+            
+            .product-card .btn {
+                font-size: 0.8rem;
+                padding: 0.25rem 0.5rem;
+            }
+            
+            /* Make buttons stack on mobile */
+            .btn-group {
+                flex-direction: column !important;
+                gap: 0.25rem;
+            }
+            
+            .btn-group .btn {
+                border-radius: 0.375rem !important;
+                margin: 0 !important;
+            }
+            
+            /* Navbar adjustments for mobile admin */
+            .badge {
+                font-size: 0.7rem;
+                padding: 0.25rem 0.4rem;
+            }
+            
+            /* Modal adjustments for mobile */
+            .modal-dialog {
+                margin: 0.5rem;
+            }
+            
+            .modal-content {
+                border-radius: 8px;
+            }
+            
+            .modal-header {
+                padding: 0.8rem;
+            }
+            
+            .modal-body {
+                padding: 0.8rem;
+            }
+            
+            .modal-footer {
+                padding: 0.8rem;
+                gap: 0.5rem;
+            }
+            
+            /* Table responsive on mobile */
+            .table-responsive {
+                font-size: 0.85rem;
+            }
+            
+            .table th,
+            .table td {
+                padding: 0.4rem !important;
+                font-size: 0.8rem;
+            }
+            
+            /* Hide less important columns on small screens */
+            .d-none-mobile {
+                display: none !important;
+            }
+            
+            /* Filters section responsive */
+            .filters-section .row > div {
+                margin-bottom: 0.5rem;
+            }
+            
+            .filters-section .btn {
+                font-size: 0.85rem;
+                padding: 0.4rem 0.6rem;
+            }
+        }
+        
+        /* Extra small screens (phones in portrait) */
+        @media (max-width: 576px) {
+            .admin-header .d-flex {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 0.5rem;
+            }
+            
+            .admin-header .btn {
+                font-size: 0.75rem;
+                padding: 0.3rem 0.6rem;
+            }
+            
+            .stats-cards {
+                grid-template-columns: 1fr 1fr;
+                gap: 0.3rem;
+            }
+            
+            .stat-card {
+                padding: 0.4rem !important;
+            }
+            
+            .stat-number {
+                font-size: 1rem !important;
+            }
+            
+            .stat-label {
+                font-size: 0.7rem !important;
+            }
+            
+            .admin-section {
+                padding: 0.6rem !important;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                gap: 0.3rem;
+            }
+            
+            .action-buttons .btn {
+                font-size: 0.75rem;
+                padding: 0.3rem 0.5rem;
+                width: 100%;
+            }
+            
+            /* Hide navbar brand text on very small screens */
+            .navbar-brand {
+                font-size: 0.9rem !important;
+            }
+            
+            /* Make dropdowns full width on mobile */
+            .dropdown-menu {
+                width: 100% !important;
+                min-width: auto !important;
+            }
+            
+            /* Estilos mejorados para dropdowns de estado en móvil */
+            .dropdown-menu .dropdown-item {
+                padding: 16px 20px !important;
+                font-size: 16px !important;
+                line-height: 1.5 !important;
+                border-bottom: 1px solid #f1f3f4;
+                transition: all 0.2s ease;
+                white-space: nowrap !important;
+                min-height: 50px !important;
+                display: flex !important;
+                align-items: center !important;
+            }
+            
+            .dropdown-menu .dropdown-item:last-child {
+                border-bottom: none;
+            }
+            
+            .dropdown-menu .dropdown-item:hover,
+            .dropdown-menu .dropdown-item:focus {
+                background-color: #e8f5e8 !important;
+                color: #008c5a !important;
+                padding-left: 24px !important;
+            }
+            
+            .dropdown-menu .dropdown-item.text-danger:hover {
+                background-color: #ffeaea !important;
+                color: #dc3545 !important;
+            }
+            
+            /* Botón dropdown más grande en móvil */
+            .btn-group .btn-sm {
+                padding: 10px 16px !important;
+                font-size: 14px !important;
+                min-width: 140px !important;
+            }
+            
+            @media (max-width: 768px) {
+                .btn-group .btn-sm {
+                    padding: 14px 20px !important;
+                    font-size: 16px !important;
+                    min-width: 160px !important;
+                    width: 100% !important;
+                }
+            }
+            
+            /* Separador más visible */
+            .dropdown-divider {
+                margin: 8px 0 !important;
+                border-top: 2px solid #dee2e6 !important;
+            }
+            
+            /* Mejorar contenedor de botones en móvil */
+            .order-card .col-md-3 .mt-2 {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 8px !important;
+            }
+            
+            /* En pantallas más grandes, mantener en fila */
+            @media (min-width: 768px) {
+                .order-card .col-md-3 .mt-2 {
+                    display: flex !important;
+                    flex-direction: row !important;
+                    gap: 8px !important;
+                }
+            }
+            
+            /* Botones más grandes y fáciles de tocar */
+            .order-card .btn-sm {
+                padding: 10px 16px !important;
+                font-size: 14px !important;
+                min-height: 42px !important;
+                white-space: nowrap !important;
+            }
+            
+            /* Dropdown menu más espacioso */
+            .btn-group .dropdown-menu {
+                min-width: 220px !important;
+                width: 220px !important;
+                padding: 12px 0 !important;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+                border: 1px solid #e0e0e0 !important;
+                border-radius: 8px !important;
+                margin-top: 4px !important;
+            }
+            
+            /* En móvil hacer el dropdown aún más grande */
+            @media (max-width: 768px) {
+                .btn-group .dropdown-menu {
+                    min-width: 280px !important;
+                    width: 280px !important;
+                    padding: 16px 0 !important;
+                    font-size: 18px !important;
+                }
+                
+                .dropdown-menu .dropdown-item {
+                    padding: 18px 24px !important;
+                    font-size: 18px !important;
+                    min-height: 56px !important;
+                }
+                
+                .dropdown-menu .dropdown-item:hover,
+                .dropdown-menu .dropdown-item:focus {
+                    padding-left: 28px !important;
+                }
+            }
+            
+            /* Reduce navbar padding on mobile */
+            .navbar {
+                padding: 0.25rem 0.5rem !important;
+            }
+            
+            .navbar-nav .nav-link {
+                padding: 0.3rem 0.5rem !important;
+                font-size: 0.85rem !important;
+            }
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            border: 1px solid rgba(0, 140, 90, 0.1);
+        }
+        
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: #008c5a;
+        }
+        
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .admin-section {
+            background: #ffffff;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border: 2px solid #f1f3f4;
+            position: relative;
+        }
+        
+        .admin-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #008c5a 0%, #00a862 100%);
+            border-radius: 15px 15px 0 0;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #008c5a, #00b374);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary-custom:hover {
+            background: linear-gradient(135deg, #007a50, #009d66);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 140, 90, 0.3);
+        }
+        
+        .product-item {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .product-item:hover {
+            border-color: #008c5a;
+            box-shadow: 0 4px 15px rgba(0, 140, 90, 0.1);
+        }
+        
+        .product-form {
+            background: #ffffff;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .form-control {
+            background-color: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .form-control:focus {
+            background-color: #ffffff;
+            border-color: #008c5a;
+            box-shadow: 0 0 0 3px rgba(0, 140, 90, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1);
+            outline: none;
+        }
+        
+        .form-control:hover {
+            border-color: #ced4da;
+            background-color: #ffffff;
+        }
+        
+        .form-control::placeholder {
+            color: #6c757d;
+            opacity: 0.8;
+        }
+        
+        /* Estilos específicos para inputs de números */
+        input[type="number"].form-control {
+            background-image: linear-gradient(45deg, transparent 49%, #f8f9fa 49%, #f8f9fa 51%, transparent 51%);
+            background-size: 20px 20px;
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+        }
+        
+        /* Estilos para select */
+        select.form-control {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.75rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+        
+        /* Estilos para textarea */
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        /* Labels mejorados */
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Contenedor de campos mejorado */
+        .mb-3 {
+            position: relative;
+        }
+        
+        /* Estilos para checkboxes mejorados */
+        .form-check-input {
+            width: 1.2rem;
+            height: 1.2rem;
+            margin-top: 0.25rem;
+            border: 2px solid #dee2e6;
+            border-radius: 4px;
+            background-color: #ffffff;
+        }
+        
+        .form-check-input:checked {
+            background-color: #008c5a;
+            border-color: #008c5a;
+        }
+        
+        .form-check-input:focus {
+            border-color: #008c5a;
+            box-shadow: 0 0 0 3px rgba(0, 140, 90, 0.15);
+        }
+        
+        .form-check-label {
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        /* Botones mejorados */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Estilos para secciones colapsables */
+        .section-header[data-bs-toggle="collapse"] {
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            padding: 0.5rem;
+            margin: -0.5rem;
+        }
+        
+        .section-header[data-bs-toggle="collapse"]:hover {
+            background-color: rgba(0, 140, 90, 0.05);
+        }
+        
+        .collapse-icon {
+            transition: transform 0.3s ease;
+            color: #008c5a;
+        }
+        
+        .section-header[aria-expanded="true"] .collapse-icon {
+            transform: rotate(180deg);
+        }
+
+        /* Estilos para tarjetas de pedidos */
+        .order-card {
+            background: #ffffff;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .order-card:hover {
+            border-color: #008c5a;
+            box-shadow: 0 4px 15px rgba(0, 140, 90, 0.1);
+        }
+        
+        .order-status {
+            position: absolute;
+            top: -10px;
+            right: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .order-total {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #008c5a;
+            white-space: nowrap;
+            overflow: visible;
+            text-overflow: clip;
+        }
+        
+        .order-items {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+        }
+        
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.25rem;
+        }
+        
+        .order-item:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Estilos para gráficos y reportes */
+        .report-chart {
+            background: #ffffff;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .progress-category {
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .category-item:last-child {
+            border-bottom: none;
+        }
+        
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .ranking-item:last-child {
+            border-bottom: none;
+        }
+        
+        .ranking-number {
+            background: #008c5a;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+        
+        .ranking-number.gold {
+            background: #ffc107;
+            color: #000;
+        }
+        
+        .ranking-number.silver {
+            background: #6c757d;
+        }
+        
+        .ranking-number.bronze {
+            background: #fd7e14;
+        }
+
+        /* Animaciones para las tarjetas */
+        .admin-section {
+            transition: all 0.3s ease;
+        }
+        
+        .admin-section:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Badges de estado mejorados */
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-confirmado {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .status-procesando {
+            background-color: #fff3e0;
+            color: #f57c00;
+        }
+        
+        .status-enviado {
+            background-color: #f3e5f5;
+            color: #7b1fa2;
+        }
+        
+        .status-entregado {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        .status-cancelado {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        /* Sistema de notificaciones elegante */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            min-width: 300px;
+            max-width: 400px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #008c5a;
+            z-index: 1050;
+            overflow: hidden;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        .notification.success { border-left-color: #28a745; }
+        .notification.error { border-left-color: #dc3545; }
+        .notification.warning { border-left-color: #ffc107; }
+        .notification.info { border-left-color: #17a2b8; }
+
+        .notification-header {
+            padding: 16px 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .notification-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .notification-icon.success { background: #d4edda; color: #155724; }
+        .notification-icon.error { background: #f8d7da; color: #721c24; }
+        .notification-icon.warning { background: #fff3cd; color: #856404; }
+        .notification-icon.info { background: #d1ecf1; color: #0c5460; }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-message {
+            color: #2c3e50;
+            font-size: 14px;
+            line-height: 1.4;
+            margin: 0;
+        }
+
+        .notification-close {
+            background: none;
+            border: none;
+            color: #6c757d;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+
+        .notification-close:hover {
+            background-color: #f8f9fa;
+        }
+
+        .notification-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #008c5a, #00b374);
+            transition: width 0.1s linear;
+        }
+
+        .notification.success .notification-progress { background: linear-gradient(90deg, #28a745, #34ce57); }
+        .notification.error .notification-progress { background: linear-gradient(90deg, #dc3545, #e74c3c); }
+        .notification.warning .notification-progress { background: linear-gradient(90deg, #ffc107, #f39c12); }
+        .notification.info .notification-progress { background: linear-gradient(90deg, #17a2b8, #3498db); }
+
+        @keyframes slideInRight {
+            from { 
+                transform: translateX(100%); 
+                opacity: 0; 
+            }
+            to { 
+                transform: translateX(0); 
+                opacity: 1; 
+            }
+        }
+
+        @keyframes slideOutRight {
+            from { 
+                transform: translateX(0); 
+                opacity: 1; 
+            }
+            to { 
+                transform: translateX(100%); 
+                opacity: 0; 
+            }
+        }
+
+        /* Responsive para notificaciones */
+        @media (max-width: 768px) {
+            .notification {
+                right: 10px;
+                left: 10px;
+                min-width: auto;
+                max-width: none;
+            }
+        }
+
+        /* Mejoras móviles simples */
+        @media (max-width: 768px) {
+            .admin-header {
+                padding: 0.5rem !important;
+            }
+            
+            .admin-header h1 {
+                font-size: 1.1rem !important;
+            }
+            
+            .stats-cards {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 0.8rem !important;
+            }
+            
+            .stat-card {
+                padding: 1rem !important;
+            }
+            
+            .stat-icon {
+                font-size: 2rem !important;
+                margin-bottom: 0.4rem !important;
+            }
+            
+            .stat-number {
+                font-size: 1.5rem !important;
+                margin-bottom: 0.2rem !important;
+            }
+            
+            .stat-label {
+                font-size: 0.75rem !important;
+            }
+            
+            .admin-section {
+                margin-bottom: 2.5rem !important;
+                padding: 0 !important;
+            }
+            
+            .section-header h3 {
+                font-size: 0.95rem !important;
+            }
+            
+            .form-control, .form-select {
+                font-size: 16px !important; /* Prevenir zoom en iOS */
+                padding: 0.6rem !important;
+            }
+            
+            .btn {
+                font-size: 0.85rem !important;
+                padding: 0.5rem 0.8rem !important;
+            }
+            
+            .btn-group {
+                flex-direction: column !important;
+                gap: 0.3rem !important;
+            }
+            
+            .btn-group .btn {
+                border-radius: 0.375rem !important;
+            }
+            
+            .order-card {
+                padding: 0.8rem !important;
+                margin-bottom: 0.8rem !important;
+            }
+            
+            .order-card .col-md-3 {
+                margin-bottom: 0.5rem !important;
+            }
+            
+            .modal-dialog {
+                margin: 0.5rem !important;
+            }
+        }
+
+        /* Pantallas extra pequeñas - una columna */
+        @media (max-width: 480px) {
+            .stats-cards {
+                grid-template-columns: 1fr !important;
+                gap: 0.6rem !important;
+            }
+            
+            .stat-card {
+                padding: 0.8rem !important;
+            }
+            
+            .stat-icon {
+                font-size: 1.8rem !important;
+            }
+            
+            .stat-number {
+                font-size: 1.3rem !important;
+            }
+            
+            .stat-label {
+                font-size: 0.7rem !important;
+            }
+        }
+
+        /* Pantallas extra pequeñas */
+        @media (max-width: 576px) {
+            .admin-header h1 {
+                font-size: 1rem !important;
+            }
+            
+            .stat-card {
+                padding: 0.8rem !important;
+            }
+            
+            .stat-number {
+                font-size: 1.2rem !important;
+            }
+            
+            .mobile-order-actions {
+                flex-direction: column !important;
+            }
+            
+            .mobile-order-actions .btn {
+                min-width: auto !important;
+                flex: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- NAVBAR ESTÁNDAR ECOMARKET -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top" style="background-color: #008c5a;">
+    <div class="container-fluid">
+        <!-- Logo -->
+        <a class="navbar-brand fw-bold" href="index.html">EcoMarket</a>
+
+        <!-- Iconos fijos a la derecha (siempre visibles) -->
+        <div class="d-flex align-items-center gap-2 order-lg-3">
+            <!-- Dropdown Usuario -->
+            <div class="dropdown">
+                <a href="#" class="text-white" role="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-person fs-5"></i>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown" id="userDropdownMenu">
+                    <!-- El contenido se genera dinámicamente con JavaScript -->
+                </ul>
+            </div>
+
+            <!-- Carrito -->
+            <a href="carrito.html" class="text-white position-relative">
+                <i class="bi bi-cart fs-5"></i>
+                <!-- Contador dinámico -->
+                <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none;">
+                0
+                </span>  
+            </a>
+
+            <!-- Indicador Admin -->
+            <span class="badge bg-warning text-dark">
+                <i class="bi bi-shield-check me-1"></i>Admin
+            </span>
+        </div>
+
+        <!-- Botón Hamburguesa (corregido) -->
+        <button class="navbar-toggler custom-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="custom-toggler-icon">
+                <span></span>
+                <span></span>
+                <span></span>
+            </span>
+        </button>
+
+        <!-- Links del menú -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item"><a class="nav-link" href="index.html">Inicio</a></li>
+                <li class="nav-item"><a class="nav-link" href="catalogo.html">Catálogo</a></li>
+                <li class="nav-item"><a class="nav-link active" href="admin.html">Admin</a></li>
+                <li class="nav-item"><a class="nav-link" href="nosotros.html">Nosotros</a></li>
+                <li class="nav-item"><a class="nav-link" href="contacto.html">Contacto</a></li>
+            </ul>
+        </div>
+    </div>
+    </nav>
+
+    <div class="admin-container">
+        <div class="container">
+            <!-- Header -->
+            <div class="admin-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1><i class="bi bi-gear-fill"></i> Panel de Administración</h1>
+                        <p class="mb-0">Gestiona los productos del catálogo EcoMarket</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="catalogo.html" class="btn btn-light">
+                            <i class="bi bi-eye"></i> Ver Catálogo
+                        </a>
+                        <button class="btn btn-outline-light" onclick="logout()">
+                            <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estadísticas -->
+            <div class="stats-cards">
+                <div class="stat-card">
+                    <div class="stat-icon">📦</div>
+                    <div class="stat-number" id="total-products">0</div>
+                    <div class="stat-label">Total Productos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-number" id="in-stock">0</div>
+                    <div class="stat-label">En Stock</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⚠️</div>
+                    <div class="stat-number" id="low-stock">0</div>
+                    <div class="stat-label">Poco Stock</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-number" id="avg-price">$0</div>
+                    <div class="stat-label">Precio Promedio</div>
+                </div>
+            </div>
+
+            <!-- Formulario para agregar/editar productos -->
+            <div class="admin-section">
+                <div class="section-header" data-bs-toggle="collapse" data-bs-target="#collapse-add-product" aria-expanded="false" aria-controls="collapse-add-product" style="cursor: pointer;">
+                    <h3><i class="bi bi-plus-circle"></i> Agregar/Editar Producto <i class="bi bi-chevron-down ms-2 collapse-icon"></i></h3>
+                    <button class="btn btn-secondary" onclick="clearForm()" data-bs-toggle="tooltip" title="Limpiar todos los campos">
+                        <i class="bi bi-x-circle"></i> Limpiar Formulario
+                    </button>
+                </div>
+                
+                <div class="collapse" id="collapse-add-product">
+                
+                <form class="product-form" id="product-form">
+                    <input type="hidden" id="product-id">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nombre del Producto *</label>
+                            <input type="text" class="form-control" id="product-name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Categoría *</label>
+                            <select class="form-control" id="product-category" required>
+                                <option value="">Seleccionar categoría</option>
+                                <option value="frutas">Frutas</option>
+                                <option value="verduras">Verduras</option>
+                                <option value="despensa">Despensa</option>
+                                <option value="ofertas">Ofertas</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Descripción *</label>
+                        <textarea class="form-control" id="product-description" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 col-12 mb-3">
+                            <label class="form-label">Precio oferta *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="product-price" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-12 mb-3">
+                            <label class="form-label">Precio Original</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="product-original-price">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-12 mb-3">
+                            <label class="form-label">Unidad *</label>
+                            <select class="form-control" id="product-unit" required>
+                                <option value="kg">Kilogramo (kg)</option>
+                                <option value="unidad">Unidad</option>
+                                <option value="litro">Litro</option>
+                                <option value="paquete">Paquete</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 col-12 mb-3">
+                            <label class="form-label">Stock Actual *</label>
+                            <input type="number" class="form-control" id="product-stock" min="0" required>
+                        </div>
+                        <div class="col-md-4 col-12 mb-3">
+                            <label class="form-label">Stock Máximo *</label>
+                            <input type="number" class="form-control" id="product-max-stock" min="1" required>
+                        </div>
+                        <div class="col-md-4 col-12 mb-3">
+                            <label class="form-label">Calificación</label>
+                            <input type="number" class="form-control" id="product-rating" min="0" max="5" step="0.1" value="4.0">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 col-12 mb-3">
+                            <label class="form-label">URL de Imagen</label>
+                            <input type="url" class="form-control" id="product-image" placeholder="https://ejemplo.com/imagen.jpg">
+                        </div>
+                        <div class="col-md-6 col-12 mb-3">
+                            <label class="form-label">Número de Reseñas</label>
+                            <input type="number" class="form-control" id="product-reviews" min="0" value="0">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6 col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="product-is-new">
+                                <label class="form-check-label" for="product-is-new">
+                                    Producto Nuevo
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="product-available" checked>
+                                <label class="form-check-label" for="product-available">
+                                    Disponible
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary-custom">
+                        <i class="bi bi-save"></i> <span id="form-btn-text">Guardar Producto</span>
+                    </button>
+                </form>
+                </div>
+            </div>
+
+            <!-- Lista de productos existentes -->
+            <div class="admin-section">
+                <div class="section-header" data-bs-toggle="collapse" data-bs-target="#collapse-products" aria-expanded="false" aria-controls="collapse-products" style="cursor: pointer;">
+                    <h3><i class="bi bi-list-ul"></i> Productos Existentes <i class="bi bi-chevron-down ms-2 collapse-icon"></i></h3>
+                    <button class="btn btn-warning" onclick="resetToDefaults()" data-bs-toggle="tooltip" title="Restaurar productos por defecto">
+                        <i class="bi bi-arrow-clockwise"></i> Restaurar Valores por Defecto
+                    </button>
+                </div>
+                
+                <div class="collapse" id="collapse-products">
+                
+                    <div id="products-list">
+                        <!-- Los productos se cargan dinámicamente aquí -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gestión de Pedidos Pendientes -->
+            <div class="admin-section">
+                <div class="section-header" data-bs-toggle="collapse" data-bs-target="#collapse-orders" aria-expanded="false" aria-controls="collapse-orders" style="cursor: pointer;">
+                    <h3><i class="bi bi-clock-history"></i> Pedidos Pendientes <i class="bi bi-chevron-down ms-2 collapse-icon"></i></h3>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-info btn-sm" onclick="generateTestOrders()" data-bs-toggle="tooltip" title="Generar pedidos de prueba con productos reales">
+                            <i class="bi bi-plus-circle"></i> Generar Prueba
+                        </button>
+                        <button class="btn btn-warning btn-sm" onclick="clearAllOrders()" data-bs-toggle="tooltip" title="Limpiar todos los pedidos antiguos">
+                            <i class="bi bi-trash3"></i> Limpiar Todo
+                        </button>
+                        <button class="btn btn-success btn-sm" onclick="refreshOrders()" data-bs-toggle="tooltip" title="Actualizar lista de pedidos">
+                            <i class="bi bi-arrow-clockwise"></i> Actualizar
+                        </button>
+                        <span class="badge bg-warning text-dark fs-6" id="pending-orders-count">0</span>
+                    </div>
+                </div>
+                
+                <div class="collapse" id="collapse-orders">
+                    <!-- Filtros de pedidos -->
+                    <div class="mb-3 p-3 bg-light rounded">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <label class="form-label">Filtrar por estado:</label>
+                                <select class="form-control form-control-sm" id="order-status-filter" onchange="filterOrders()">
+                                    <option value="">Todos los estados</option>
+                                    <option value="confirmado">Confirmados</option>
+                                    <option value="procesando">Procesando</option>
+                                    <option value="enviado">Enviados</option>
+                                    <option value="entregado">Entregados</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Método de pago:</label>
+                                <select class="form-control form-control-sm" id="payment-filter" onchange="filterOrders()">
+                                    <option value="">Todos los métodos</option>
+                                    <option value="credit-card">Tarjeta de Crédito</option>
+                                    <option value="bank-transfer">Transferencia</option>
+                                    <option value="cash-on-delivery">Contra Entrega</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Buscar cliente:</label>
+                                <input type="text" class="form-control form-control-sm" id="customer-search" placeholder="Nombre o email..." onkeyup="filterOrders()">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">&nbsp;</label>
+                                <button class="btn btn-outline-secondary btn-sm w-100" onclick="clearOrderFilters()">
+                                    <i class="bi bi-x"></i> Limpiar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="orders-list">
+                        <!-- Los pedidos se cargan dinámicamente aquí -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informes y Estadísticas -->
+            <div class="admin-section">
+                <div class="section-header" data-bs-toggle="collapse" data-bs-target="#collapse-reports" aria-expanded="false" aria-controls="collapse-reports" style="cursor: pointer;">
+                    <h3><i class="bi bi-graph-up"></i> Informes y Estadísticas <i class="bi bi-chevron-down ms-2 collapse-icon"></i></h3>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-info btn-sm" onclick="generateReport()" data-bs-toggle="tooltip" title="Generar nuevo informe">
+                            <i class="bi bi-file-earmark-bar-graph"></i> Generar Informe
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm" onclick="exportReport()" data-bs-toggle="tooltip" title="Exportar datos">
+                            <i class="bi bi-download"></i> Exportar
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="collapse" id="collapse-reports">
+                    <!-- Métricas principales -->
+                    <div class="row mb-4">
+                        <div class="col-md-3 mb-3">
+                            <div class="stat-card">
+                                <div class="stat-icon text-primary">📊</div>
+                                <div class="stat-number" id="total-sales">$0</div>
+                                <div class="stat-label">Ventas Totales</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="stat-card">
+                                <div class="stat-icon text-success">🏆</div>
+                                <div class="stat-number" id="best-seller">-</div>
+                                <div class="stat-label">Más Vendido</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="stat-card">
+                                <div class="stat-icon text-info">👤</div>
+                                <div class="stat-number" id="top-customer">-</div>
+                                <div class="stat-label">Cliente Top</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="stat-card">
+                                <div class="stat-icon text-warning">📦</div>
+                                <div class="stat-number" id="pending-deliveries">0</div>
+                                <div class="stat-label">Pendientes</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tablas de reportes -->
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="bi bi-trophy"></i> Top 5 Productos Más Vendidos</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="top-products-list">
+                                        <!-- Lista generada dinámicamente -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="bi bi-people"></i> Top 5 Clientes</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="top-customers-list">
+                                        <!-- Lista generada dinámicamente -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resumen de pedidos por categoría -->
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Ventas por Categoría</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row" id="category-stats">
+                                <!-- Estadísticas por categoría generadas dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Sistema de administración de productos - Versión limpia
+        let isEditing = false;
+
+        // ========================
+        // SISTEMA DE NOTIFICACIONES ELEGANTE
+        // ========================
+        function showNotification(message, type = 'success', duration = 4000) {
+            const notificationId = 'notification-' + Date.now();
+            
+            const icons = {
+                success: '<i class="bi bi-check-circle-fill"></i>',
+                error: '<i class="bi bi-x-circle-fill"></i>',
+                warning: '<i class="bi bi-exclamation-triangle-fill"></i>',
+                info: '<i class="bi bi-info-circle-fill"></i>'
+            };
+
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.id = notificationId;
+            notification.innerHTML = `
+                <div class="notification-header">
+                    <div class="d-flex align-items-start">
+                        <div class="notification-icon ${type}">
+                            ${icons[type]}
+                        </div>
+                        <div class="notification-content">
+                            <p class="notification-message">${message}</p>
+                        </div>
+                        <button class="notification-close" onclick="closeNotification('${notificationId}')">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="notification-progress" style="width: 100%"></div>
+            `;
+
+            document.body.appendChild(notification);
+
+            // Animar la barra de progreso
+            setTimeout(() => {
+                const progressBar = notification.querySelector('.notification-progress');
+                if (progressBar) {
+                    progressBar.style.width = '0%';
+                    progressBar.style.transition = `width ${duration}ms linear`;
+                }
+            }, 100);
+
+            // Auto-cerrar después del tiempo especificado
+            setTimeout(() => {
+                closeNotification(notificationId);
+            }, duration);
+
+            return notificationId;
+        }
+
+        function closeNotification(notificationId) {
+            const notification = document.getElementById(notificationId);
+            if (notification) {
+                notification.style.animation = 'slideOutRight 0.3s ease-out';
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }
+        }
+
+        // Función de confirmación elegante
+        // Función showConfirmation se usa desde app.js - no duplicar aquí
+        
+        // Obtener productos del localStorage
+        function getProducts() {
+            const products = localStorage.getItem('ecomarket_products');
+            return products ? JSON.parse(products) : [];
+        }
+        
+        // Guardar productos en localStorage
+        function saveProducts(products) {
+            localStorage.setItem('ecomarket_products', JSON.stringify(products));
+            // Trigger evento para actualizar catálogo
+            window.dispatchEvent(new CustomEvent('productsUpdated', { detail: products }));
+        }
+        
+        // Generar ID único para nuevo producto
+        function generateId() {
+            return 'prod_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+        
+        // Actualizar estadísticas
+        function updateStats() {
+            const products = getProducts();
+            const totalProducts = products.length;
+            const inStock = products.filter(p => p.stock > 5).length;
+            const lowStock = products.filter(p => p.stock <= 5 && p.stock > 0).length;
+            const avgPrice = products.length > 0 ? 
+                Math.round(products.reduce((sum, p) => sum + p.price, 0) / products.length) : 0;
+            
+            document.getElementById('total-products').textContent = totalProducts;
+            document.getElementById('in-stock').textContent = inStock;
+            document.getElementById('low-stock').textContent = lowStock;
+            document.getElementById('avg-price').textContent = '$' + avgPrice.toLocaleString();
+        }
+        
+        // Renderizar lista de productos
+        function renderProductsList() {
+            const products = getProducts();
+            const container = document.getElementById('products-list');
+            
+            if (products.length === 0) {
+                container.innerHTML = '<div class="text-center text-muted py-5">' +
+                    '<i class="bi bi-inbox" style="font-size: 3rem;"></i>' +
+                    '<h5>No hay productos registrados</h5>' +
+                    '<p>Agrega tu primer producto usando el formulario de arriba</p>' +
+                    '</div>';
+                return;
+            }
+            
+            container.innerHTML = products.map(product => `
+                <div class="product-item">
+                    <div class="row align-items-center">
+                        <div class="col-md-2">
+                            <img src="${product.image || 'https://via.placeholder.com/80x60/008c5a/ffffff?text=Sin+Img'}" 
+                                 class="img-fluid rounded" alt="${product.name}" style="height: 60px; object-fit: cover;">
+                        </div>
+                        <div class="col-md-3">
+                            <h6 class="mb-1">${product.name}</h6>
+                            <span class="badge bg-secondary">${product.category}</span>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="fw-bold text-success">$${product.price.toLocaleString()}</div>
+                            <small class="text-muted">por ${product.unit}</small>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="d-flex align-items-center">
+                                <span class="me-2">${product.stock}</span>
+                                <div class="progress" style="width: 60px; height: 8px;">
+                                    <div class="progress-bar ${product.stock > 5 ? 'bg-success' : 'bg-warning'}" 
+                                         style="width: ${(product.stock / product.maxStock) * 100}%"></div>
+                                </div>
+                            </div>
+                            <small class="text-muted">de ${product.maxStock}</small>
+                        </div>
+                        <div class="col-md-1 text-center">
+                            <span class="badge ${product.available ? 'bg-success' : 'bg-secondary'}">
+                                ${product.available ? 'Activo' : 'Inactivo'}
+                            </span>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="editProduct('${product.id}')">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct('${product.id}')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Limpiar formulario
+        function clearForm() {
+            document.getElementById('product-form').reset();
+            document.getElementById('product-id').value = '';
+            document.getElementById('product-available').checked = true;
+            document.getElementById('product-rating').value = 4.0;
+            document.getElementById('product-reviews').value = 0;
+            document.getElementById('form-btn-text').textContent = 'Guardar Producto';
+            isEditing = false;
+        }
+        
+        // Editar producto
+        function editProduct(productId) {
+            const products = getProducts();
+            const product = products.find(p => p.id === productId);
+            
+            if (!product) return;
+            
+            document.getElementById('product-id').value = product.id;
+            document.getElementById('product-name').value = product.name;
+            document.getElementById('product-category').value = product.category;
+            document.getElementById('product-description').value = product.description;
+            document.getElementById('product-price').value = product.price;
+            document.getElementById('product-original-price').value = product.originalPrice || '';
+            document.getElementById('product-unit').value = product.unit;
+            document.getElementById('product-stock').value = product.stock;
+            document.getElementById('product-max-stock').value = product.maxStock;
+            document.getElementById('product-rating').value = product.rating;
+            document.getElementById('product-image').value = product.image || '';
+            document.getElementById('product-reviews').value = product.reviews;
+            document.getElementById('product-is-new').checked = product.isNew;
+            document.getElementById('product-available').checked = product.available;
+            
+            document.getElementById('form-btn-text').textContent = 'Actualizar Producto';
+            isEditing = true;
+            
+            // Scroll al formulario
+            document.getElementById('product-form').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Eliminar producto
+        function deleteProduct(productId) {
+            showConfirmation(
+                '¿Estás seguro de que deseas eliminar este producto?',
+                function() {
+                    const products = getProducts();
+                    const updatedProducts = products.filter(p => p.id !== productId);
+                    saveProducts(updatedProducts);
+                    renderProductsList();
+                    updateStats();
+                    
+                    showNotification('Producto eliminado correctamente', 'success');
+                }
+            );
+        }
+        
+        // Restaurar productos por defecto
+        function resetToDefaults() {
+            showConfirmation(
+                '¿Estás seguro? Esto eliminará todos los productos actuales y restaurará los valores por defecto.',
+                function() {
+            
+            // Productos por defecto (mismos que en catalog.js)
+            const defaultProducts = [
+                {
+                    id: 'frutillas',
+                    name: 'Frutillas Frescas Premium',
+                    category: 'frutas',
+                    description: 'Frutillas de temporada, dulces y jugosas. Perfectas para postres y desayunos saludables.',
+                    price: 1600,
+                    originalPrice: 2000,
+                    unit: 'kg',
+                    stock: 15,
+                    maxStock: 20,
+                    image: 'assets/img/frutillas.jpg',
+                    rating: 4.5,
+                    reviews: 24,
+                    isNew: false,
+                    isOffer: true,
+                    available: true
+                },
+                {
+                    id: 'lechuga',
+                    name: 'Lechuga Criolla Fresca',
+                    category: 'verduras',
+                    description: 'Lechuga criolla de hoja verde, crujiente y fresca. Ideal para ensaladas y hamburguesas.',
+                    price: 1200,
+                    originalPrice: null,
+                    unit: 'unidad',
+                    stock: 25,
+                    maxStock: 30,
+                    image: 'assets/img/lechuga.jpg',
+                    rating: 4.0,
+                    reviews: 18,
+                    isNew: false,
+                    isOffer: false,
+                    available: true
+                },
+                {
+                    id: 'tomates',
+                    name: 'Tomates Cherry Orgánicos',
+                    category: 'verduras',
+                    description: 'Tomates cherry orgánicos, dulces y jugosos. Perfectos para ensaladas y snacks saludables.',
+                    price: 2800,
+                    originalPrice: null,
+                    unit: 'kg',
+                    stock: 3,
+                    maxStock: 20,
+                    image: 'assets/img/tomates.jpg',
+                    rating: 5.0,
+                    reviews: 32,
+                    isNew: false,
+                    isOffer: false,
+                    available: true
+                },
+                {
+                    id: 'zanahorias',
+                    name: 'Zanahorias Baby Premium',
+                    category: 'verduras',
+                    description: 'Zanahorias baby tiernas y dulces. Ideales para cocinar o consumir crudas como snack saludable.',
+                    price: 1800,
+                    originalPrice: null,
+                    unit: 'kg',
+                    stock: 20,
+                    maxStock: 25,
+                    image: 'assets/img/zanahoria.jpg',
+                    rating: 4.2,
+                    reviews: 12,
+                    isNew: true,
+                    isOffer: false,
+                    available: true
+                }
+            ];
+            
+            saveProducts(defaultProducts);
+            renderProductsList();
+            updateStats();
+            clearForm();
+            
+            showNotification('Productos restaurados a valores por defecto', 'info');
+                }
+            );
+        }
+        
+        // Manejar envío del formulario
+        document.getElementById('product-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                id: document.getElementById('product-id').value || generateId(),
+                name: document.getElementById('product-name').value.trim(),
+                category: document.getElementById('product-category').value,
+                description: document.getElementById('product-description').value.trim(),
+                price: parseInt(document.getElementById('product-price').value),
+                originalPrice: document.getElementById('product-original-price').value ? 
+                              parseInt(document.getElementById('product-original-price').value) : null,
+                unit: document.getElementById('product-unit').value,
+                stock: parseInt(document.getElementById('product-stock').value),
+                maxStock: parseInt(document.getElementById('product-max-stock').value),
+                rating: parseFloat(document.getElementById('product-rating').value),
+                image: document.getElementById('product-image').value.trim() || null,
+                reviews: parseInt(document.getElementById('product-reviews').value) || 0,
+                isNew: document.getElementById('product-is-new').checked,
+                available: document.getElementById('product-available').checked
+            };
+            
+            // Validaciones básicas
+            if (formData.price <= 0) {
+                showNotification('El precio debe ser mayor a 0', 'error');
+                return;
+            }
+            
+            if (formData.stock > formData.maxStock) {
+                showNotification('El stock actual no puede ser mayor al stock máximo', 'error');
+                return;
+            }
+            
+            // Calcular si es oferta
+            formData.isOffer = formData.originalPrice && formData.originalPrice > formData.price;
+            
+            const products = getProducts();
+            
+            if (isEditing) {
+                // Actualizar producto existente
+                const index = products.findIndex(p => p.id === formData.id);
+                if (index !== -1) {
+                    products[index] = formData;
+                    showNotification('Producto actualizado correctamente', 'success');
+                }
+            } else {
+                // Agregar nuevo producto
+                products.push(formData);
+                showNotification('Producto agregado correctamente', 'success');
+            }
+            
+            saveProducts(products);
+            renderProductsList();
+            updateStats();
+            clearForm();
+        });
+        
+        // Función para cerrar sesión
+        function logout() {
+            console.log('logout() function called');
+            try {
+                showConfirmation(
+                    '¿Estás seguro de que deseas cerrar sesión?',
+                    function() {
+                        console.log('Logout confirmed');
+                        // Confirmar logout
+                        localStorage.removeItem('ecomarket_logged_in');
+                        localStorage.removeItem('ecomarket_user_type');
+                        localStorage.removeItem('ecomarket_user_email');
+                        localStorage.removeItem('ecomarket_user_name');
+                        localStorage.removeItem('ecomarket_current_user');
+                        
+                        showNotification('Sesión cerrada correctamente', 'info');
+                        setTimeout(() => {
+                            console.log('Redirecting to login.html');
+                            window.location.href = 'login.html';
+                        }, 1500);
+                    },
+                    function() {
+                        console.log('Logout cancelled');
+                        // Cancelar logout
+                        showNotification('Sesión mantenida', 'info', 2000);
+                    }
+                );
+            } catch (error) {
+                console.error('Error in logout function:', error);
+                // Fallback - usar nuestro sistema de confirmación
+                showConfirmation(
+                    'Confirmar Logout',
+                    '¿Estás seguro de que deseas cerrar sesión?',
+                    function() {
+                        localStorage.removeItem('ecomarket_logged_in');
+                        localStorage.removeItem('ecomarket_user_type');
+                        localStorage.removeItem('ecomarket_user_email');
+                        localStorage.removeItem('ecomarket_user_name');
+                        localStorage.removeItem('ecomarket_current_user');
+                        
+                        showNotification('Cerrando sesión...', 'success');
+                        setTimeout(() => {
+                            window.location.href = 'login.html';
+                        }, 1500);
+                    }
+                );
+            }
+        }
+        
+        // Verificar autenticación
+        function checkAuth() {
+            const isLoggedIn = localStorage.getItem('ecomarket_logged_in') === 'true';
+            const userType = localStorage.getItem('ecomarket_user_type');
+            
+            if (!isLoggedIn || userType !== 'admin') {
+                showNotification('Acceso denegado. Debes iniciar sesión como administrador.', 'error');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+                return false;
+            }
+            return true;
+        }
+
+        // ========================
+        // GESTIÓN DE PEDIDOS
+        // ========================
+        
+        // Obtener pedidos del localStorage
+        function getOrders() {
+            const orders = localStorage.getItem('ecomarket_orders');
+            const parsedOrders = orders ? JSON.parse(orders) : [];
+            console.log('Pedidos cargados:', parsedOrders.length, parsedOrders);
+            return parsedOrders;
+        }
+        
+        // Renderizar lista de pedidos
+        function renderOrdersList() {
+            const orders = getOrders();
+            console.log('Renderizando pedidos:', orders.length);
+            const container = document.getElementById('orders-list');
+            const pendingCount = document.getElementById('pending-orders-count');
+            
+            // Filtrar pedidos pendientes (no entregados)
+            const pendingOrders = orders.filter(order => order.status !== 'entregado');
+            console.log('Pedidos pendientes:', pendingOrders.length);
+            if (pendingCount) pendingCount.textContent = pendingOrders.length;
+            
+            if (orders.length === 0) {
+                container.innerHTML = '<div class="text-center text-muted py-5">' +
+                    '<i class="bi bi-inbox" style="font-size: 3rem;"></i>' +
+                    '<h5>No hay pedidos registrados</h5>' +
+                    '<p>Los pedidos aparecerán aquí cuando los clientes realicen compras</p>' +
+                    '</div>';
+                return;
+            }
+            
+            let ordersHtml = '';
+            orders.forEach(order => {
+                console.log('Renderizando pedido:', order);
+                console.log('Items del pedido en renderOrdersList:', order.items);
+                
+                let itemsHtml = '';
+                if (order.items && order.items.length > 0) {
+                    order.items.forEach(item => {
+                        console.log('Renderizando item en lista:', item);
+                        
+                        // Mejorar el nombre del producto
+                        let itemName = item.name;
+                        if (!itemName || itemName === 'Producto sin nombre') {
+                            // Mapear productos conocidos por ID si está disponible - Lista completa
+                            const productMap = {
+                                'frutillas': 'Frutillas Frescas Premium',
+                                'lechuga': 'Lechuga Criolla Fresca',
+                                'tomates': 'Tomates Cherry Orgánicos',
+                                'zanahorias': 'Zanahorias Baby Premium',
+                                'manzanas': 'Manzanas Red Delicious',
+                                'bananas': 'Bananas Premium',
+                                'peras': 'Peras Williams',
+                                'apio': 'Apio Fresco Orgánico'
+                            };
+                            itemName = productMap[item.productId] || item.productId || 'Producto del catálogo';
+                        }
+                        
+                        const itemQuantity = parseInt(item.quantity) || 1;
+                        const itemUnit = item.unit || 'unidad';
+                        const itemPrice = parseFloat(item.price) || 0;
+                        
+                        itemsHtml += '<div class="order-item">' +
+                            '<span>' + itemName + ' (' + itemQuantity + ' ' + itemUnit + ')</span>' +
+                            '<span>$' + (itemPrice * itemQuantity).toLocaleString() + '</span>' +
+                            '</div>';
+                    });
+                } else {
+                    itemsHtml = '<div class="order-item"><span>No hay productos</span><span>$0</span></div>';
+                }
+                
+                ordersHtml += '<div class="order-card">' +
+                    '<div class="order-status">' +
+                    '<span class="status-badge status-' + order.status + '">' + order.status + '</span>' +
+                    '</div>' +
+                    '<div class="row">' +
+                    '<div class="col-md-3">' +
+                    '<strong>Pedido #' + order.id + '</strong><br>' +
+                    '<small class="text-muted">' + new Date(order.date).toLocaleDateString() + '</small><br>' +
+                    '<small class="text-muted">' + new Date(order.date).toLocaleTimeString() + '</small>' +
+                    '</div>' +
+                    '<div class="col-md-3">' +
+                    '<strong>Cliente:</strong><br>' +
+                    order.customer.name + '<br>' +
+                    '<small class="text-muted">' + order.customer.email + '</small><br>' +
+                    '<small class="text-muted">' + order.customer.phone + '</small>' +
+                    '</div>' +
+                    '<div class="col-md-3">' +
+                    '<strong>Entrega:</strong><br>' +
+                    order.delivery.address + '<br>' +
+                    '<small class="text-muted">' + order.delivery.city + '</small><br>' +
+                    '<small class="text-muted">Pago: ' + getPaymentMethodName(order.payment.method) + '</small>' +
+                    '</div>' +
+                    '<div class="col-md-3 text-end">' +
+                    '<div class="order-total">Total: $' + order.total.toLocaleString() + '</div>' +
+                    '<div class="mt-2">' +
+                    '<button class="btn btn-sm btn-outline-primary me-1" onclick="viewOrderDetails(\'' + order.id + '\')">' +
+                    '<i class="bi bi-eye"></i> Ver' +
+                    '</button>' +
+                    '<div class="btn-group">' +
+                    '<button class="btn btn-sm btn-success dropdown-toggle" data-bs-toggle="dropdown">' +
+                    '<i class="bi bi-gear"></i>' +
+                    '</button>' +
+                    '<ul class="dropdown-menu">' +
+                    '<li><a class="dropdown-item" onclick="updateOrderStatus(\'' + order.id + '\', \'confirmado\')">Confirmar</a></li>' +
+                    '<li><a class="dropdown-item" onclick="updateOrderStatus(\'' + order.id + '\', \'procesando\')">Procesar</a></li>' +
+                    '<li><a class="dropdown-item" onclick="updateOrderStatus(\'' + order.id + '\', \'enviado\')">Enviar</a></li>' +
+                    '<li><a class="dropdown-item" onclick="updateOrderStatus(\'' + order.id + '\', \'entregado\')">Entregar</a></li>' +
+                    '<li><hr class="dropdown-divider"></li>' +
+                    '<li><a class="dropdown-item text-danger" onclick="cancelOrder(\'' + order.id + '\')">Cancelar</a></li>' +
+                    '</ul>' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="order-items mt-3">' +
+                    '<strong>Productos:</strong>' +
+                    itemsHtml +
+                    '</div>' +
+                    '</div>';
+            });
+            
+            container.innerHTML = ordersHtml;
+        }
+        
+        // Obtener nombre del método de pago
+        function getPaymentMethodName(method) {
+            const methods = {
+                'credit-card': 'Tarjeta de Crédito',
+                'bank-transfer': 'Transferencia Bancaria',
+                'cash-on-delivery': 'Contra Entrega'
+            };
+            return methods[method] || method;
+        }
+        
+        // Actualizar estado de pedido
+        // Función helper para formatear el total correctamente
+        function formatOrderTotal(total) {
+            const numericTotal = parseFloat(total) || 0;
+            return '$' + Math.round(numericTotal).toLocaleString('es-CL');
+        }
+
+        function updateOrderStatus(orderId, newStatus) {
+            const orders = getOrders();
+            const orderIndex = orders.findIndex(o => o.id === orderId);
+            
+            if (orderIndex !== -1) {
+                const order = orders[orderIndex];
+                order.status = newStatus;
+                order.lastUpdated = new Date().toISOString();
+                
+                // Actualizar en el historial general
+                localStorage.setItem('ecomarket_orders', JSON.stringify(orders));
+                
+                // Actualizar también en el historial específico del usuario
+                const userId = order.customer.id;
+                let userOrders = JSON.parse(localStorage.getItem('ecomarket_user_orders_' + userId)) || [];
+                const userOrderIndex = userOrders.findIndex(o => o.id === orderId);
+                if (userOrderIndex !== -1) {
+                    userOrders[userOrderIndex] = order;
+                    localStorage.setItem('ecomarket_user_orders_' + userId, JSON.stringify(userOrders));
+                }
+                
+                renderOrdersList();
+                updateReportsData();
+                
+                // Mostrar mensaje personalizado según el estado
+                const statusMessages = {
+                    'confirmado': 'Pedido confirmado correctamente',
+                    'procesando': 'Pedido marcado como procesando',
+                    'enviado': 'Pedido marcado como enviado',
+                    'entregado': 'Pedido marcado como entregado',
+                    'cancelado': 'Pedido cancelado'
+                };
+                showNotification(statusMessages[newStatus] || 'Pedido actualizado', 'success');
+            }
+        }
+        
+        // Función para cancelar pedido (alias para updateOrderStatus)
+        function cancelOrder(orderId) {
+            showConfirmation(
+                'Confirmar Cancelación',
+                '¿Estás seguro de que deseas cancelar este pedido?',
+                function() {
+                    updateOrderStatus(orderId, 'cancelado');
+                }
+            );
+        }
+        
+        // Ver detalles del pedido
+        function viewOrderDetails(orderId) {
+            console.log('Intentando ver detalles del pedido:', orderId);
+            const orders = getOrders();
+            const order = orders.find(o => o.id === orderId);
+            
+            if (!order) {
+                console.error('Pedido no encontrado:', orderId);
+                showNotification('Pedido no encontrado', 'error');
+                return;
+            }
+            
+            console.log('Pedido encontrado:', order);
+            console.log('Items del pedido en viewOrderDetails:', order.items);
+            
+            let itemsHtml = '';
+            let calculatedTotal = 0;
+            if (order.items && order.items.length > 0) {
+                order.items.forEach((item, index) => {
+                    console.log('Procesando item ' + index + ':', item);
+                    console.log('- Nombre:', item.name, 'Tipo:', typeof item.name);
+                    console.log('- Precio:', item.price, 'Tipo:', typeof item.price);
+                    console.log('- Cantidad:', item.quantity, 'Tipo:', typeof item.quantity);
+                    
+                    const itemPrice = parseFloat(item.price) || 0;
+                    const itemQuantity = parseInt(item.quantity) || 1;
+                    const itemUnit = item.unit || 'unidad';
+                    
+                    // Sumar al total calculado
+                    calculatedTotal += itemPrice * itemQuantity;
+                    
+                    // Mejorar el nombre del producto
+                    let itemName = item.name;
+                    if (!itemName || itemName === 'Producto sin nombre' || itemName === 'Sin nombre') {
+                        // Mapear productos conocidos por ID si está disponible - Lista completa
+                        const productMap = {
+                            'frutillas': 'Frutillas Frescas Premium',
+                            'lechuga': 'Lechuga Criolla Fresca',
+                            'tomates': 'Tomates Cherry Orgánicos',
+                            'zanahorias': 'Zanahorias Baby Premium',
+                            'manzanas': 'Manzanas Red Delicious',
+                            'bananas': 'Bananas Premium',
+                            'peras': 'Peras Williams',
+                            'apio': 'Apio Fresco Orgánico'
+                        };
+                        itemName = productMap[item.productId] || item.productId || 'Producto del catálogo';
+                    }
+                    
+                    console.log('- Valores procesados: nombre=' + itemName + ', precio=' + itemPrice + ', cantidad=' + itemQuantity);
+                    
+                    itemsHtml += '<tr>' +
+                        '<td>' + itemName + '</td>' +
+                        '<td>' + itemQuantity + ' ' + itemUnit + '</td>' +
+                        '<td class="d-none-mobile">$' + itemPrice.toLocaleString() + '</td>' +
+                        '<td>$' + (itemPrice * itemQuantity).toLocaleString() + '</td>' +
+                        '</tr>';
+                });
+            } else {
+                itemsHtml = '<tr><td colspan="3" class="d-block d-sm-none">No hay productos en este pedido</td><td colspan="4" class="d-none d-sm-table-cell">No hay productos en este pedido</td></tr>';
+            }
+            
+            // Usar el total calculado si el total del pedido es 0 o indefinido
+            const finalTotal = order.total && order.total > 0 ? order.total : calculatedTotal;
+            console.log('Total del pedido:', order.total, 'Total calculado:', calculatedTotal, 'Total final:', finalTotal);
+            
+            let lastUpdatedHtml = '';
+            if (order.lastUpdated) {
+                lastUpdatedHtml = '<p><strong>Última Actualización:</strong> ' + new Date(order.lastUpdated).toLocaleString() + '</p>';
+            }
+            
+            const modalHTML = '<div class="modal fade" id="orderDetailsModal" tabindex="-1">' +
+                '<div class="modal-dialog modal-lg">' +
+                '<div class="modal-content">' +
+                '<div class="modal-header">' +
+                '<h5 class="modal-title">Detalles del Pedido #' + order.id + '</h5>' +
+                '<button type="button" class="btn-close" data-bs-dismiss="modal"></button>' +
+                '</div>' +
+                '<div class="modal-body">' +
+                '<div class="row mb-3">' +
+                '<div class="col-md-6">' +
+                '<h6>Información del Cliente</h6>' +
+                '<p><strong>Nombre:</strong> ' + order.customer.name + '<br>' +
+                '<strong>Email:</strong> ' + order.customer.email + '<br>' +
+                '<strong>Teléfono:</strong> ' + order.customer.phone + '</p>' +
+                '</div>' +
+                '<div class="col-md-6">' +
+                '<h6>Información de Entrega</h6>' +
+                '<p><strong>Dirección:</strong> ' + order.delivery.address + '<br>' +
+                '<strong>Ciudad:</strong> ' + order.delivery.city + '<br>' +
+                '<strong>Estado:</strong> <span class="status-badge status-' + order.status + '">' + order.status + '</span></p>' +
+                '</div>' +
+                '</div>' +
+                '<h6>Productos</h6>' +
+                '<div class="table-responsive">' +
+                '<table class="table table-sm">' +
+                '<thead>' +
+                '<tr>' +
+                '<th>Producto</th>' +
+                '<th>Cantidad</th>' +
+                '<th class="d-none-mobile">Precio Unit.</th>' +
+                '<th>Subtotal</th>' +
+                '</tr>' +
+                '</thead>' +
+                '<tbody>' +
+                itemsHtml +
+                '</tbody>' +
+                '<tfoot>' +
+                '<tr class="table-success">' +
+                '<th colspan="2" class="d-block d-sm-none">Total</th>' +
+                '<th colspan="3" class="d-none d-sm-table-cell">Total</th>' +
+                '<th>$' + finalTotal.toLocaleString() + '</th>' +
+                '</tr>' +
+                '</tfoot>' +
+                '</table>' +
+                '</div>' +
+                '<div class="mt-3">' +
+                '<p><strong>Método de Pago:</strong> ' + getPaymentMethodName(order.payment.method) + '</p>' +
+                '<p><strong>Fecha:</strong> ' + new Date(order.date).toLocaleString() + '</p>' +
+                lastUpdatedHtml +
+                '</div>' +
+                '</div>' +
+                '<div class="modal-footer">' +
+                '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>' +
+                '<button type="button" class="btn btn-primary" onclick="printOrder(\'' + order.id + '\')">Imprimir</button>' +
+                '</div>' +
+                '</div>' +
+                '</div>' +
+                '</div>';
+            
+            // Remover modal existente si lo hay
+            const existingModal = document.getElementById('orderDetailsModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Agregar modal al DOM
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // Mostrar modal
+            try {
+                const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
+                modal.show();
+                console.log('Modal mostrado exitosamente');
+            } catch (error) {
+                console.error('Error mostrando modal:', error);
+                showNotification('Error mostrando detalles del pedido. Revisa la consola para más información.', 'error');
+            }
+        }
+        
+        // Cancelar pedido
+        function cancelOrder(orderId) {
+            showConfirmation(
+                'Confirmar Cancelación',
+                '¿Estás seguro de que deseas cancelar este pedido?',
+                function() {
+                    const orders = getOrders();
+                    const updatedOrders = orders.filter(o => o.id !== orderId);
+                    localStorage.setItem('ecomarket_orders', JSON.stringify(updatedOrders));
+                    renderOrdersList();
+                    updateReportsData();
+                    showNotification('Pedido cancelado correctamente', 'success');
+                }
+            );
+        }
+        
+        // Filtrar pedidos
+        function filterOrders() {
+            const statusFilter = document.getElementById('order-status-filter').value;
+            const paymentFilter = document.getElementById('payment-filter').value;
+            const customerSearch = document.getElementById('customer-search').value.toLowerCase();
+            
+            const orders = getOrders();
+            let filteredOrders = orders;
+            
+            if (statusFilter) {
+                filteredOrders = filteredOrders.filter(order => order.status === statusFilter);
+            }
+            
+            if (paymentFilter) {
+                filteredOrders = filteredOrders.filter(order => order.payment.method === paymentFilter);
+            }
+            
+            if (customerSearch) {
+                filteredOrders = filteredOrders.filter(order => 
+                    order.customer.name.toLowerCase().includes(customerSearch) ||
+                    order.customer.email.toLowerCase().includes(customerSearch)
+                );
+            }
+            
+            renderFilteredOrders(filteredOrders);
+        }
+        
+        // Renderizar pedidos filtrados
+        function renderFilteredOrders(filteredOrders) {
+            const container = document.getElementById('orders-list');
+            
+            if (filteredOrders.length === 0) {
+                container.innerHTML = '<div class="text-center text-muted py-3">' +
+                    '<i class="bi bi-search" style="font-size: 2rem;"></i>' +
+                    '<h6>No se encontraron pedidos con esos criterios</h6>' +
+                    '<p>Intenta ajustar los filtros</p>' +
+                    '</div>';
+                return;
+            }
+            
+            // Usar la misma lógica de renderizado pero con los pedidos filtrados
+            let ordersHtml = '';
+            filteredOrders.forEach(order => {
+                let itemsHtml = '';
+                order.items.forEach(item => {
+                    itemsHtml += '<div class="order-item">' +
+                        '<span>' + item.name + ' (' + item.quantity + ' ' + item.unit + ')</span>' +
+                        '<span>$' + (item.price * item.quantity).toLocaleString() + '</span>' +
+                        '</div>';
+                });
+                
+                ordersHtml += '<div class="order-card">' +
+                    '<div class="order-status">' +
+                    '<span class="status-badge status-' + order.status + '">' + order.status + '</span>' +
+                    '</div>' +
+                    '<div class="row">' +
+                    '<div class="col-md-3">' +
+                    '<strong>Pedido #' + order.id + '</strong><br>' +
+                    '<small class="text-muted">' + new Date(order.date).toLocaleDateString() + '</small><br>' +
+                    '<small class="text-muted">' + new Date(order.date).toLocaleTimeString() + '</small>' +
+                    '</div>' +
+                    '<div class="col-md-3">' +
+                    '<strong>Cliente:</strong><br>' +
+                    order.customer.name + '<br>' +
+                    '<small class="text-muted">' + order.customer.email + '</small><br>' +
+                    '<small class="text-muted">' + order.customer.phone + '</small>' +
+                    '</div>' +
+                    '<div class="col-md-3">' +
+                    '<strong>Entrega:</strong><br>' +
+                    order.delivery.address + '<br>' +
+                    '<small class="text-muted">' + order.delivery.city + '</small><br>' +
+                    '<small class="text-muted">Pago: ' + getPaymentMethodName(order.payment.method) + '</small>' +
+                    '</div>' +
+                    '<div class="col-md-3 text-end">' +
+                    '<div class="order-total">Total: $' + order.total.toLocaleString() + '</div>' +
+                    '<div class="mt-2">' +
+                    '<button class="btn btn-sm btn-outline-primary me-1" onclick="viewOrderDetails(\'' + order.id + '\')">' +
+                    '<i class="bi bi-eye"></i> Ver' +
+                    '</button>' +
+                    '<div class="btn-group">' +
+                    '<button class="btn btn-sm btn-success dropdown-toggle" data-bs-toggle="dropdown">' +
+                    '<i class="bi bi-gear"></i>' +
+                    '</button>' +
+                    '<ul class="dropdown-menu">' +
+                    '<li><a class="dropdown-item" onclick="updateOrderStatus(\'' + order.id + '\', \'confirmado\')">Confirmar</a></li>' +
+                    '<li><a class="dropdown-item" onclick="updateOrderStatus(\'' + order.id + '\', \'procesando\')">Procesar</a></li>' +
+                    '<li><a class="dropdown-item" onclick="updateOrderStatus(\'' + order.id + '\', \'enviado\')">Enviar</a></li>' +
+                    '<li><a class="dropdown-item" onclick="updateOrderStatus(\'' + order.id + '\', \'entregado\')">Entregar</a></li>' +
+                    '<li><hr class="dropdown-divider"></li>' +
+                    '<li><a class="dropdown-item text-danger" onclick="cancelOrder(\'' + order.id + '\')">Cancelar</a></li>' +
+                    '</ul>' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="order-items mt-3">' +
+                    '<strong>Productos:</strong>' +
+                    itemsHtml +
+                    '</div>' +
+                    '</div>';
+            });
+            
+            container.innerHTML = ordersHtml;
+        }
+        
+        // Limpiar filtros de pedidos
+        function clearOrderFilters() {
+            document.getElementById('order-status-filter').value = '';
+            document.getElementById('payment-filter').value = '';
+            document.getElementById('customer-search').value = '';
+            renderOrdersList();
+        }
+        
+        // Actualizar lista de pedidos
+        function refreshOrders() {
+            renderOrdersList();
+            showNotification('Lista de pedidos actualizada', 'info');
+        }
+
+        // Limpiar todos los pedidos
+        function clearAllOrders() {
+            // Mostrar el modal de confirmación
+            const clearModal = new bootstrap.Modal(document.getElementById('clearOrdersModal'));
+            clearModal.show();
+            
+            // Configurar el botón de confirmación
+            document.getElementById('confirmClearOrders').onclick = function() {
+                // Limpiar todos los pedidos del localStorage
+                localStorage.removeItem('ecomarket_orders');
+                
+                // Limpiar también los historiales específicos de usuarios
+                const keys = Object.keys(localStorage);
+                keys.forEach(key => {
+                    if (key.startsWith('ecomarket_user_orders_')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+                
+                renderOrdersList();
+                updateReportsData();
+                showNotification('Todos los pedidos han sido eliminados correctamente', 'success');
+                
+                // Cerrar el modal
+                clearModal.hide();
+            };
+        }
+
+        // ========================
+        // INFORMES Y ESTADÍSTICAS
+        // ========================
+        
+        // Generar datos de reporte
+        function generateReportData() {
+            const orders = getOrders();
+            const products = getProducts();
+            
+            // Calcular ventas totales
+            const totalSales = orders.reduce((sum, order) => sum + order.total, 0);
+            
+            // Productos más vendidos
+            const productSales = {};
+            orders.forEach(order => {
+                order.items.forEach(item => {
+                    if (!productSales[item.name]) {
+                        productSales[item.name] = { quantity: 0, revenue: 0 };
+                    }
+                    productSales[item.name].quantity += item.quantity;
+                    productSales[item.name].revenue += item.price * item.quantity;
+                });
+            });
+            
+            const topProducts = Object.entries(productSales)
+                .sort((a, b) => b[1].quantity - a[1].quantity)
+                .slice(0, 5);
+            
+            // Clientes top
+            const customerPurchases = {};
+            orders.forEach(order => {
+                const email = order.customer.email;
+                if (!customerPurchases[email]) {
+                    customerPurchases[email] = {
+                        name: order.customer.name,
+                        email: email,
+                        orders: 0,
+                        total: 0
+                    };
+                }
+                customerPurchases[email].orders++;
+                customerPurchases[email].total += order.total;
+            });
+            
+            const topCustomers = Object.values(customerPurchases)
+                .sort((a, b) => b.total - a.total)
+                .slice(0, 5);
+            
+            // Ventas por categoría
+            const categorySales = {};
+            orders.forEach(order => {
+                order.items.forEach(item => {
+                    const product = products.find(p => p.name === item.name);
+                    if (product) {
+                        const category = product.category;
+                        if (!categorySales[category]) {
+                            categorySales[category] = { quantity: 0, revenue: 0 };
+                        }
+                        categorySales[category].quantity += item.quantity;
+                        categorySales[category].revenue += item.price * item.quantity;
+                    }
+                });
+            });
+            
+            // Pedidos pendientes
+            const pendingDeliveries = orders.filter(order => order.status !== 'entregado').length;
+            
+            return {
+                totalSales,
+                topProducts,
+                topCustomers,
+                categorySales,
+                pendingDeliveries,
+                bestSeller: topProducts.length > 0 ? topProducts[0][0] : 'N/A',
+                topCustomer: topCustomers.length > 0 ? topCustomers[0].name : 'N/A'
+            };
+        }
+        
+        // Actualizar datos de reportes
+        function updateReportsData() {
+            const data = generateReportData();
+            
+            // Actualizar métricas principales
+            document.getElementById('total-sales').textContent = '$' + data.totalSales.toLocaleString();
+            document.getElementById('best-seller').textContent = data.bestSeller;
+            document.getElementById('top-customer').textContent = data.topCustomer;
+            document.getElementById('pending-deliveries').textContent = data.pendingDeliveries;
+            
+            // Renderizar top productos
+            const topProductsList = document.getElementById('top-products-list');
+            if (data.topProducts.length === 0) {
+                topProductsList.innerHTML = '<p class="text-muted">No hay datos disponibles</p>';
+            } else {
+                let productsHtml = '';
+                data.topProducts.forEach((product, index) => {
+                    let rankingClass = '';
+                    if (index === 0) rankingClass = 'gold';
+                    else if (index === 1) rankingClass = 'silver';
+                    else if (index === 2) rankingClass = 'bronze';
+                    
+                    productsHtml += '<div class="ranking-item">' +
+                        '<div class="ranking-number ' + rankingClass + '">' + (index + 1) + '</div>' +
+                        '<div class="flex-grow-1">' +
+                        '<strong>' + product[0] + '</strong><br>' +
+                        '<small class="text-muted">' + product[1].quantity + ' unidades vendidas</small>' +
+                        '</div>' +
+                        '<div class="text-end">' +
+                        '<strong>$' + product[1].revenue.toLocaleString() + '</strong>' +
+                        '</div>' +
+                        '</div>';
+                });
+                topProductsList.innerHTML = productsHtml;
+            }
+            
+            // Renderizar top clientes
+            const topCustomersList = document.getElementById('top-customers-list');
+            if (data.topCustomers.length === 0) {
+                topCustomersList.innerHTML = '<p class="text-muted">No hay datos disponibles</p>';
+            } else {
+                let customersHtml = '';
+                data.topCustomers.forEach((customer, index) => {
+                    let rankingClass = '';
+                    if (index === 0) rankingClass = 'gold';
+                    else if (index === 1) rankingClass = 'silver';
+                    else if (index === 2) rankingClass = 'bronze';
+                    
+                    customersHtml += '<div class="ranking-item">' +
+                        '<div class="ranking-number ' + rankingClass + '">' + (index + 1) + '</div>' +
+                        '<div class="flex-grow-1">' +
+                        '<strong>' + customer.name + '</strong><br>' +
+                        '<small class="text-muted">' + customer.email + '</small><br>' +
+                        '<small class="text-muted">' + customer.orders + ' pedidos</small>' +
+                        '</div>' +
+                        '<div class="text-end">' +
+                        '<strong>$' + customer.total.toLocaleString() + '</strong>' +
+                        '</div>' +
+                        '</div>';
+                });
+                topCustomersList.innerHTML = customersHtml;
+            }
+            
+            // Renderizar estadísticas por categoría
+            const categoryStats = document.getElementById('category-stats');
+            const categories = Object.entries(data.categorySales);
+            const maxRevenue = Math.max(...categories.map(cat => cat[1].revenue));
+            
+            if (categories.length === 0) {
+                categoryStats.innerHTML = '<div class="col-12"><p class="text-muted">No hay datos disponibles</p></div>';
+            } else {
+                let categoriesHtml = '';
+                categories.forEach(([category, stats]) => {
+                    categoriesHtml += '<div class="col-md-6 mb-3">' +
+                        '<div class="category-item">' +
+                        '<div class="flex-grow-1">' +
+                        '<strong class="text-capitalize">' + category + '</strong>' +
+                        '<div class="progress progress-category mt-1">' +
+                        '<div class="progress-bar bg-success" style="width: ' + ((stats.revenue / maxRevenue) * 100) + '%"></div>' +
+                        '</div>' +
+                        '<small class="text-muted">' + stats.quantity + ' productos vendidos</small>' +
+                        '</div>' +
+                        '<div class="text-end ms-3">' +
+                        '<strong>$' + stats.revenue.toLocaleString() + '</strong>' +
+                        '</div>' +
+                        '</div>' +
+                        '</div>';
+                });
+                categoryStats.innerHTML = categoriesHtml;
+            }
+        }
+        
+        // Generar informe
+        function generateReport() {
+            updateReportsData();
+            showNotification('Informe actualizado con los datos más recientes', 'success');
+        }
+        
+        // Exportar informe
+        function exportReport() {
+            const data = generateReportData();
+            const reportData = {
+                fecha: new Date().toISOString(),
+                resumen: {
+                    ventasTotales: data.totalSales,
+                    productoMasVendido: data.bestSeller,
+                    clienteTop: data.topCustomer,
+                    pedidosPendientes: data.pendingDeliveries
+                },
+                topProductos: data.topProducts,
+                topClientes: data.topCustomers,
+                ventasPorCategoria: data.categorySales
+            };
+            
+            const dataStr = JSON.stringify(reportData, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `informe_ecomarket_${new Date().toISOString().split('T')[0]}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            showNotification('Informe exportado correctamente', 'success');
+        }
+        
+        // Imprimir pedido
+        function printOrder(orderId) {
+            showNotification('Función de impresión temporalmente deshabilitada para evitar errores', 'warning');
+        }
+
+        // Función temporal para generar pedidos de prueba (solo para testing)
+        function generateTestOrders() {
+            const testUser = {
+                id: 'test-user-001',
+                name: 'Usuario Prueba',
+                email: 'usuario@prueba.com'
+            };
+            
+            // Asegurar que el usuario esté logueado
+            localStorage.setItem('ecomarket_current_user', JSON.stringify(testUser));
+            
+            // Productos reales del catálogo - exactamente como están definidos en productMap
+            const availableProducts = [
+                { name: 'Frutillas Frescas Premium', unit: 'kg', price: 1600, id: 'frutillas' },
+                { name: 'Lechuga Criolla Fresca', unit: 'unidad', price: 1200, id: 'lechuga' },
+                { name: 'Tomates Cherry Orgánicos', unit: 'kg', price: 2800, id: 'tomates' },
+                { name: 'Zanahorias Baby Premium', unit: 'kg', price: 1800, id: 'zanahorias' },
+                { name: 'Manzanas Red Delicious', unit: 'kg', price: 2200, id: 'manzanas' },
+                { name: 'Bananas Premium', unit: 'kg', price: 1500, id: 'bananas' },
+                { name: 'Peras Williams', unit: 'kg', price: 2900, id: 'peras' },
+                { name: 'Apio Fresco Orgánico', unit: 'atado', price: 1400, id: 'apio' }
+            ];
+
+            const testOrders = [
+                {
+                    id: 'ORD' + Date.now(),
+                    date: new Date().toISOString(),
+                    status: 'confirmado',
+                    customer: {
+                        id: testUser.id,
+                        name: testUser.name,
+                        email: testUser.email,
+                        phone: '+57 300 123 4567'
+                    },
+                    delivery: {
+                        address: 'Los sonetos 949',
+                        city: 'Maipú',
+                        postal: '12345',
+                        notes: 'Casa color azul'
+                    },
+                    payment: {
+                        method: 'credit-card'
+                    },
+                    items: [
+                        { 
+                            name: availableProducts[0].name, 
+                            quantity: 2, 
+                            unit: availableProducts[0].unit, 
+                            price: availableProducts[0].price,
+                            productId: availableProducts[0].id
+                        },
+                        { 
+                            name: availableProducts[2].name, 
+                            quantity: 1, 
+                            unit: availableProducts[2].unit, 
+                            price: availableProducts[2].price,
+                            productId: availableProducts[2].id
+                        },
+                        { 
+                            name: availableProducts[1].name, 
+                            quantity: 3, 
+                            unit: availableProducts[1].unit, 
+                            price: availableProducts[1].price,
+                            productId: availableProducts[1].id
+                        }
+                    ],
+                    total: 9400, // (1600 * 2) + (2800 * 1) + (1200 * 3) = 3200 + 2800 + 3600
+                    lastUpdated: new Date().toISOString()
+                },
+                {
+                    id: 'ORD' + (Date.now() + 1),
+                    date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Ayer
+                    status: 'procesando',
+                    customer: {
+                        id: testUser.id,
+                        name: testUser.name,
+                        email: testUser.email,
+                        phone: '+57 300 123 4567'
+                    },
+                    delivery: {
+                        address: 'Av. Libertador 2358',
+                        city: 'Santiago',
+                        postal: '54321',
+                        notes: 'Departamento 4B'
+                    },
+                    payment: {
+                        method: 'bank-transfer'
+                    },
+                    items: [
+                        { 
+                            name: availableProducts[3].name, 
+                            quantity: 2, 
+                            unit: availableProducts[3].unit, 
+                            price: availableProducts[3].price,
+                            productId: availableProducts[3].id
+                        },
+                        { 
+                            name: availableProducts[4].name, 
+                            quantity: 1, 
+                            unit: availableProducts[4].unit, 
+                            price: availableProducts[4].price,
+                            productId: availableProducts[4].id
+                        }
+                    ],
+                    total: 5800, // (1800 * 2) + (2200 * 1) = 3600 + 2200
+                    lastUpdated: new Date().toISOString()
+                }
+            ];
+            
+            // Limpiar TODOS los pedidos existentes antes de agregar el nuevo
+            localStorage.removeItem('ecomarket_orders');
+            localStorage.removeItem('ecomarket_user_orders_' + testUser.id);
+            
+            // Ahora guardar el pedido nuevo
+            localStorage.setItem('ecomarket_orders', JSON.stringify(testOrders));
+            
+            // También guardar en historial del usuario
+            localStorage.setItem('ecomarket_user_orders_' + testUser.id, JSON.stringify(testOrders));
+            
+            console.log('Pedido de prueba generado:', testOrders[0]);
+            console.log('Items del pedido:', testOrders[0].items);
+            
+            // Verificar que se guardó correctamente
+            const savedOrders = JSON.parse(localStorage.getItem('ecomarket_orders'));
+            console.log('Pedidos guardados:', savedOrders);
+            console.log('Items del primer pedido guardado:', savedOrders[0].items);
+            
+            renderOrdersList();
+            updateReportsData();
+            showNotification('¡Pedidos de prueba con productos reales generados exitosamente!', 'success');
+        }
+        
+        // Inicialización del panel de administración
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!checkAuth()) return;
+            
+            renderProductsList();
+            updateStats();
+            renderOrdersList();
+            updateReportsData();
+            
+            // Añadir función de test al window para debug
+            window.generateTestOrders = generateTestOrders;
+            
+            // Inicializar tooltips
+            var tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            tooltips.forEach(function(el) {
+                new bootstrap.Tooltip(el);
+            });
+            
+            // Efectos de animación para secciones colapsables
+            var collapseElements = document.querySelectorAll('[data-bs-toggle="collapse"]');
+            collapseElements.forEach(function(element) {
+                element.addEventListener('click', function() {
+                    var icon = this.querySelector('.collapse-icon');
+                    if (icon) {
+                        var isExpanded = this.getAttribute('aria-expanded') === 'true';
+                        icon.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
+                    }
+                });
+            });
+        });
+    </script>
+
+    <!-- Modal de Confirmación para Limpiar Pedidos -->
+    <div class="modal fade" id="clearOrdersModal" tabindex="-1" aria-labelledby="clearOrdersModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title" id="clearOrdersModalLabel">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Eliminación
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center">
+                        <i class="bi bi-trash3-fill text-danger" style="font-size: 3rem;"></i>
+                        <h6 class="mt-3 mb-3">¿Estás seguro de que deseas eliminar TODOS los pedidos?</h6>
+                        <p class="text-muted">
+                            Esta acción eliminará permanentemente todos los pedidos del sistema 
+                            y no se puede deshacer.
+                        </p>
+                        <div class="alert alert-warning d-flex align-items-center" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <div>Esta acción es <strong>irreversible</strong></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg me-1"></i>Cancelar
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmClearOrders">
+                        <i class="bi bi-trash3-fill me-1"></i>Sí, Eliminar Todo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Incluir script de navbar estándar -->
+    <script src="assets/js/app.js"></script>
+</body>
+</html>

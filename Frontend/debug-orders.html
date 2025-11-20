@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Depurador de Pedidos</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+        button { padding: 10px 15px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Depurador de Pedidos EcoMarket</h1>
+    
+    <div class="section">
+        <h2>Pedidos en localStorage</h2>
+        <button onclick="checkOrders()">Verificar Pedidos</button>
+        <button onclick="clearOrders()">Limpiar Pedidos</button>
+        <button onclick="createTestOrder()">Crear Pedido de Prueba</button>
+        <pre id="orders-output"></pre>
+    </div>
+
+    <div class="section">
+        <h2>Usuario Actual</h2>
+        <button onclick="checkUser()">Verificar Usuario</button>
+        <pre id="user-output"></pre>
+    </div>
+
+    <script>
+        function checkOrders() {
+            const orders = localStorage.getItem('ecomarket_orders');
+            const ordersData = orders ? JSON.parse(orders) : [];
+            
+            // También verificar pedidos específicos del usuario
+            const currentUser = JSON.parse(localStorage.getItem('ecomarket_current_user') || '{}');
+            const userOrders = localStorage.getItem('ecomarket_user_orders_' + currentUser.id);
+            const userOrdersData = userOrders ? JSON.parse(userOrders) : [];
+            
+            const output = document.getElementById('orders-output');
+            output.textContent = `Pedidos globales: ${ordersData.length}
+Pedidos del usuario ${currentUser.id}: ${userOrdersData.length}
+
+=== PEDIDOS GLOBALES ===
+${JSON.stringify(ordersData, null, 2)}
+
+=== PEDIDOS DEL USUARIO ===
+${JSON.stringify(userOrdersData, null, 2)}`;
+            
+            console.log('Pedidos en localStorage:', ordersData);
+            console.log('Pedidos del usuario:', userOrdersData);
+        }
+
+        function clearOrders() {
+            localStorage.removeItem('ecomarket_orders');
+            localStorage.removeItem('ecomarket_user_orders_1');
+            localStorage.removeItem('ecomarket_user_orders_2');
+            document.getElementById('orders-output').textContent = 'Pedidos eliminados';
+        }
+
+        function createTestOrder() {
+            const testOrder = {
+                id: 'TEST' + Date.now(),
+                date: new Date().toISOString(),
+                status: 'confirmado',
+                customer: {
+                    id: '1',
+                    name: 'Usuario Prueba',
+                    email: 'test@test.com',
+                    phone: '+57 300 123 4567'
+                },
+                delivery: {
+                    address: 'Calle Falsa 123',
+                    city: 'Bogotá',
+                    postal: '110111',
+                    notes: 'Pedido de prueba'
+                },
+                payment: {
+                    method: 'credit-card'
+                },
+                items: [
+                    {
+                        name: 'Manzanas',
+                        quantity: 2,
+                        unit: 'kg',
+                        price: 3500,
+                        productId: 'manzanas'
+                    },
+                    {
+                        name: 'Bananas',
+                        quantity: 1,
+                        unit: 'kg',
+                        price: 2500,
+                        productId: 'bananas'
+                    }
+                ],
+                total: 9500,
+                lastUpdated: new Date().toISOString()
+            };
+
+            let orderHistory = JSON.parse(localStorage.getItem('ecomarket_orders')) || [];
+            orderHistory.unshift(testOrder);
+            localStorage.setItem('ecomarket_orders', JSON.stringify(orderHistory));
+            
+            document.getElementById('orders-output').textContent = 'Pedido de prueba creado';
+        }
+
+        function checkUser() {
+            const user = localStorage.getItem('ecomarket_current_user');
+            const userData = user ? JSON.parse(user) : null;
+            const isLoggedIn = localStorage.getItem('ecomarket_logged_in');
+            const userType = localStorage.getItem('ecomarket_user_type');
+            
+            const output = document.getElementById('user-output');
+            output.textContent = `Estado de login: ${isLoggedIn}
+Tipo de usuario: ${userType}
+
+Datos del usuario:
+${JSON.stringify(userData, null, 2)}`;
+        }
+
+        // Cargar datos iniciales
+        window.onload = function() {
+            checkOrders();
+            checkUser();
+        }
+    </script>
+</body>
+</html>
