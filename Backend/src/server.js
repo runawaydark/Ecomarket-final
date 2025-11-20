@@ -20,7 +20,7 @@ const app = express();
 app.use(cors({
     origin: [
         'http://localhost:5500', // si usas Live Server
-        'https://TU-PROYECTO.vercel.app'
+        'https://ecomarket-five.vercel.app/'
     ],
     credentials: true
 }));

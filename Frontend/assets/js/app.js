@@ -1,16 +1,16 @@
-/* =============================================
-   ECOMARKET - ARCHIVO PRINCIPAL DE JAVASCRIPT
-   =============================================
-   
-   TABLA DE CONTENIDO:
-   1. SISTEMA DE NOTIFICACIONES
-   2. SISTEMA DE CONFIRMACIONES
-   3. GESTIÓN DEL CARRITO
-   4. SISTEMA DE AUTENTICACIÓN
-   5. NAVEGACIÓN Y UI
-   6. FOOTER Y COMPONENTES
-   7. EVENTOS DEL DOCUMENTO
-   
+/*  ============================================
+    ECOMARKET - ARCHIVO PRINCIPAL DE JAVASCRIPT
+    =============================================
+
+    TABLA DE CONTENIDO:
+    1. SISTEMA DE NOTIFICACIONES
+    2. SISTEMA DE CONFIRMACIONES
+    3. GESTIÓN DEL CARRITO
+    4. SISTEMA DE AUTENTICACIÓN
+    5. NAVEGACIÓN Y UI
+    6. FOOTER Y COMPONENTES
+    7. EVENTOS DEL DOCUMENTO
+
    ============================================= */
 
 // =============================================
