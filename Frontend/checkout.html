@@ -196,12 +196,8 @@
             <a href="#" class="text-white" role="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="bi bi-person fs-5"></i>
             </a>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                <li><a class="dropdown-item" href="login.html">Iniciar sesión</a></li>
-                <li><a class="dropdown-item" href="pedidos.html">Mis pedidos</a></li>
-                <li><a class="dropdown-item" href="carrito.html">Ver carrito</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item d-none" id="logoutBtn" href="#">Cerrar sesión</a></li>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown" id="userDropdownMenu">
+                <!-- El contenido se genera dinámicamente con JavaScript -->
             </ul>
             </div>
 
@@ -1121,5 +1117,19 @@
         }
         }
     </style>
+    
+    <script>
+        // Actualizar menú de usuario al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                if (typeof updateNavbar === 'function') {
+                    updateNavbar();
+                } else if (typeof updateUserDropdown === 'function') {
+                    updateUserDropdown();
+                }
+            }, 100);
+        });
+    </script>
+    
     </body>
 </html>

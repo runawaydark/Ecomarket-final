@@ -33,7 +33,15 @@ async function apiPost(path, data) {
     throw new Error(errorMsg);
     }
 
-    return res.json();
+    const jsonResponse = await res.json();
+    
+    // Si el backend envuelve la respuesta en { ok: true, data: {...} }
+    // extraemos el data, sino devolvemos la respuesta completa
+    if (jsonResponse.ok && jsonResponse.data) {
+        return jsonResponse.data;
+    }
+    
+    return jsonResponse;
 }
 
 function getAuthToken() {

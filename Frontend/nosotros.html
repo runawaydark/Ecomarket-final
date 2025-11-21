@@ -653,6 +653,13 @@
             this.style.transform = 'translateY(0) scale(1)';
         });
     });
+    
+    // Actualizar menú de usuario según estado de sesión
+    if (typeof updateNavbar === 'function') {
+        updateNavbar();
+    } else if (typeof updateUserDropdown === 'function') {
+        updateUserDropdown();
+    }
     </script>
 </body>
 </html>

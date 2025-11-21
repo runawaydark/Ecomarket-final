@@ -189,6 +189,13 @@
             // Limpiar el formulario
             this.reset();
         });
+        
+        // Actualizar menú de usuario según estado de sesión
+        if (typeof updateNavbar === 'function') {
+            updateNavbar();
+        } else if (typeof updateUserDropdown === 'function') {
+            updateUserDropdown();
+        }
     </script>
 </body>
 </html>

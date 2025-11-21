@@ -315,5 +315,18 @@
     <script src="assets/js/catalog.js"></script>
     <script src="assets/js/footer.js"></script>
 
+    <script>
+        // Actualizar menú de usuario al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                if (typeof updateNavbar === 'function') {
+                    updateNavbar();
+                } else if (typeof updateUserDropdown === 'function') {
+                    updateUserDropdown();
+                }
+            }, 100);
+        });
+    </script>
+
     </body>
 </html>

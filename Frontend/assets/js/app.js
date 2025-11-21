@@ -255,7 +255,7 @@ function checkAuthStatus() {
         isLoggedIn,
         userType,
         userEmail,
-        isAdmin: userType === 'admin'
+        isAdmin: userType === 'admin' || userType === 'ADMIN'
     };
 }
 
@@ -268,10 +268,13 @@ function logout() {
         '¿Estás seguro de que deseas cerrar sesión?',
         'Se cerrará tu sesión actual',
         function() {
+            // Limpiar todos los datos de sesión
             localStorage.removeItem('ecomarket_logged_in');
             localStorage.removeItem('ecomarket_user_type');
             localStorage.removeItem('ecomarket_user_email');
             localStorage.removeItem('ecomarket_user_name');
+            localStorage.removeItem('ecomarket_token');
+            localStorage.removeItem('ecomarket_user');
             
             showNotification('Sesión cerrada correctamente', 'success');
             
@@ -672,8 +675,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            const name = document.getElementById("name") ? document.getElementById("name").value : 'Usuario';
-            showNotification(`Hola ${name}, has iniciado sesión correctamente (ejemplo frontend)`, 'success');
+            // Este código ahora es manejado por el formulario específico en login.html
+            // No se ejecuta la notificación de ejemplo aquí
         });
     }
 });

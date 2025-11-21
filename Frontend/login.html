@@ -112,7 +112,17 @@
                     <li class="nav-item"><a class="nav-link" href="contacto.html">Contacto</a></li>
                 </ul>
                 <div class="d-flex align-items-center gap-3">
-                    <a href="#" class="text-white"><i class="bi bi-person fs-5"></i></a>
+                    <!-- Dropdown del Usuario -->
+                    <div class="dropdown">
+                        <a href="#" class="text-white" role="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person fs-5"></i>
+                        </a>
+                        <!-- Menú desplegable del usuario (contenido dinámico vía JS) -->
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown" id="userDropdownMenu">
+                            <!-- El contenido se genera dinámicamente con JavaScript -->
+                        </ul>
+                    </div>
+                    
                     <a href="carrito.html" class="text-white position-relative">
                         <i class="bi bi-cart fs-5"></i>
                         <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none;">
@@ -169,12 +179,13 @@
                     <label for="password" class="form-label">Contraseña</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                        <input type="password" class="form-control" id="password" placeholder="••••••••" required>
+                        <input type="password" class="form-control" id="password" placeholder="••••••••" required minlength="6" aria-describedby="passwordHelp">
                         <button class="btn btn-outline-secondary password-toggle-btn" type="button" id="togglePassword">
                             <i class="bi bi-eye" id="toggleIcon"></i>
                         </button>
                     </div>
                     <div class="invalid-feedback">La contraseña es obligatoria.</div>
+                    <div id="passwordHelp" class="form-text text-muted">La contraseña debe tener al menos 6 caracteres.</div>
                 </div>
 
                 <!-- BOTÓN PRINCIPAL -->
@@ -395,18 +406,24 @@
             }
             
             // === MANEJO DEL FORMULARIO (integrado con backend) ===
-            authForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-            
-            const email = emailInput.value.trim();
-            const password = passwordInput.value;
-            const name = nameInput.value.trim();
-            
-              // Validación básica
-                if (!email || !password || (!isLoginMode && !name)) {
-                showNotification('Por favor completa todos los campos obligatorios.', 'warning');
-                return;
-                }
+                        authForm.addEventListener('submit', async (e) => {
+                                e.preventDefault();
+
+                        const email = emailInput.value.trim();
+                        const password = passwordInput.value;
+                        const name = nameInput.value.trim();
+
+                            // Validación básica
+                                if (!email || !password || (!isLoginMode && !name)) {
+                                showNotification('Por favor completa todos los campos obligatorios.', 'warning');
+                                return;
+                                }
+
+                            // Validación mínima de longitud de contraseña
+                                if (password && password.length < 6) {
+                                showNotification('La contraseña debe tener al menos 6 caracteres.', 'warning');
+                                return;
+                                }
                 
               // En registro NO permitimos "admin"
                 if (!isLoginMode && email.toLowerCase() === 'admin') {
@@ -428,23 +445,32 @@
                   // ===== LOGIN contra backend =====
                     const body = { email, password };
                     const data = await apiPost('/auth/login', body);
-                  // asumo que el backend responde { token, user: { name, email, role, ... } }
                 
                     if (data.token) {
-                    localStorage.setItem('ecomarket_token', data.token);
+                        localStorage.setItem('ecomarket_token', data.token);
                     }
                     if (data.user) {
-                    localStorage.setItem('ecomarket_user', JSON.stringify(data.user));
-                    localStorage.setItem('ecomarket_logged_in', 'true');
+                        localStorage.setItem('ecomarket_user', JSON.stringify(data.user));
+                        localStorage.setItem('ecomarket_logged_in', 'true');
+                        // Normalizar el role (el backend puede usar ADMIN o admin)
+                        const normalizedRole = (data.user.role || 'user').toLowerCase();
+                        localStorage.setItem('ecomarket_user_type', normalizedRole === 'admin' || normalizedRole === 'customer' ? normalizedRole : 'user');
+                        localStorage.setItem('ecomarket_user_email', data.user.email);
+                        localStorage.setItem('ecomarket_user_name', data.user.name);
                     }
                     
                     const userName = data.user?.name || 'Usuario';
-                    const isAdmin = data.user && (data.user.role === 'admin' || data.user.isAdmin);
+                    const isAdmin = data.user && (data.user.role === 'admin' || data.user.role === 'ADMIN');
                     
-                    showNotification(`¡Bienvenido ${userName}! Iniciando sesión...`, 'success');
+                    showNotification(`¡Bienvenido ${userName}!`, 'success');
+                    
+                    // Actualizar el menú de usuario inmediatamente
+                    if (typeof updateNavbar === 'function') {
+                        updateNavbar();
+                    }
                     
                     setTimeout(() => {
-                    window.location.href = isAdmin ? 'admin.html' : 'index.html';
+                        window.location.href = isAdmin ? 'admin.html' : 'index.html';
                     }, 1200);
                     
                 } else {
@@ -526,6 +552,13 @@
                 }
             }, 500);
             
+            // === ACTUALIZAR NAVBAR CON ESTADO DE SESIÓN ===
+            // Verificar si el usuario ya está logueado y actualizar el menú
+            if (typeof updateNavbar === 'function') {
+                updateNavbar();
+            } else if (typeof updateUserDropdown === 'function') {
+                updateUserDropdown();
+            }
 
         });
     </script>

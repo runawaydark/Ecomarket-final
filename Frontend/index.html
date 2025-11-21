@@ -735,6 +735,18 @@
     <script src="assets/js/footer.js"></script>
     
     <script>
+        // Asegurar que el dropdown del usuario se actualice correctamente
+        document.addEventListener('DOMContentLoaded', function() {
+            // Esperar un momento para que app.js se cargue completamente
+            setTimeout(function() {
+                if (typeof updateNavbar === 'function') {
+                    updateNavbar();
+                } else if (typeof updateUserDropdown === 'function') {
+                    updateUserDropdown();
+                }
+            }, 200);
+        });
+        
         // Footer inline como backup
         document.addEventListener('DOMContentLoaded', function() {
             const container = document.getElementById('footer-container');

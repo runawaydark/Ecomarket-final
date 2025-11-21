@@ -760,5 +760,19 @@
             }
         }
     </style>
+    
+    <script>
+        // Actualizar menú de usuario según estado de sesión
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                if (typeof updateNavbar === 'function') {
+                    updateNavbar();
+                } else if (typeof updateUserDropdown === 'function') {
+                    updateUserDropdown();
+                }
+            }, 100);
+        });
+    </script>
+    
 </body>
 </html>
