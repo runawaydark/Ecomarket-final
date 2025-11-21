@@ -15,22 +15,38 @@ import paymentsRoutes from "./routes/payments.routes.js";
 
 
 dotenv.config();
-
 const app = express();
+
+
+
 
 // 🔹 CORS (para que el front en Vercel pueda llamar al backend)
 app.use(cors({
     origin: [
-        'http://localhost:5500', // si usas Live Server
-        'https://ecomarket-five.vercel.app/'
+    "http://localhost:5500",
+    "http://127.0.0.1:5500",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5500/Frontend/index.html"
     ],
-    credentials: true
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 200
+    
 }));
+
+// Habilitar preflight
+app.options("*", cors());
+
 
 // middlewares
 app.use(morgan('dev'));
 app.use(helmet());
 app.use(express.json());
+app.use("/api/auth", authRoutes);
+app.use("/api/products", productRoutes);
 
 app.get('/health', (req, res) => {
     res.json({ ok: true, service: 'ecomarket-backend', time: new Date().toISOString() });

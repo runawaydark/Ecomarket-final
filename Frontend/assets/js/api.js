@@ -13,12 +13,27 @@ async function apiPost(path, data) {
     let errorMsg = `Error API: ${res.status}`;
     try {
         const body = await res.json();
-        if (body.message) errorMsg = body.message;
-    } catch (_) {}
+        console.log("Error backend:", body);  // 👈 para verlo en consola
+
+      // intenta distintos formatos de error
+        if (typeof body.message === "string") {
+        errorMsg = body.message;
+        } else if (typeof body.error === "string") {
+        errorMsg = body.error;
+        } else if (Array.isArray(body.errors) && body.errors.length > 0) {
+        // típico de express-validator
+        errorMsg = body.errors[0].msg || JSON.stringify(body.errors[0]);
+        } else {
+        errorMsg = JSON.stringify(body);
+        }
+    } catch (_) {
+      // si no es JSON, dejamos el mensaje por defecto
+    }
+
     throw new Error(errorMsg);
     }
 
-  return res.json(); // aquí debería venir { token, user, ... }
+    return res.json();
 }
 
 function getAuthToken() {
@@ -27,3 +42,4 @@ function getAuthToken() {
 
 window.apiPost = apiPost;
 window.getAuthToken = getAuthToken;
+

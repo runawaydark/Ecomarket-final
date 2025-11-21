@@ -406,7 +406,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-document.getElementById("logoutBtn").classList.remove("d-none");
+// Proteger acceso al elemento logoutBtn (puede no existir en algunas páginas)
+const _logoutBtn = document.getElementById("logoutBtn");
+if (_logoutBtn && _logoutBtn.classList) {
+    _logoutBtn.classList.remove("d-none");
+}
 
 document.addEventListener("DOMContentLoaded", () => {
     let current = window.location.pathname.split("/").pop();
@@ -642,32 +646,36 @@ document.addEventListener("DOMContentLoaded", () => {
  * Maneja la visibilidad de contraseñas y validación
  */
 document.addEventListener("DOMContentLoaded", () => {
-  const loginForm = document.getElementById("loginForm");
-  const togglePassword = document.getElementById("togglePassword");
-  const passwordInput = document.getElementById("password");
+    // Buscar formulario por `loginForm` o `authForm` para compatibilidad
+    const loginForm = document.getElementById("loginForm") || document.getElementById("authForm");
+    const togglePassword = document.getElementById("togglePassword");
+    const passwordInput = document.getElementById("password");
 
-  // Mostrar/ocultar contraseña
-  togglePassword.addEventListener("click", () => {
-    const type = passwordInput.type === "password" ? "text" : "password";
-    passwordInput.type = type;
-    togglePassword.innerHTML = type === "password" 
-      ? '<i class="bi bi-eye"></i>' 
-      : '<i class="bi bi-eye-slash"></i>';
-  });
-
-  // Validaciones
-  loginForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-
-    if (!loginForm.checkValidity()) {
-      e.stopPropagation();
-      loginForm.classList.add("was-validated");
-      return;
+    // Proteger para evitar errores si los elementos no existen en la página actual
+    if (togglePassword && passwordInput) {
+        togglePassword.addEventListener("click", () => {
+            const type = passwordInput.type === "password" ? "text" : "password";
+            passwordInput.type = type;
+            togglePassword.innerHTML = type === "password" 
+                ? '<i class="bi bi-eye"></i>' 
+                : '<i class="bi bi-eye-slash"></i>';
+        });
     }
 
-    const name = document.getElementById("name").value;
-    showNotification(`Hola ${name}, has iniciado sesión correctamente (ejemplo frontend)`, 'success');
-  });
+    if (loginForm) {
+        loginForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+
+            if (!loginForm.checkValidity()) {
+                e.stopPropagation();
+                loginForm.classList.add("was-validated");
+                return;
+            }
+
+            const name = document.getElementById("name") ? document.getElementById("name").value : 'Usuario';
+            showNotification(`Hola ${name}, has iniciado sesión correctamente (ejemplo frontend)`, 'success');
+        });
+    }
 });
 
 /**
