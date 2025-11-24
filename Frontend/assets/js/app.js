@@ -56,8 +56,8 @@ function showNotification(message, type = 'info', duration = 4000) {
     notification.innerHTML = `
         <div style="display: flex; align-items: center; gap: 8px;">
             <i class="bi bi-${type === 'success' ? 'check-circle-fill' : 
-                               type === 'error' ? 'exclamation-triangle-fill' : 
-                               type === 'warning' ? 'exclamation-triangle-fill' : 'info-circle-fill'}"></i>
+                            type === 'error' ? 'exclamation-triangle-fill' : 
+                            type === 'warning' ? 'exclamation-triangle-fill' : 'info-circle-fill'}"></i>
             <span>${message}</span>
             <button type="button" class="btn-close" onclick="this.parentElement.parentElement.remove()"></button>
         </div>
@@ -647,8 +647,15 @@ document.addEventListener("DOMContentLoaded", () => {
 /**
  * Configuración del formulario de login
  * Maneja la visibilidad de contraseñas y validación
+ * NOTA: Este código solo se aplica si NO estamos en login.html
+ * porque login.html tiene su propia implementación
  */
 document.addEventListener("DOMContentLoaded", () => {
+    // Solo ejecutar si NO estamos en login.html
+    if (window.location.pathname.includes('login.html')) {
+        return; // Salir para evitar conflictos
+    }
+
     // Buscar formulario por `loginForm` o `authForm` para compatibilidad
     const loginForm = document.getElementById("loginForm") || document.getElementById("authForm");
     const togglePassword = document.getElementById("togglePassword");
@@ -686,26 +693,31 @@ document.addEventListener("DOMContentLoaded", () => {
  * Implementación adicional para botones de toggle
  */
 document.addEventListener("DOMContentLoaded", () => {
-  const pwd = document.getElementById("password");
-  const toggleBtn = document.querySelector(".password-toggle");
-  const icon = toggleBtn ? toggleBtn.querySelector("i") : null;
+    // Solo ejecutar si NO estamos en login.html
+    if (window.location.pathname.includes('login.html')) {
+        return; // Salir para evitar conflictos
+    }
 
-  if (toggleBtn && pwd && icon) {
-    const setMode = (show) => {
-      pwd.type = show ? "text" : "password";
-      toggleBtn.setAttribute("aria-pressed", String(show));
-      icon.classList.toggle("bi-eye", !show);
-      icon.classList.toggle("bi-eye-slash", show);
+    const pwd = document.getElementById("password");
+    const toggleBtn = document.querySelector(".password-toggle");
+    const icon = toggleBtn ? toggleBtn.querySelector("i") : null;
+
+    if (toggleBtn && pwd && icon) {
+        const setMode = (show) => {
+        pwd.type = show ? "text" : "password";
+        toggleBtn.setAttribute("aria-pressed", String(show));
+        icon.classList.toggle("bi-eye", !show);
+        icon.classList.toggle("bi-eye-slash", show);
 
       // Mantener el cursor al final (algunos navegadores lo mueven)
-      const v = pwd.value;
-      pwd.value = "";
-      pwd.value = v;
-      pwd.focus({ preventScroll: true });
+        const v = pwd.value;
+        pwd.value = "";
+        pwd.value = v;
+        pwd.focus({ preventScroll: true });
     };
 
     toggleBtn.addEventListener("click", () => {
-      setMode(pwd.type === "password");
-    });
-  }
+        setMode(pwd.type === "password");
+        });
+    }
 });

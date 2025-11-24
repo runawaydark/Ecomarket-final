@@ -1,53 +1,131 @@
-// Por ahora, backend local
-const API_URL = "http://localhost:3000/api";
+// ==========================
+// CONFIGURACIÓN DEL BACKEND
+// ==========================
+// ==========================
+// CONFIGURACIÓN DEL BACKEND
+// ==========================
 
-async function apiPost(path, data) {
-    const res = await fetch(API_URL + path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-    });
+const API_BASE_URL = "http://localhost:3000/api";
 
-    if (!res.ok) {
-    // Intentamos leer mensaje del backend
-    let errorMsg = `Error API: ${res.status}`;
+// ==========================
+// MÉTODO GET UNIVERSAL
+// ==========================
+
+async function apiGet(endpoint) {
     try {
-        const body = await res.json();
-        console.log("Error backend:", body);  // 👈 para verlo en consola
+        const response = await fetch(`${API_BASE_URL}${endpoint}`);
 
-      // intenta distintos formatos de error
-        if (typeof body.message === "string") {
-        errorMsg = body.message;
-        } else if (typeof body.error === "string") {
-        errorMsg = body.error;
-        } else if (Array.isArray(body.errors) && body.errors.length > 0) {
-        // típico de express-validator
-        errorMsg = body.errors[0].msg || JSON.stringify(body.errors[0]);
-        } else {
-        errorMsg = JSON.stringify(body);
+        if (!response.ok) {
+            throw new Error(`Error GET ${endpoint}: ${response.status}`);
         }
-    } catch (_) {
-      // si no es JSON, dejamos el mensaje por defecto
-    }
 
-    throw new Error(errorMsg);
+        return await response.json();
+    } catch (error) {
+        console.error("Error en apiGet:", error);
+        throw error;
     }
-
-    const jsonResponse = await res.json();
-    
-    // Si el backend envuelve la respuesta en { ok: true, data: {...} }
-    // extraemos el data, sino devolvemos la respuesta completa
-    if (jsonResponse.ok && jsonResponse.data) {
-        return jsonResponse.data;
-    }
-    
-    return jsonResponse;
 }
+
+// ==========================
+// MÉTODO POST UNIVERSAL
+// ==========================
+
+async function apiPost(endpoint, data) {
+    try {
+        console.log(`📤 POST ${endpoint}:`, data);
+        
+        const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+        });
+
+        console.log(`📥 Response status:`, res.status);
+
+        if (!res.ok) {
+            let errorMsg = `Error API: ${res.status}`;
+            try {
+                const body = await res.json();
+                console.log('Error body:', body);
+                if (body.message) errorMsg = body.message;
+            } catch (_) {}
+            throw new Error(errorMsg);
+        }
+
+        const responseData = await res.json();
+        console.log(`✅ Response data:`, responseData);
+        return responseData;
+    } catch (error) {
+        console.error("❌ Error en apiPost:", error);
+        throw error;
+    }
+}
+
+// ==========================
+// MÉTODO PUT UNIVERSAL
+// ==========================
+
+async function apiPut(endpoint, data) {
+    try {
+        const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+        });
+
+        if (!res.ok) {
+            let errorMsg = `Error API: ${res.status}`;
+            try {
+                const body = await res.json();
+                if (body.message) errorMsg = body.message;
+            } catch (_) {}
+            throw new Error(errorMsg);
+        }
+
+        return await res.json();
+    } catch (error) {
+        console.error("Error en apiPut:", error);
+        throw error;
+    }
+}
+
+// ==========================
+// MÉTODO DELETE UNIVERSAL
+// ==========================
+
+async function apiDelete(endpoint) {
+    try {
+        const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+            method: "DELETE",
+        });
+
+        if (!res.ok) {
+            let errorMsg = `Error API: ${res.status}`;
+            try {
+                const body = await res.json();
+                if (body.message) errorMsg = body.message;
+            } catch (_) {}
+            throw new Error(errorMsg);
+        }
+
+        return await res.json();
+    } catch (error) {
+        console.error("Error en apiDelete:", error);
+        throw error;
+    }
+}
+
+// ==========================
+// TOKEN DE AUTH
+// ==========================
 
 function getAuthToken() {
     return localStorage.getItem("ecomarket_token");
 }
 
+// Exponer funciones globales
+window.apiGet = apiGet;
 window.apiPost = apiPost;
+window.apiPut = apiPut;
+window.apiDelete = apiDelete;
 window.getAuthToken = getAuthToken;
-

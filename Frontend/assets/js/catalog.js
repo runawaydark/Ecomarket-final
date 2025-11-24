@@ -70,129 +70,9 @@ function showToast(message, type = 'success', duration = 3000) {
 
 /**
  * Productos por defecto del sistema
- * Estructura: id, name, category, description, price, stock, etc.
+ * Array vacío - los productos se cargarán desde la base de datos
  */
-const defaultProducts = [
-    {
-        id: 'frutillas',
-        name: 'Frutillas Frescas Premium',
-        category: 'frutas',
-        description: 'Frutillas de temporada, dulces y jugosas. Perfectas para postres y desayunos saludables.',
-        price: 1600,
-        originalPrice: 2000,
-        unit: 'kg',
-        stock: 15,
-        maxStock: 20,
-        image: 'assets/img/frutillas.jpg',
-        rating: 4.5,
-        reviews: 24,
-        isNew: false,
-        isOffer: true,
-        available: true
-    },
-    {
-        id: 'lechuga',
-        name: 'Lechuga Criolla Fresca',
-        category: 'verduras',
-        description: 'Lechuga criolla de hoja verde, crujiente y fresca. Ideal para ensaladas y hamburguesas.',
-        price: 1200,
-        originalPrice: null,
-        unit: 'unidad',
-        stock: 25,
-        maxStock: 30,
-        image: 'assets/img/lechuga.jpg',
-        rating: 4.0,
-        reviews: 18,
-        isNew: false,
-        isOffer: false,
-        available: true
-    },
-    {
-        id: 'tomates',
-        name: 'Tomates Cherry Orgánicos',
-        category: 'verduras',
-        description: 'Tomates cherry orgánicos, dulces y jugosos. Perfectos para ensaladas y snacks saludables.',
-        price: 2800,
-        originalPrice: null,
-        unit: 'kg',
-        stock: 3,
-        maxStock: 20,
-        image: 'assets/img/tomates.jpg',
-        rating: 5.0,
-        reviews: 32,
-        isNew: false,
-        isOffer: false,
-        available: true
-    },
-    {
-        id: 'zanahorias',
-        name: 'Zanahorias Baby Premium',
-        category: 'verduras',
-        description: 'Zanahorias baby tiernas y dulces. Ideales para cocinar o consumir crudas como snack saludable.',
-        price: 1800,
-        originalPrice: null,
-        unit: 'kg',
-        stock: 20,
-        maxStock: 25,
-        image: 'assets/img/zanahoria.jpg',
-        rating: 4.2,
-        reviews: 12,
-        isNew: true,
-        isOffer: false,
-        available: true
-    },
-    {
-        id: 'manzanas',
-        name: 'Manzanas Red Delicious',
-        category: 'frutas',
-        description: 'Manzanas rojas crujientes y dulces. Perfectas para consumir frescas o en postres.',
-        price: 2200,
-        originalPrice: null,
-        unit: 'kg',
-        stock: 30,
-        maxStock: 40,
-        image: 'assets/img/manzanas.png',
-        rating: 4.3,
-        reviews: 28,
-        isNew: false,
-        isOffer: false,
-        available: true
-    },
-    {
-        id: 'bananas',
-        name: 'Bananas Premium',
-        category: 'frutas',
-        description: 'Bananas maduras y dulces, ricas en potasio. Ideales para batidos y desayunos.',
-        price: 1500,
-        originalPrice: 1800,
-        unit: 'kg',
-        stock: 18,
-        maxStock: 25,
-        image: 'assets/img/bananas.png',
-        rating: 4.6,
-        reviews: 45,
-        isNew: false,
-        isOffer: true,
-        available: true
-    },
-    {
-        id: 'apio',
-        name: 'Apio Fresco Orgánico',
-        category: 'verduras',
-        description: 'Apio fresco y crujiente, perfecto para jugos y ensaladas. Temporalmente agotado.',
-        price: 1400,
-        originalPrice: null,
-        unit: 'kg',
-        stock: 0,
-        maxStock: 15,
-        image: 'https://via.placeholder.com/300x220/90EE90/333333?text=Apio',
-        rating: 4.1,
-        reviews: 8,
-        isNew: false,
-        isOffer: false,
-        available: false
-    }
-];
+const defaultProducts = [];
 
 // =============================================
 // VARIABLES GLOBALES DEL SISTEMA
@@ -205,7 +85,7 @@ let itemsPerPage = 6;
 /** Estado de filtros activos */
 let currentFilters = {
     categories: [],
-    priceRange: { min: 500, max: 5000 },
+    priceRange: { min: 0, max: 5000 },
     availability: [],
     sortBy: 'relevancia'
 };
@@ -223,29 +103,58 @@ let currentView = 'grid';
 // Nueva variable global para almacenar los productos reales del backend
 let backendProducts = [];
 
-// Sobrescribir initializeProducts() para cargar desde backend
-async function initializeProducts() {
-    try {
-        backendProducts = await apiGet("/products"); // Llamada real al backend
+// Mapa de IDs de categoría de Mongo → slugs del catálogo
+const CATEGORY_ID_MAP = {
+  // IDs reales de colección "categories".
 
-        // Normalizar campos para que coincidan con el sistema actual
-        backendProducts = backendProducts.map(p => ({
-            id: p._id, // tu backend usa _id
-            name: p.name,
-            category: p.category?.toLowerCase() || "general",
-            description: p.description || "",
-            price: p.price,
-            originalPrice: p.originalPrice || null,
-            unit: p.unit || "unidad",
-            stock: p.stock || 0,
-            maxStock: p.maxStock || 100,
-            image: p.imageUrl || "https://via.placeholder.com/300",
-            rating: p.rating || 4.0,
-            reviews: p.reviews || 0,
-            isNew: p.isNew || false,
-            isOffer: p.isOffer || false,
-            available: p.stock > 0
-        }));
+    "6920d5ab3805202c3b36be72": "frutas",
+    "6920d5ab3805202c3b36be73": "verduras",
+    "6920ff235965d54c277ed825": "despensa",
+};
+
+
+            // Sobrescribir initializeProducts() para cargar desde backend
+            async function initializeProducts() {
+                try {
+                    backendProducts = await apiGet("/products"); // Llamada real al backend
+                
+                    // Normalizar campos para que coincidan con el sistema actual
+            backendProducts = backendProducts.map(p => ({
+                id: p._id,
+                name: p.name,
+                category: (() => {
+                if (!p.category) return "general";
+            
+                // Caso 1: viene como string (ObjectId como texto)
+                if (typeof p.category === "string") {
+                    return CATEGORY_ID_MAP[p.category] || "general";
+                }
+            
+                // Caso 2: viene como objeto poblado { _id, name }
+                if (p.category._id && CATEGORY_ID_MAP[p.category._id]) {
+                    return CATEGORY_ID_MAP[p.category._id];
+                }
+                if (p.category.name) {
+                    return p.category.name.toLowerCase();
+                }
+            
+                return "general";
+                })(),
+                description: p.description || "",
+                price: p.price,
+                originalPrice: p.originalPrice || null,
+                unit: p.unit || "unidad",
+                stock: p.stock || 0,
+                maxStock: p.maxStock || 100,
+                image: p.imageUrl || "https://via.placeholder.com/300",
+                rating: p.rating || 4.0,
+                reviews: p.reviews || 0,
+                isNew: p.isNew || false,
+                isOffer: p.isOffer || false,
+                available: p.stock > 0
+            }));
+
+
 
         console.log("Productos cargados desde backend:", backendProducts);
 
@@ -515,6 +424,8 @@ function renderProducts() {
                 </div>
             </div>
         `;
+        // Actualizar contadores a 0
+        updateResultsInfo(0, 0, 0);
         return;
     }
     
@@ -677,6 +588,12 @@ function updateResultsInfo(totalProducts, startItem, endItem) {
     if (paginationInfo) {
         paginationInfo.innerHTML = `Mostrando <strong>${startItem}-${endItem}</strong> de <strong>${totalProducts}</strong> productos`;
     }
+    
+    // Actualizar encabezado de resultados
+    const resultsInfo = document.querySelector('.results-info p');
+    if (resultsInfo) {
+        resultsInfo.innerHTML = `Mostrando <span id="showing-count">${startItem}-${endItem}</span> de <span id="total-count">${totalProducts}</span> productos`;
+    }
 }
 
 // Actualizar contador de productos encontrados
@@ -788,7 +705,7 @@ function applyFilters() {
     });
     
     // Obtener rango de precios
-    const minPrice = parseInt(document.getElementById('precio-min').value) || 500;
+    const minPrice = parseInt(document.getElementById('precio-min').value) || 0;
     const maxPrice = parseInt(document.getElementById('precio-max').value) || 5000;
     currentFilters.priceRange = { min: minPrice, max: maxPrice };
     
@@ -824,10 +741,10 @@ function clearFilters() {
     document.querySelectorAll('.availability-checkbox').forEach(cb => cb.checked = false);
     
     // Resetear precios
-    document.getElementById('precio-min').value = 500;
+    document.getElementById('precio-min').value = 0;
     document.getElementById('precio-max').value = 5000;
-    document.getElementById('precio-range').value = 2750;
-    document.getElementById('current-price').textContent = '$2,750';
+    document.getElementById('precio-range').value = 2500;
+    document.getElementById('current-price').textContent = '$2,500';
     
     // Resetear ordenación
     document.getElementById('sort-options').value = 'relevancia';
@@ -835,7 +752,7 @@ function clearFilters() {
     // Limpiar filtros y renderizar
     currentFilters = {
         categories: [],
-        priceRange: { min: 500, max: 5000 },
+        priceRange: { min: 0, max: 5000 },
         availability: [],
         sortBy: 'relevancia'
     };
@@ -916,8 +833,8 @@ function changeView(viewType) {
 }
 
 // Inicialización cuando se carga la página
-document.addEventListener('DOMContentLoaded', function() {
-    initializeProducts();
+document.addEventListener('DOMContentLoaded', async function() {
+    await initializeProducts();
     updateCartCount();
     setupQuantityControls();
     setupPriceSlider();
@@ -945,7 +862,9 @@ document.addEventListener('DOMContentLoaded', function() {
     updatePagination();
     updateProductsFoundCount();
     
-    console.log('Sistema de catálogo inicializado');
+    // Actualizar contadores basados en productos reales
+    const totalProducts = getProducts().length;
+    console.log(`Sistema de catálogo inicializado con ${totalProducts} productos`);
 });
 
 // Función para aplicar filtro de categoría desde URL

@@ -380,7 +380,9 @@
             registerTab.addEventListener('click', () => switchMode(false));
 
             // === FUNCIÓN PARA MOSTRAR/OCULTAR CONTRASEÑA ===
-            togglePassword.addEventListener('click', () => {
+            togglePassword.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 const isPassword = passwordInput.type === 'password';
                 
                 if (isPassword) {
@@ -396,8 +398,12 @@
 
             // === FUNCIÓN PARA VALIDAR EMAIL ===
             function isValidEmailOrAdmin(email) {
-                // Si es "admin", es válido
+                // Si es "admin", convertir al email real del admin
                 if (email.toLowerCase() === 'admin') {
+                    return true;
+                }
+                // Si es el email completo del admin, también es válido
+                if (email.toLowerCase() === 'admin@ecomarket.com') {
                     return true;
                 }
                 // Si no es admin, debe ser un email válido
@@ -409,7 +415,7 @@
                         authForm.addEventListener('submit', async (e) => {
                                 e.preventDefault();
 
-                        const email = emailInput.value.trim();
+                        let email = emailInput.value.trim();
                         const password = passwordInput.value;
                         const name = nameInput.value.trim();
 
@@ -431,6 +437,11 @@
                 return;
                 }
                 
+              // Si es login y escribe "admin", convertir al email del admin
+                if (isLoginMode && email.toLowerCase() === 'admin') {
+                    email = 'admin@ecomarket.com';
+                }
+                
               // Validar formato de correo (manteniendo tu función de validación)
                 if (!isValidEmailOrAdmin(email)) {
                 const msg = isLoginMode
@@ -444,7 +455,12 @@
                 if (isLoginMode) {
                   // ===== LOGIN contra backend =====
                     const body = { email, password };
-                    const data = await apiPost('/auth/login', body);
+                    const response = await apiPost('/auth/login', body);
+                    
+                    console.log('Respuesta del servidor:', response);
+                    
+                    // El backend devuelve { ok: true, data: { token, user } }
+                    const data = response.data || response;
                 
                     if (data.token) {
                         localStorage.setItem('ecomarket_token', data.token);
@@ -452,15 +468,16 @@
                     if (data.user) {
                         localStorage.setItem('ecomarket_user', JSON.stringify(data.user));
                         localStorage.setItem('ecomarket_logged_in', 'true');
-                        // Normalizar el role (el backend puede usar ADMIN o admin)
-                        const normalizedRole = (data.user.role || 'user').toLowerCase();
-                        localStorage.setItem('ecomarket_user_type', normalizedRole === 'admin' || normalizedRole === 'customer' ? normalizedRole : 'user');
+                        // Normalizar el role (el backend usa ADMIN/CUSTOMER en mayúsculas)
+                        const normalizedRole = (data.user.role || 'CUSTOMER').toUpperCase();
+                        const userType = normalizedRole === 'ADMIN' ? 'admin' : 'user';
+                        localStorage.setItem('ecomarket_user_type', userType);
                         localStorage.setItem('ecomarket_user_email', data.user.email);
                         localStorage.setItem('ecomarket_user_name', data.user.name);
                     }
                     
                     const userName = data.user?.name || 'Usuario';
-                    const isAdmin = data.user && (data.user.role === 'admin' || data.user.role === 'ADMIN');
+                    const isAdmin = data.user && (data.user.role === 'ADMIN' || data.user.role === 'admin');
                     
                     showNotification(`¡Bienvenido ${userName}!`, 'success');
                     
@@ -476,9 +493,10 @@
                 } else {
                   // ===== REGISTRO contra backend =====
                     const body = { name, email, password };
-                    const data = await apiPost('/auth/register', body);
-                  // muchos backends de ejemplo devuelven { message: 'Usuario creado' } o similar
-                
+                    const response = await apiPost('/auth/register', body);
+                    
+                    console.log('Respuesta de registro:', response);
+                    
                     showNotification('Cuenta creada correctamente. Ahora puedes iniciar sesión.', 'success');
                 
                   // Cambiamos a modo login y dejamos el correo escrito
@@ -487,7 +505,7 @@
                     passwordInput.value = '';
                 }
                 } catch (err) {
-                    console.error(err);
+                    console.error('Error en login/registro:', err);
                     showNotification(err.message || 'Error al procesar la solicitud.', 'error');
                 }
 
