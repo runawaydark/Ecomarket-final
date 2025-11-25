@@ -165,6 +165,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/app.js"></script>
     <script src="assets/js/footer.js"></script>
+    <script src="assets/js/api.js"></script>
     
     <script>
         let currentUser = null;
@@ -189,58 +190,115 @@
             }
         }
         
-        // Inicializar página
-        document.addEventListener('DOMContentLoaded', function() {
-            checkGlobalFunctions();
-            checkUserAuthentication();
-            loadOrders();
-            setupFilters();
-            updateCartCount();
-        });
 
         // Verificar autenticación del usuario
         function checkUserAuthentication() {
-            const loggedUser = localStorage.getItem('ecomarket_current_user');
-            if (loggedUser) {
-                currentUser = JSON.parse(loggedUser);
-                document.getElementById('not-logged-in').style.display = 'none';
-                document.getElementById('orders-container').style.display = 'block';
-                document.getElementById('filters-section').style.display = 'flex';
-            } else {
+            const auth = checkAuthStatus(); // viene de app.js
+            const userJson = localStorage.getItem('ecomarket_user');
+        
+            if (!auth.isLoggedIn || !userJson) {
+                currentUser = null;
                 document.getElementById('not-logged-in').style.display = 'block';
                 document.getElementById('orders-container').style.display = 'none';
                 document.getElementById('filters-section').style.display = 'none';
+                return false;
+            }
+        
+            currentUser = JSON.parse(userJson);
+        
+            document.getElementById('not-logged-in').style.display = 'none';
+            document.getElementById('orders-container').style.display = 'block';
+            document.getElementById('filters-section').style.display = 'flex';
+        
+            return true;
+        }
+
+
+        // Cargar pedidos del usuario desde el backend
+        async function loadOrders() {
+            if (!currentUser) return;
+        
+            const token = getAuthToken && getAuthToken();
+            if (!token) {
+                showNotification('Debes iniciar sesión para ver tus pedidos.', 'error', 3000);
+                return;
+            }
+        
+            try {
+                const response = await apiGet('/orders/mine');
+                const backendOrders = response.data || response; // según cómo responda el backend
+            
+                if (!Array.isArray(backendOrders) || backendOrders.length === 0) {
+                    orders = [];
+                    filteredOrders = [];
+                
+                    document.getElementById('empty-orders').style.display = 'block';
+                    document.getElementById('orders-list').style.display = 'none';
+                    return;
+                }
+            
+                // Intentar usar productos guardados del catálogo (si existen)
+                const storedProducts = JSON.parse(localStorage.getItem('ecomarket_products') || '[]');
+            
+                orders = backendOrders.map(o => {
+                    const date = o.createdAt || o.date || new Date().toISOString();
+                
+                    // Mapear estado del backend a los estados que ya usa la UI
+                    const statusMap = {
+                        PAID: 'confirmado'   // por ahora todo lo que venga como PAID lo mostramos como "confirmado"
+                    };
+                    const status = statusMap[o.status] || 'confirmado';
+                
+                    const items = (o.items || []).map(i => {
+                        const productId = (i.product && i.product._id) || i.product || i.productId;
+                        const product = storedProducts.find(p => p.id === productId || p._id === productId);
+                    
+                        const price = i.unitPrice || (product ? parseFloat(product.price) : 0);
+                    
+                        return {
+                            productId,
+                            name: product ? product.name : 'Producto del catálogo',
+                            quantity: i.quantity || 1,
+                            price: price,
+                            unit: product ? (product.unit || 'unidad') : 'unidad'
+                        };
+                    });
+                
+                    const total = o.total || items.reduce((s, it) => s + (it.price * it.quantity), 0);
+                
+                    return {
+                        id: o._id || o.id,
+                        date,
+                        status,
+                        items,
+                        total,
+                        // Campos que tu UI espera para los detalles
+                        payment: { method: 'credit-card' }, // de momento fijo, luego lo afinamos
+                        delivery: {
+                            address: 'Dirección no informada',
+                            city: ''
+                        },
+                        customer: {
+                            id: currentUser.id || currentUser._id,
+                            name: currentUser.name || currentUser.email,
+                            email: currentUser.email
+                        }
+                    };
+                });
+            
+                filteredOrders = [...orders];
+            
+                document.getElementById('empty-orders').style.display = 'none';
+                document.getElementById('orders-list').style.display = 'flex';
+                document.getElementById('filters-section').style.display = 'flex';
+            
+                renderOrders(filteredOrders);
+            } catch (error) {
+                console.error('Error cargando pedidos desde backend', error);
+                showNotification('No se pudieron cargar tus pedidos. Intenta más tarde.', 'error', 3000);
             }
         }
 
-        // Cargar pedidos del usuario
-        function loadOrders() {
-            if (!currentUser) return;
-            
-            // Cargar desde el historial específico del usuario primero
-            let userOrders = JSON.parse(localStorage.getItem('ecomarket_user_orders_' + currentUser.id)) || [];
-            
-            // Si no hay historial específico, buscar en el historial general
-            if (userOrders.length === 0) {
-                const allOrders = JSON.parse(localStorage.getItem('ecomarket_orders')) || [];
-                userOrders = allOrders.filter(order => 
-                    (order.userId === currentUser.id) || 
-                    (order.customer && order.customer.id === currentUser.id)
-                );
-            }
-            
-            orders = userOrders;
-            filteredOrders = [...orders];
-            
-            if (orders.length === 0) {
-                document.getElementById('empty-orders').style.display = 'block';
-                document.getElementById('orders-list').style.display = 'none';
-            } else {
-                document.getElementById('empty-orders').style.display = 'none';
-                document.getElementById('orders-list').style.display = 'flex';
-                renderOrders(filteredOrders);
-            }
-        }
 
         // Renderizar lista de pedidos
         function renderOrders(ordersToRender) {
@@ -290,11 +348,11 @@
             
             // Obtener método de pago
             const paymentText = order.payment ? getPaymentMethodText(order.payment.method) : 
-                              (order.paymentMethod ? getOldPaymentMethodText(order.paymentMethod) : 'No especificado');
+                                (order.paymentMethod ? getOldPaymentMethodText(order.paymentMethod) : 'No especificado');
             
             // Obtener dirección
             const addressText = order.delivery ? (order.delivery.address + ', ' + order.delivery.city) :
-                               (order.shipping ? (order.shipping.address + ', ' + order.shipping.city) : 'No especificada');
+                                (order.shipping ? (order.shipping.address + ', ' + order.shipping.city) : 'No especificada');
 
             return `
                 <div class="col-lg-6 col-xl-4">
@@ -764,14 +822,13 @@
     <script>
         // Actualizar menú de usuario según estado de sesión
         document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                if (typeof updateNavbar === 'function') {
-                    updateNavbar();
-                } else if (typeof updateUserDropdown === 'function') {
-                    updateUserDropdown();
-                }
-            }, 100);
+            checkGlobalFunctions();
+            checkUserAuthentication();
+            loadOrders();
+            setupFilters();
+            updateCartCount();
         });
+
     </script>
     
 </body>

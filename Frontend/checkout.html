@@ -485,156 +485,212 @@
         let cart = [];
         let products = [];
         let shippingData = null;
+        let currentUser = null;
         const SHIPPING_COST = 2500;
         const FREE_SHIPPING_THRESHOLD = 15000;
 
     // Inicializar checkout
-    document.addEventListener('DOMContentLoaded', function() {
-      // Validar que el usuario esté logueado
-      if (!checkUserAuthentication()) {
-        return;
-      }
-      
-      initializeUsers();
-      loadCheckoutData();
-      loadProducts();
-      renderCheckoutSummary();
-      setupPaymentMethodHandlers();
-      formatCardInputs();
-      updateCartCount();
-    });
+    // Inicializar checkout
+        document.addEventListener('DOMContentLoaded', async function() {
+          // Validar que el usuario esté logueado
+            currentUser = checkUserAuthentication();
+            if (!currentUser) {
+                return;
+            }
+    
+          // Ya no usamos usuarios fake de localStorage
+          // initializeUsers();
+    
+          await loadCheckoutData();   // ahora será async
+            loadProducts();
+            renderCheckoutSummary();
+            setupPaymentMethodHandlers();
+            formatCardInputs();
+            updateCartCount();
+        });
+
     
     // Sistema de Notificaciones Elegante
     function showNotification(message, type = 'info', duration = 4000) {
-      const container = document.getElementById('notification-container');
-      const notificationId = 'notification-' + Date.now();
-      
-      const icons = {
+        const container = document.getElementById('notification-container');
+        const notificationId = 'notification-' + Date.now();
+    
+        const icons = {
         success: '<i class="bi bi-check-circle-fill text-success"></i>',
         error: '<i class="bi bi-x-circle-fill text-danger"></i>', 
         warning: '<i class="bi bi-exclamation-triangle-fill text-warning"></i>',
         info: '<i class="bi bi-info-circle-fill text-info"></i>'
-      };
-      
-      const titles = {
+        };
+    
+        const titles = {
         success: '¡Éxito!',
         error: 'Error',
         warning: 'Atención',
         info: 'Información'
-      };
-      
-      const notification = document.createElement('div');
-      notification.className = `notification ${type}`;
-      notification.id = notificationId;
-      notification.innerHTML = `
+        };
+    
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.id = notificationId;
+        notification.innerHTML = `
         <div class="notification-header">
-          <div class="d-flex align-items-start">
+            <div class="d-flex align-items-start">
             <div class="notification-icon">
-              ${icons[type]}
+                ${icons[type]}
             </div>
             <div class="notification-content">
-              <div class="notification-title">${titles[type]}</div>
-              <div class="notification-message">${message}</div>
+                <div class="notification-title">${titles[type]}</div>
+                <div class="notification-message">${message}</div>
             </div>
-          </div>
-          <button class="notification-close" onclick="closeNotification('${notificationId}')">×</button>
+            </div>
+            <button class="notification-close" onclick="closeNotification('${notificationId}')">×</button>
         </div>
         <div class="notification-progress"></div>
-      `;
-      
-      container.appendChild(notification);
-      
+        `;
+
+        container.appendChild(notification);
+        
       // Auto-remover después del duration
-      setTimeout(() => {
-        closeNotification(notificationId);
-      }, duration);
-      
-      return notificationId;
-    }
+        setTimeout(() => {
+            closeNotification(notificationId);
+        }, duration);
+        
+        return notificationId;
+        }
     
     function closeNotification(notificationId) {
-      const notification = document.getElementById(notificationId);
-      if (notification) {
+        const notification = document.getElementById(notificationId);
+        if (notification) {
         notification.classList.add('fade-out');
         setTimeout(() => {
-          if (notification.parentNode) {
+            if (notification.parentNode) {
             notification.parentNode.removeChild(notification);
-          }
-        }, 300);
-      }
+                }
+            }, 300);
+        }
     }
     
     // Función para verificar autenticación
+    // Función para verificar autenticación usando el backend real
     function checkUserAuthentication() {
-      const currentUser = JSON.parse(localStorage.getItem('ecomarket_current_user'));
-      const isLoggedIn = localStorage.getItem('ecomarket_logged_in') === 'true';
-      
-      if (!currentUser || !isLoggedIn) {
-        showNotification('Debes iniciar sesión para acceder al checkout. Redirigiendo...', 'error', 3000);
+        const token = typeof getAuthToken === 'function' ? getAuthToken() : null;
+        const userStr = localStorage.getItem('ecomarket_user');
+
+        if (!token || !userStr) {
+        showNotification(
+            'Debes iniciar sesión para acceder al checkout. Redirigiendo...',
+            'error',
+            3000
+        );
         setTimeout(() => {
-          window.location.href = 'login.html';
+            window.location.href = 'login.html';
         }, 3000);
-        return false;
-      }
-      
-      return true;
+        return null;
+        }
+
+        try {
+        return JSON.parse(userStr);
+        } catch (_) {
+        localStorage.removeItem('ecomarket_user');
+        showNotification(
+            'Error con los datos de usuario. Por favor inicia sesión nuevamente.',
+            'error',
+            3000
+        );
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 3000);
+            return null;
+        }
     }
+
 
     // Inicializar usuarios de prueba
     function initializeUsers() {
-      const users = localStorage.getItem('ecomarket_users');
-      if (!users) {
+        const users = localStorage.getItem('ecomarket_users');
+        if (!users) {
         const defaultUsers = [
-          {
+            {
             id: 1,
             email: 'usuario@ecomarket.com',
             password: '123456',
             name: 'Usuario Demo',
             phone: '+56 9 1234 5678'
-          },
-          {
+            },
+            {
             id: 2,
             email: 'test@test.com',
             password: 'test',
             name: 'Test User',
             phone: '+56 9 8765 4321'
-          }
+            } 
         ];
         localStorage.setItem('ecomarket_users', JSON.stringify(defaultUsers));
         
         // Simular usuario logueado para pruebas
         localStorage.setItem('ecomarket_current_user', JSON.stringify(defaultUsers[0]));
-      }
-    }        // Cargar datos del checkout
-        function loadCheckoutData() {
-        // Cargar carrito desde localStorage
-        const checkoutCart = localStorage.getItem('ecomarket_checkout_cart');
-        const regularCart = localStorage.getItem('ecomarket_cart');
+        }
+    }        
+        // Cargar datos del checkout
+        // Cargar datos del checkout (carrito desde backend + datos de envío desde localStorage)
+        async function loadCheckoutData() {
+          // 1. Cargar datos de envío (siguen en localStorage)
+            const savedShipping = localStorage.getItem('ecomarket_shipping');
+            shippingData = savedShipping ? JSON.parse(savedShipping) : null;
         
-        cart = checkoutCart ? JSON.parse(checkoutCart) : (regularCart ? JSON.parse(regularCart) : []);
+            if (!shippingData) {
+                showToast('Por favor complete los datos de envío', 'warning');
+                setTimeout(() => {
+                window.location.href = 'carrito.html';
+                }, 2000);
+                return;
+            }
+    
+            // 2. Intentar cargar el carrito REAL desde el backend
+            const token = typeof getAuthToken === 'function' ? getAuthToken() : null;
+    
+            if (token) {
+            try {
+              const backendCart = await apiGet('/cart'); // GET /api/cart
+            
+                if (!backendCart || !Array.isArray(backendCart.items) || backendCart.items.length === 0) {
+                showToast('No hay productos en el carrito', 'warning');
+                setTimeout(() => {
+                    window.location.href = 'carrito.html';
+                }, 2000);
+                return;
+                }
         
-        // Cargar datos de envío
-        const savedShipping = localStorage.getItem('ecomarket_shipping');
-        shippingData = savedShipping ? JSON.parse(savedShipping) : null;
-        
-        // Si no hay carrito, redirigir
-        if (cart.length === 0) {
+              // Adaptar formato del backend al que usa el front
+                cart = backendCart.items.map(item => ({
+                productId: item.product._id || item.product, // soporta populate o id plano
+                quantity: item.quantity,
+                addedAt: item.addedAt || new Date().toISOString()
+                }));
+                
+              // Guardar copia en localStorage para mantener compatibilidad con otras páginas
+                localStorage.setItem('ecomarket_cart', JSON.stringify(cart));
+            } catch (error) {
+                console.error('❌ Error cargando carrito desde backend, se usa localStorage:', error);
+                const checkoutCart = localStorage.getItem('ecomarket_checkout_cart');
+                const regularCart = localStorage.getItem('ecomarket_cart');
+                cart = checkoutCart ? JSON.parse(checkoutCart) : (regularCart ? JSON.parse(regularCart) : []);
+            }
+            } else {
+            // Fallback extremo (no debería ocurrir porque checkout requiere login)
+            const checkoutCart = localStorage.getItem('ecomarket_checkout_cart');
+            const regularCart = localStorage.getItem('ecomarket_cart');
+            cart = checkoutCart ? JSON.parse(checkoutCart) : (regularCart ? JSON.parse(regularCart) : []);
+            }
+            } 
+            if (!cart || cart.length === 0) {
             showToast('No hay productos en el carrito', 'warning');
             setTimeout(() => {
-            window.location.href = 'carrito.html';
+                window.location.href = 'carrito.html';
             }, 2000);
-            return;
-        }
+            }
         
-        // Si no hay datos de envío, redirigir al carrito
-        if (!shippingData) {
-            showToast('Por favor complete los datos de envío', 'warning');
-            setTimeout(() => {
-            window.location.href = 'carrito.html';
-            }, 2000);
-            return;
-        }
-        }
+
 
         // Cargar productos
         function loadProducts() {
@@ -827,49 +883,65 @@
         }
 
         // Procesar pago
-        function processPayment() {
-            // Verificar que el usuario esté logueado
-            const currentUser = localStorage.getItem('ecomarket_current_user');
-            if (!currentUser) {
-                showToast('Debes iniciar sesión para completar tu pedido', 'warning', 4000);
-                setTimeout(() => {
-                    window.location.href = 'login.html';
+        // Procesar pago y crear pedido REAL en backend
+        async function processPayment() {
+        // Asegurarse de que hay usuario y token
+        const token = typeof getAuthToken === 'function' ? getAuthToken() : null;
+        if (!token || !currentUser) {
+            showToast('Debes iniciar sesión para completar tu pedido', 'warning', 4000);
+            setTimeout(() => {
+                window.location.href = 'login.html';
                 }, 2000);
+            return;
+        }
+
+        const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+
+        // Validar formulario si es tarjeta
+        if (selectedPaymentMethod === 'credit') {
+            if (!validateCardForm()) {
                 return;
             }
-
-            const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
-            
-            // Validar según método de pago
-            if (selectedPaymentMethod === 'credit') {
-                if (!validateCardForm()) {
-                    return;
-                }
-            }
-            
-            // Simular procesamiento
-            const submitBtn = document.querySelector('button[onclick="processPayment()"]');
-            const originalText = submitBtn.innerHTML;
-            
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Procesando pedido...';
-            
-            // Mostrar mensaje de procesamiento
-            showToast('Procesando tu pedido...', 'info', 2000);
-            
-            setTimeout(() => {
-                // Guardar pedido en historial
-                const orderId = saveOrderToHistory();
-                
-                // Limpiar carrito después de compra exitosa
-                localStorage.removeItem('ecomarket_cart');
-                localStorage.removeItem('ecomarket_checkout_cart');
-                
-                // Mostrar mensaje de éxito con detalles
-                showSuccessModal(orderId);
-                
-            }, 2000);
         }
+
+        const submitBtn = document.querySelector('button[onclick="processPayment()"]');
+        const originalText = submitBtn.innerHTML;
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Procesando pedido...';
+
+        showToast('Procesando tu pedido...', 'info', 2000);
+
+        try {
+        // Llamada real: POST /api/orders/checkout
+        const response = await apiPost('/orders/checkout', {}); // body vacío, backend toma el carrito activo
+        const data = response.data || response; // por si ok() envuelve en { data: order }
+
+        const backendOrder = data;
+        console.log('✅ Pedido creado en backend:', backendOrder);
+
+        // Usar algún identificador amigable para mostrar al usuario
+        const orderId = backendOrder.paymentRef || backendOrder._id || backendOrder.id || ('ORD' + Date.now());
+
+        // (Opcional) seguir guardando historial en localStorage para la vista de "pedidos"
+        saveOrderToHistory(orderId);
+
+        // Limpiar carrito en el front
+        localStorage.removeItem('ecomarket_cart');
+        localStorage.removeItem('ecomarket_checkout_cart');
+        cart = [];
+        updateCartCount();
+
+        // Mostrar modal de éxito
+        showSuccessModal(orderId);
+        } catch (error) {
+        console.error('❌ Error al crear pedido en backend:', error);
+        showToast('No se pudo completar tu pedido. Intenta nuevamente.', 'error', 4000);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+        }
+    }
+
 
         // Validar formulario de tarjeta
         function validateCardForm() {
@@ -919,89 +991,77 @@
         }
 
         // Guardar pedido en historial
-        function saveOrderToHistory() {
-            // Cargar productos para obtener información completa
+        // Guardar pedido en historial LOCAL (para compatibilidad con pedidos.html)
+        function saveOrderToHistory(orderIdFromBackend) {
+          // Cargar productos para obtener información completa
             loadProducts();
-            
-            const currentUser = JSON.parse(localStorage.getItem('ecomarket_current_user'));
+        
+            const currentUser = JSON.parse(localStorage.getItem('ecomarket_user'));
             if (!currentUser) {
-                showNotification('Debes iniciar sesión para completar la compra. Redirigiendo...', 'error', 3000);
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 3000);
-                return null;
+            return null;
             }
             
-            // Obtener datos de envío del localStorage (guardados en carrito)
-            const shippingData = JSON.parse(localStorage.getItem('ecomarket_shipping'));
+            const shippingData = JSON.parse(localStorage.getItem('ecomarket_shipping') || 'null');
             if (!shippingData) {
-                showNotification('Debes completar los datos de envío primero. Redirigiendo al carrito...', 'warning', 3000);
-                setTimeout(() => {
-                    window.location.href = 'carrito.html';
-                }, 3000);
-                return null;
+            return null;
             }
             
-            const orderId = 'ORD' + Date.now();
             const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
             
-            // Obtener método de pago legible
             const paymentMethods = {
-                'credit': 'credit-card',
-                'transfer': 'bank-transfer', 
-                'cash': 'cash-on-delivery'
+            'credit': 'credit-card',
+            'transfer': 'bank-transfer',
+            'cash': 'cash-on-delivery'
             };
             
-            // Usar los datos del formulario de envío
+            const orderId = orderIdFromBackend || ('ORD' + Date.now());
             const customerName = shippingData.name || currentUser.name;
-            const customerPhone = shippingData.phone || '+57 300 000 0000';
+            const customerPhone = shippingData.phone || '';
             
             const order = {
-                id: orderId,
-                date: new Date().toISOString(),
-                status: 'confirmado',
-                customer: {
-                    id: currentUser.id,
-                    name: customerName,
-                    email: currentUser.email,
-                    phone: customerPhone
-                },
-                delivery: {
-                    address: shippingData.address,
-                    city: shippingData.city,
-                    postal: shippingData.postal || '',
-                    notes: shippingData.reference || ''
-                },
-                payment: {
-                    method: paymentMethods[selectedPaymentMethod] || selectedPaymentMethod
-                },
-                items: cart.map(item => {
-                    // Obtener información completa del producto
-                    const product = products.find(p => p.id === item.productId);
-                    return {
-                        name: product ? product.name : (item.name || 'Producto sin nombre'),
-                        quantity: item.quantity || 1,
-                        unit: product ? product.unit : (item.unit || 'unidad'),
-                        price: product ? parseFloat(product.price) : parseFloat(item.price) || 0,
-                        productId: item.productId || item.id || 'unknown'
-                    };
-                }),
-                total: calculateOrderTotal(cart), // Calcular total directamente
-                lastUpdated: new Date().toISOString()
+            id: orderId,
+            date: new Date().toISOString(),
+            status: 'confirmado',
+            customer: {
+                id: currentUser.id,
+                name: customerName,
+                email: currentUser.email,
+                phone: customerPhone
+            },
+            delivery: {
+                address: shippingData.address,
+                city: shippingData.city,
+                postal: shippingData.postal || '',
+                notes: shippingData.reference || ''
+            },
+            payment: {
+                method: paymentMethods[selectedPaymentMethod] || selectedPaymentMethod
+            },
+            items: cart.map(item => {
+                const product = products.find(p => p.id === item.productId);
+                return {
+                name: product ? product.name : (item.name || 'Producto'),
+                quantity: item.quantity || 1,
+                unit: product ? product.unit : (item.unit || 'unidad'),
+                price: product ? parseFloat(product.price) : parseFloat(item.price) || 0,
+                productId: item.productId || item.id || 'unknown'
+                };
+            }),
+            total: calculateOrderTotal(cart),
+            lastUpdated: new Date().toISOString()
             };
             
-            // Guardar en historial de pedidos (para admin y usuarios)
             let orderHistory = JSON.parse(localStorage.getItem('ecomarket_orders')) || [];
             orderHistory.unshift(order);
             localStorage.setItem('ecomarket_orders', JSON.stringify(orderHistory));
             
-            // Guardar también en historial específico del usuario (para compatibilidad)
             let userOrders = JSON.parse(localStorage.getItem('ecomarket_user_orders_' + currentUser.id)) || [];
             userOrders.unshift(order);
             localStorage.setItem('ecomarket_user_orders_' + currentUser.id, JSON.stringify(userOrders));
             
             return orderId;
         }
+
 
         // Actualizar contador del carrito
         function updateCartCount() {

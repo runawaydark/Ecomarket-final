@@ -285,6 +285,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/app.js"></script>
     <script src="assets/js/footer.js"></script>
+    <script src="assets/js/api.js"></script>
     
     <script>
         // ===== SISTEMA DE CARRITO =====
@@ -296,49 +297,71 @@
         const FREE_SHIPPING_THRESHOLD = 15000;
         
         // Inicializar carrito
-        document.addEventListener('DOMContentLoaded', function() {
-            loadCart();
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadCart();
             loadProducts();
             renderCart();
             loadShippingData();
-            
-            // Cargar recomendaciones después de un pequeño delay para asegurar que los productos estén cargados
+        
             setTimeout(() => {
                 loadRecommendedProducts();
             }, 100);
-            
+        
             updateCartCount();
-            
-            // Actualizar menú de usuario según estado de sesión
+        
             if (typeof updateNavbar === 'function') {
                 updateNavbar();
             } else if (typeof updateUserDropdown === 'function') {
                 updateUserDropdown();
             }
         });
+
         
-        // Cargar carrito desde localStorage
+        // Cargar carrito desde backend
         function loadCart() {
             const savedCart = localStorage.getItem('ecomarket_cart');
             cart = savedCart ? JSON.parse(savedCart) : [];
             console.log('🛒 Carrito cargado desde localStorage:', cart);
             console.log('📦 Número de productos en carrito:', cart.length);
         }
+
+        // Cargar carrito (desde backend si está logueado, si no, desde localStorage)
+        async function loadCart() {
+            const savedCart = localStorage.getItem('ecomarket_cart');
+            cart = savedCart ? JSON.parse(savedCart) : [];
+            console.log('🛒 Carrito local cargado:', cart);
         
-        // Cargar productos desde localStorage
-        function loadProducts() {
-            const savedProducts = localStorage.getItem('ecomarket_products');
-            products = savedProducts ? JSON.parse(savedProducts) : [];
-        }
+            // Si no hay token, solo usamos el carrito local
+            const token = getAuthToken && getAuthToken();
+            if (!token) {
+                console.log('👤 Usuario no logueado, usando carrito local únicamente');
+                return;
+            }
         
-        // Guardar carrito en localStorage
-        function saveCart() {
-            localStorage.setItem('ecomarket_cart', JSON.stringify(cart));
-            updateCartCount();
+            try {
+                console.log('🔐 Usuario logueado, sincronizando carrito con backend...');
+                const backendCart = await apiGet('/cart'); // GET /api/cart
             
+                // backendCart.items viene con: [{ product, quantity, unitPrice }, ...]
+                if (backendCart && Array.isArray(backendCart.items)) {
+                    // Convertimos al formato que usa tu front: { productId, quantity, addedAt }
+                    cart = backendCart.items.map(item => ({
+                        productId: item.product._id || item.product,   // soporta id plano o objeto
+                        quantity: item.quantity,
+                        addedAt: item.addedAt || new Date().toISOString()
+                    }));
+                
+                    console.log('🛒 Carrito sincronizado desde backend:', cart);
+                    // Guardamos también en localStorage para otras páginas
+                    localStorage.setItem('ecomarket_cart', JSON.stringify(cart));
+                }
+            } catch (error) {
+                console.error('❌ Error obteniendo carrito desde backend, usando solo localStorage', error);
+            }
+        }
+
             // Trigger evento para actualizar contador en otras páginas
             window.dispatchEvent(new CustomEvent('cartUpdated', { detail: cart }));
-        }
         
         // Renderizar carrito
         function renderCart() {
@@ -489,41 +512,55 @@
         }
         
         // Actualizar cantidad de un producto
-        function updateQuantity(productId, newQuantity) {
+        async function updateQuantity(productId, newQuantity) {
             const product = products.find(p => p.id === productId);
             if (!product) return;
-            
+        
+            const cartItem = cart.find(item => item.productId === productId);
+        
             if (newQuantity <= 0) {
-                removeFromCart(productId);
+                // Si la cantidad es 0 o menos, simplemente eliminamos
+                await removeFromCart(productId);
                 return;
             }
-            
+        
             if (newQuantity > product.stock) {
                 showToast(`Solo hay ${product.stock} unidades disponibles de ${product.name}`, 'warning');
-                // Restaurar la cantidad anterior en el input
-                const input = document.querySelector(`[data-item-id="${productId}"] input[type="number"]`);
-                if (input) {
-                    const cartItem = cart.find(item => item.productId === productId);
-                    input.value = cartItem ? cartItem.quantity : 1;
+                const input = document.querySelector(
+                    `[data-item-id="${productId}"] input[type="number"]`
+                );
+                if (input && cartItem) {
+                    input.value = cartItem.quantity;
                 }
                 return;
             }
-            
-            const cartItem = cart.find(item => item.productId === productId);
+        
+            // Actualizamos localmente
             if (cartItem) {
                 cartItem.quantity = newQuantity;
                 saveCart();
                 renderCart();
             }
+        
+            // Si el usuario está logueado, sincronizamos con backend
+            const token = getAuthToken && getAuthToken();
+            if (token) {
+                try {
+                    await apiPut('/cart/item', { productId, quantity: newQuantity });
+                    console.log('✅ Cantidad sincronizada con backend');
+                } catch (error) {
+                    console.error('❌ Error actualizando cantidad en backend:', error);
+                    showToast('No se pudo actualizar el carrito en el servidor', 'error');
+                }
+            }
         }
+
         
         // Eliminar producto del carrito
-        function removeFromCart(productIdOrIndex) {
+        async function removeFromCart(productIdOrIndex) {
             let index, item, productId;
-            
-            // Determinar si recibimos un ID de producto o un índice
+        
             if (typeof productIdOrIndex === 'string') {
-                // Es un productId, buscar el índice
                 index = cart.findIndex(item => item.productId === productIdOrIndex);
                 if (index === -1) {
                     console.error('Producto no encontrado en el carrito:', productIdOrIndex);
@@ -533,7 +570,6 @@
                 item = cart[index];
                 productId = productIdOrIndex;
             } else {
-                // Es un índice
                 index = productIdOrIndex;
                 item = cart[index];
                 if (!item) {
@@ -543,30 +579,34 @@
                 }
                 productId = item.productId;
             }
-            
-            // Obtener información del producto para mostrar mensaje
+        
             const product = products.find(p => p.id === productId);
             const productName = product?.name || item.name || 'Producto';
-            
+        
             console.log('🗑️ Eliminando producto del carrito:', productName, 'en índice:', index);
-            console.log('🛒 Carrito antes de eliminar:', cart.length, 'items');
-            console.log('📦 Item a eliminar:', item);
-            
-            // Eliminar del carrito
             cart.splice(index, 1);
-            console.log('🛒 Carrito después de eliminar:', cart.length, 'items');
-            
-            // Guardar cambios y actualizar vista
+        
             saveCart();
             renderCart();
-            
-            // Mostrar notificación
+        
+            const token = getAuthToken && getAuthToken();
+            if (token) {
+                try {
+                    // quantity <= 0 hace que el backend elimine el ítem
+                    await apiPut('/cart/item', { productId, quantity: 0 });
+                    console.log('✅ Producto eliminado en backend');
+                } catch (error) {
+                    console.error('❌ Error eliminando producto en backend:', error);
+                }
+            }
+        
             if (typeof showToast === 'function') {
                 showToast(`${productName} eliminado del carrito`, 'info');
             } else if (typeof showNotification === 'function') {
                 showNotification(`${productName} eliminado del carrito`, 'info');
             }
         }
+
         
         // Aumentar cantidad de producto
         function increaseQuantity(index) {
@@ -603,14 +643,25 @@
         }
         
         // Vaciar carrito completo
-        function clearCart() {
+        async function clearCart() {
             if (cart.length === 0) return;
-            
+        
             cart = [];
             saveCart();
             renderCart();
             showToast('Carrito vaciado completamente', 'info');
+        
+            const token = getAuthToken && getAuthToken();
+            if (token) {
+                try {
+                    await apiDelete('/cart/clear'); // DELETE /api/cart/clear
+                    console.log('✅ Carrito vaciado en backend');
+                } catch (error) {
+                    console.error('❌ Error al vaciar carrito en backend:', error);
+                }
+            }
         }
+
         
         // Actualizar resumen del pedido
         function updateSummary() {
@@ -748,9 +799,9 @@
         }
         
         // Agregar producto recomendado al carrito
-        function addRecommendedToCart(productId) {
+        async function addRecommendedToCart(productId) {
             const existingItem = cart.find(item => item.productId === productId);
-            
+        
             if (existingItem) {
                 existingItem.quantity += 1;
             } else {
@@ -760,17 +811,26 @@
                     addedAt: new Date().toISOString()
                 });
             }
-            
+        
             saveCart();
             renderCart();
-            
-            // Mostrar feedback
+        
+            const token = getAuthToken && getAuthToken();
+            if (token) {
+                try {
+                    await apiPost('/cart/add', { productId, quantity: 1 });
+                    console.log('✅ Producto recomendado agregado al carrito en backend');
+                } catch (error) {
+                    console.error('❌ Error agregando producto recomendado en backend:', error);
+                }
+            }
+        
             const product = products.find(p => p.id === productId);
             if (product) {
-                // Crear toast de confirmación
                 showAddToCartToast(product.name);
             }
         }
+        
         
         // Mostrar notificaciones no invasivas
         function showToast(message, type = 'success', duration = 3000) {
