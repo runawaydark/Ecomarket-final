@@ -703,6 +703,21 @@
             }
         }
 
+
+                // Guardar carrito en localStorage y sincronizar contador + evento global
+        function saveCart() {
+            // Guardar en localStorage
+            localStorage.setItem('ecomarket_cart', JSON.stringify(cart));
+        
+            // Actualizar contador del ícono del carrito
+            updateCartCount();
+        
+            // Avisar a otras páginas que el carrito cambió
+            window.dispatchEvent(new CustomEvent('cartUpdated', { detail: cart }));
+        
+            console.log('🛒 Carrito guardado:', cart);
+        }
+        
         
         // Actualizar resumen del pedido
         function updateSummary() {

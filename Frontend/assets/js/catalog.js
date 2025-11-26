@@ -291,27 +291,6 @@ function saveProducts(products) {
         }
 
 
-    // Guardar carrito y actualizar contador
-    localStorage.setItem('ecomarket_cart', JSON.stringify(cart));
-    updateCartCount();
-    
-    // Disparar evento para sincronizar con otras páginas
-    window.dispatchEvent(new CustomEvent('cartUpdated', { detail: cart }));
-    
-    // Feedback visual
-    const addButton = productCard.querySelector('.btn-add-cart');
-    const originalText = addButton.innerHTML;
-    addButton.innerHTML = '<i class="bi bi-check-circle"></i> ¡Agregado!';
-    addButton.style.background = 'linear-gradient(135deg, #28a745, #34ce57)';
-    
-    setTimeout(() => {
-        addButton.innerHTML = originalText;
-        addButton.style.background = 'linear-gradient(135deg, #008c5a, #00b374)';
-    }, 1500);
-
-    console.log('Producto agregado al carrito:', { productId, quantity, total: cart.length });
-}
-
 // Actualizar contador del carrito
 function updateCartCount() {
     const cart = JSON.parse(localStorage.getItem('ecomarket_cart')) || [];

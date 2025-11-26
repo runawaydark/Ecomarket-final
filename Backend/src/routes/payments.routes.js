@@ -11,5 +11,6 @@ router.post("/create-transaction", createTransaction);
 
 // Confirmar/commit después del pago
 router.post("/commit", commitTransaction);
+router.get("/commit", commitTransaction);  
 
 export default router;

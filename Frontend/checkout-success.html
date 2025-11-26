@@ -141,79 +141,100 @@
     // Pequeño helper para notificaciones sin romper nada
     function notify(message, type = 'info', duration = 4000) {
         if (typeof showNotification === 'function') {
-        showNotification(message, type, duration);
+            showNotification(message, type, duration);
         } else if (typeof showToast === 'function') {
-        showToast(message, type, duration);
+            showToast(message, type, duration);
         } else {
-        console.log(message);
+            console.log(message);
         }
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
-      // Actualizar navbar si la función existe
+        // Actualizar navbar si la función existe
         try {
-        if (typeof updateNavbar === 'function') {
-            updateNavbar();
-        } else if (typeof updateUserDropdown === 'function') {
-            updateUserDropdown();
-        }
+            if (typeof updateNavbar === 'function') {
+                updateNavbar();
+            } else if (typeof updateUserDropdown === 'function') {
+                updateUserDropdown();
+            }
         } catch (e) {
-        console.warn('No se pudo actualizar navbar:', e);
+            console.warn('No se pudo actualizar navbar:', e);
         }
 
         const statusMessage = document.getElementById('status-message');
         const orderCodeEl = document.getElementById('order-code');
 
-      // 1. Verificar token / sesión
+        // 1. Verificar token / sesión
         const token = (typeof getAuthToken === 'function') ? getAuthToken() : null;
         if (!token) {
-        statusMessage.textContent = 'Tu sesión no está activa. Por favor inicia sesión nuevamente.';
-        notify('Debes iniciar sesión para registrar tu pedido.', 'error');
-        setTimeout(() => window.location.href = 'login.html', 3000);
-        return;
+            statusMessage.textContent = 'Tu sesión no está activa. Por favor inicia sesión nuevamente.';
+            notify('Debes iniciar sesión para ver el detalle de tu pedido.', 'error');
+            setTimeout(() => window.location.href = 'login.html', 3000);
+            return;
         }
 
-      // 2. Llamar al backend para crear el pedido desde el carrito activo
+        // 2. Obtener la lista de pedidos del usuario y mostrar el último
         try {
-        notify('Registrando tu pedido en EcoMarket...', 'info', 3000);
+            notify('Confirmando tu pedido en EcoMarket...', 'info', 3000);
 
-        const response = await apiPost('/orders/checkout', {}); // el backend usa el carrito activo
-        const order = response.data || response;
+            const response = await apiGet('/orders/mine'); // GET /api/orders/mine
+            const orders = response.data || response;
 
-        const orderId =
-            order.paymentRef ||
-            order._id ||
-            order.id ||
-            ('ORD' + Date.now());
-
-        orderCodeEl.textContent = '#' + orderId;
-        statusMessage.textContent = '¡Tu pedido fue registrado correctamente! Te redirigiremos a Mis pedidos en unos segundos.';
-        notify('Pedido registrado con éxito.', 'success');
-
-        // 3. Limpiar carrito en el front (igual que en checkout.html)
-        try {
-            localStorage.removeItem('ecomarket_cart');
-            localStorage.removeItem('ecomarket_checkout_cart');
-            if (typeof updateCartCount === 'function') {
-            updateCartCount();
+            if (!Array.isArray(orders) || orders.length === 0) {
+                orderCodeEl.textContent = 'Sin pedidos registrados';
+                statusMessage.textContent =
+                    'Tu pago fue procesado, pero no pudimos encontrar un pedido asociado. Revisa nuevamente en unos minutos o contáctanos.';
+                notify('No se encontró ningún pedido para tu cuenta.', 'warning');
+                return;
             }
-        } catch (e) {
-            console.warn('No se pudo limpiar el carrito en localStorage:', e);
-        }
 
-        // 4. Redirigir a Mis pedidos
-        setTimeout(() => {
-            window.location.href = 'pedidos.html';
-        }, 4000);
+            const lastOrder = orders[0]; // vienen ordenados por fecha desc en el backend
+
+            const orderId =
+                lastOrder.paymentRef ||
+                lastOrder._id ||
+                lastOrder.id ||
+                ('ORD' + Date.now());
+
+            orderCodeEl.textContent = '#' + orderId;
+
+            const statusText = (lastOrder.status || '').toUpperCase();
+            if (statusText === 'PAID') {
+                statusMessage.textContent =
+                    '¡Tu pedido fue registrado y el pago se procesó correctamente! Te redirigiremos a "Mis pedidos" en unos segundos.';
+            } else {
+                statusMessage.textContent =
+                    'Tu pedido fue registrado, pero aún está en estado "' + (lastOrder.status || 'pendiente') +
+                    '". Puedes revisar el detalle en "Mis pedidos".';
+            }
+
+            notify('Pedido confirmado con éxito.', 'success');
+
+            // 3. Limpiar carrito en el front por si quedó algo
+            try {
+                localStorage.removeItem('ecomarket_cart');
+                localStorage.removeItem('ecomarket_checkout_cart');
+                if (typeof updateCartCount === 'function') {
+                    updateCartCount();
+                }
+            } catch (e) {
+                console.warn('No se pudo limpiar el carrito en localStorage:', e);
+            }
+
+            // 4. Redirigir a Mis pedidos
+            setTimeout(() => {
+                window.location.href = 'pedidos.html';
+            }, 4000);
 
         } catch (err) {
-        console.error('Error al crear pedido después del pago:', err);
-        orderCodeEl.textContent = 'Error al generar pedido';
-        statusMessage.textContent =
-            'Tu pago fue recibido, pero hubo un problema registrando el pedido. Por favor revisa "Mis pedidos" o contáctanos.';
-        notify('No se pudo registrar el pedido, pero tu pago fue procesado. Revisa "Mis pedidos".', 'warning');
+            console.error('Error al obtener pedidos después del pago:', err);
+            orderCodeEl.textContent = 'Error al obtener pedido';
+            statusMessage.textContent =
+                'Tu pago fue recibido, pero hubo un problema al cargar el detalle del pedido. Por favor revisa "Mis pedidos" o contáctanos.';
+            notify('No se pudo cargar el detalle del pedido. Revisa "Mis pedidos".', 'warning');
         }
-        });
+    });
     </script>
+
 </body>
 </html>

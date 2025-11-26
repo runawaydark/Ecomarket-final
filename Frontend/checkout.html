@@ -342,27 +342,8 @@
                 </div>
                 </div>
 
-                <!-- Formulario de tarjeta -->
-                <div id="cardForm">
-                <div class="row g-3">
-                    <div class="col-12">
-                    <label for="cardNumber" class="form-label fw-semibold">Número de tarjeta</label>
-                    <input type="text" id="cardNumber" class="form-control form-control-lg" placeholder="1111 2222 3333 4444" maxlength="19">
-                    </div>
-                    <div class="col-12">
-                    <label for="cardName" class="form-label fw-semibold">Nombre del titular</label>
-                    <input type="text" id="cardName" class="form-control form-control-lg" placeholder="Como aparece en la tarjeta">
-                    </div>
-                    <div class="col-md-6">
-                    <label for="expiry" class="form-label fw-semibold">Fecha de expiración</label>
-                    <input type="text" id="expiry" class="form-control form-control-lg" placeholder="MM/AA" maxlength="5">
-                    </div>
-                    <div class="col-md-6">
-                    <label for="cvv" class="form-label fw-semibold">CVV</label>
-                    <input type="password" id="cvv" class="form-control form-control-lg" placeholder="123" maxlength="3">
-                    </div>
-                </div>
-                </div>
+                <!-- Formulario de tarjeta eliminado: Webpay se encarga de los datos -->
+                <div id="cardForm" style="display: none;"></div>
 
                 <!-- Información para transferencia -->
                 <div id="transferInfo" style="display: none;">
@@ -478,7 +459,7 @@
     <script src="assets/js/app.js"></script>
     <script src="assets/js/footer.js"></script>
     <script src="assets/js/api.js"></script>      
-    <script src="assets/js/checkout.js"></script>  
+
 
     
     <script>
@@ -489,25 +470,69 @@
         const SHIPPING_COST = 2500;
         const FREE_SHIPPING_THRESHOLD = 15000;
 
+        // Mapa de IDs de categoría de Mongo → slugs amigables
+const CATEGORY_ID_MAP = {
+    "6920d5ab3805202c3b36be72": "frutas",
+    "6920d5ab3805202c3b36be73": "verduras",
+    "6920ff235965d54c277ed825": "despensa",
+};
+
+// Cargar productos desde el backend para poder mostrar nombre, precio, etc.
+async function loadProducts() {
+    try {
+        const backendProducts = await apiGet('/products');
+
+        products = backendProducts.map(p => ({
+            id: p._id,
+            name: p.name,
+            category: (() => {
+                if (!p.category) return "general";
+
+                if (typeof p.category === "string") {
+                    return CATEGORY_ID_MAP[p.category] || "general";
+                }
+
+                if (p.category._id && CATEGORY_ID_MAP[p.category._id]) {
+                    return CATEGORY_ID_MAP[p.category._id];
+                }
+                if (p.category.name) {
+                    return p.category.name.toLowerCase();
+                }
+
+                return "general";
+            })(),
+            description: p.description || "",
+            price: p.price,
+            originalPrice: p.originalPrice || null,
+            unit: p.unit || "unidad",
+            stock: p.stock || 0,
+            image: p.imageUrl || "https://via.placeholder.com/300",
+            isOffer: p.isOffer || false
+        }));
+
+        console.log('📦 Productos cargados para checkout:', products.length);
+    } catch (error) {
+        console.error('❌ Error cargando productos para checkout:', error);
+        showToast('Error cargando productos desde el servidor', 'error');
+    }
+}
+
+
+
+
     // Inicializar checkout
-    // Inicializar checkout
-        document.addEventListener('DOMContentLoaded', async function() {
-          // Validar que el usuario esté logueado
-            currentUser = checkUserAuthentication();
-            if (!currentUser) {
-                return;
-            }
-    
-          // Ya no usamos usuarios fake de localStorage
-          // initializeUsers();
-    
-          await loadCheckoutData();   // ahora será async
-            loadProducts();
-            renderCheckoutSummary();
-            setupPaymentMethodHandlers();
-            formatCardInputs();
-            updateCartCount();
-        });
+document.addEventListener('DOMContentLoaded', async function() {
+    // Validar que el usuario esté logueado
+    currentUser = checkUserAuthentication();
+    if (!currentUser) return;
+
+    await loadCheckoutData();   
+    await loadProducts();       
+    renderCheckoutSummary();
+    setupPaymentMethodHandlers();
+    updateCartCount();
+});
+
 
     
     // Sistema de Notificaciones Elegante
@@ -631,72 +656,70 @@
         localStorage.setItem('ecomarket_current_user', JSON.stringify(defaultUsers[0]));
         }
     }        
+
         // Cargar datos del checkout
-        // Cargar datos del checkout (carrito desde backend + datos de envío desde localStorage)
         async function loadCheckoutData() {
-          // 1. Cargar datos de envío (siguen en localStorage)
+            // 1. Cargar datos de envío desde localStorage
             const savedShipping = localStorage.getItem('ecomarket_shipping');
             shippingData = savedShipping ? JSON.parse(savedShipping) : null;
         
             if (!shippingData) {
                 showToast('Por favor complete los datos de envío', 'warning');
                 setTimeout(() => {
-                window.location.href = 'carrito.html';
+                    window.location.href = 'carrito.html';
                 }, 2000);
                 return;
             }
-    
+        
             // 2. Intentar cargar el carrito REAL desde el backend
             const token = typeof getAuthToken === 'function' ? getAuthToken() : null;
-    
+        
+            // Helper para fallback a localStorage
+            const loadCartFromLocal = () => {
+                const checkoutCart = localStorage.getItem('ecomarket_checkout_cart');
+                const regularCart = localStorage.getItem('ecomarket_cart');
+                cart = checkoutCart
+                    ? JSON.parse(checkoutCart)
+                    : (regularCart ? JSON.parse(regularCart) : []);
+            };
+        
             if (token) {
-            try {
-              const backendCart = await apiGet('/cart'); // GET /api/cart
-            
-                if (!backendCart || !Array.isArray(backendCart.items) || backendCart.items.length === 0) {
+                try {
+                    const backendCart = await apiGet('/cart'); // GET /api/cart
+                
+                    if (backendCart && Array.isArray(backendCart.items) && backendCart.items.length > 0) {
+                        cart = backendCart.items.map(item => ({
+                            productId: item.product._id || item.product, // soporta populate o id plano
+                            quantity: item.quantity,
+                            addedAt: item.addedAt || new Date().toISOString()
+                        }));
+                    
+                        // Guardar también en localStorage por compatibilidad
+                        localStorage.setItem('ecomarket_cart', JSON.stringify(cart));
+                    } else {
+                        // Carrito vacío en backend → usamos localStorage
+                        loadCartFromLocal();
+                    }
+                } catch (error) {
+                    console.error('❌ Error cargando carrito desde backend, se usa localStorage:', error);
+                    loadCartFromLocal();
+                }
+            } else {
+                // No hay token (no debería pasar porque ya validamos login), pero por si acaso
+                loadCartFromLocal();
+            }
+        
+            // 3. Validar que efectivamente tengamos productos
+            if (!cart || cart.length === 0) {
                 showToast('No hay productos en el carrito', 'warning');
                 setTimeout(() => {
                     window.location.href = 'carrito.html';
                 }, 2000);
-                return;
-                }
-        
-              // Adaptar formato del backend al que usa el front
-                cart = backendCart.items.map(item => ({
-                productId: item.product._id || item.product, // soporta populate o id plano
-                quantity: item.quantity,
-                addedAt: item.addedAt || new Date().toISOString()
-                }));
-                
-              // Guardar copia en localStorage para mantener compatibilidad con otras páginas
-                localStorage.setItem('ecomarket_cart', JSON.stringify(cart));
-            } catch (error) {
-                console.error('❌ Error cargando carrito desde backend, se usa localStorage:', error);
-                const checkoutCart = localStorage.getItem('ecomarket_checkout_cart');
-                const regularCart = localStorage.getItem('ecomarket_cart');
-                cart = checkoutCart ? JSON.parse(checkoutCart) : (regularCart ? JSON.parse(regularCart) : []);
             }
-            } else {
-            // Fallback extremo (no debería ocurrir porque checkout requiere login)
-            const checkoutCart = localStorage.getItem('ecomarket_checkout_cart');
-            const regularCart = localStorage.getItem('ecomarket_cart');
-            cart = checkoutCart ? JSON.parse(checkoutCart) : (regularCart ? JSON.parse(regularCart) : []);
-            }
-            } 
-            if (!cart || cart.length === 0) {
-            showToast('No hay productos en el carrito', 'warning');
-            setTimeout(() => {
-                window.location.href = 'carrito.html';
-            }, 2000);
-            }
-        
-
-
-        // Cargar productos
-        function loadProducts() {
-        const savedProducts = localStorage.getItem('ecomarket_products');
-        products = savedProducts ? JSON.parse(savedProducts) : [];
         }
+
+        
+
 
         // Renderizar resumen del checkout
         function renderCheckoutSummary() {
@@ -818,11 +841,12 @@
         }
 
         // Configurar manejadores de métodos de pago
-        function setupPaymentMethodHandlers() {
-        const paymentMethods = document.querySelectorAll('input[name="paymentMethod"]');
-        
-        paymentMethods.forEach(method => {
-            method.addEventListener('change', function() {
+// Configurar manejadores de métodos de pago
+function setupPaymentMethodHandlers() {
+    const paymentMethods = document.querySelectorAll('input[name="paymentMethod"]');
+    
+    paymentMethods.forEach(method => {
+        method.addEventListener('change', function() {
             // Remover clase activa de todas las tarjetas
             document.querySelectorAll('.payment-method-card').forEach(card => {
                 card.classList.remove('active-payment');
@@ -831,34 +855,38 @@
             // Agregar clase activa a la tarjeta seleccionada
             this.closest('.payment-method-card').classList.add('active-payment');
             
-            // Ocultar todos los formularios
-            document.getElementById('cardForm').style.display = 'none';
+            // Ocultar bloques informativos
             document.getElementById('transferInfo').style.display = 'none';
             document.getElementById('cashInfo').style.display = 'none';
-            
-            // Mostrar el formulario correspondiente
-            switch(this.value) {
+            // cardForm se mantiene siempre oculto (lo controla el HTML con display:none)
+
+            // Mostrar solo la info según el método
+            switch (this.value) {
                 case 'credit':
-                document.getElementById('cardForm').style.display = 'block';
-                break;
+                    // Nada que mostrar: Webpay pedirá los datos en su propia pantalla
+                    break;
                 case 'transfer':
-                document.getElementById('transferInfo').style.display = 'block';
-                break;
+                    document.getElementById('transferInfo').style.display = 'block';
+                    break;
                 case 'cash':
-                document.getElementById('cashInfo').style.display = 'block';
-                break;
+                    document.getElementById('cashInfo').style.display = 'block';
+                    break;
             }
-            });
         });
-        
-        // Activar el primer método por defecto
-        document.querySelector('input[name="paymentMethod"]:checked').closest('.payment-method-card').classList.add('active-payment');
-        }
+    });
+
+    // Activar el primer método por defecto
+    document
+        .querySelector('input[name="paymentMethod"]:checked')
+        .closest('.payment-method-card')
+        .classList.add('active-payment');
+}
+
 
         // Formatear inputs de tarjeta
         function formatCardInputs() {
-        const cardNumber = document.getElementById('cardNumber');
-        const expiry = document.getElementById('expiry');
+            const cardNumber = document.getElementById('cardNumber');
+            const expiry = document.getElementById('expiry');
         
         // Formatear número de tarjeta
         cardNumber.addEventListener('input', function(e) {
@@ -882,100 +910,85 @@
         });
         }
 
-        // Procesar pago
-        // Procesar pago y crear pedido REAL en backend
-        async function processPayment() {
-        // Asegurarse de que hay usuario y token
-        const token = typeof getAuthToken === 'function' ? getAuthToken() : null;
-        if (!token || !currentUser) {
-            showToast('Debes iniciar sesión para completar tu pedido', 'warning', 4000);
-            setTimeout(() => {
-                window.location.href = 'login.html';
-                }, 2000);
-            return;
-        }
 
-        const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
-
-        // Validar formulario si es tarjeta
-        if (selectedPaymentMethod === 'credit') {
-            if (!validateCardForm()) {
-                return;
-            }
-        }
-
-        const submitBtn = document.querySelector('button[onclick="processPayment()"]');
-        const originalText = submitBtn.innerHTML;
-
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Procesando pedido...';
-
-        showToast('Procesando tu pedido...', 'info', 2000);
-
-        try {
-        // Llamada real: POST /api/orders/checkout
-        const response = await apiPost('/orders/checkout', {}); // body vacío, backend toma el carrito activo
-        const data = response.data || response; // por si ok() envuelve en { data: order }
-
-        const backendOrder = data;
-        console.log('✅ Pedido creado en backend:', backendOrder);
-
-        // Usar algún identificador amigable para mostrar al usuario
-        const orderId = backendOrder.paymentRef || backendOrder._id || backendOrder.id || ('ORD' + Date.now());
-
-        // (Opcional) seguir guardando historial en localStorage para la vista de "pedidos"
-        saveOrderToHistory(orderId);
-
-        // Limpiar carrito en el front
-        localStorage.removeItem('ecomarket_cart');
-        localStorage.removeItem('ecomarket_checkout_cart');
-        cart = [];
-        updateCartCount();
-
-        // Mostrar modal de éxito
-        showSuccessModal(orderId);
-        } catch (error) {
-        console.error('❌ Error al crear pedido en backend:', error);
-        showToast('No se pudo completar tu pedido. Intenta nuevamente.', 'error', 4000);
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalText;
-        }
+// Procesar pago: crear orden en backend y redirigir a Webpay
+async function processPayment() {
+    const token = typeof getAuthToken === 'function' ? getAuthToken() : null;
+    if (!token || !currentUser) {
+        showToast('Debes iniciar sesión para completar tu pedido', 'warning', 4000);
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 2000);
+        return;
     }
 
+    const submitBtn = document.querySelector('button[onclick="processPayment()"]');
+    const originalText = submitBtn.innerHTML;
 
-        // Validar formulario de tarjeta
-        function validateCardForm() {
-        const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
-        const cardName = document.getElementById('cardName').value.trim();
-        const expiry = document.getElementById('expiry').value;
-        const cvv = document.getElementById('cvv').value;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Redirigiendo a Webpay...';
+
+    showToast('Creando tu orden y redirigiendo a Webpay...', 'info', 3000);
+
+    try {
+        // Construir payload con el carrito del FRONT como fallback
+        const itemsPayload = (cart || []).map(item => ({
+            productId: item.productId,
+            quantity: item.quantity
+        }));
         
-        if (cardNumber.length < 16) {
-            showToast('El número de tarjeta debe tener 16 dígitos', 'error');
-            document.getElementById('cardNumber').focus();
-            return false;
+        // 1) Crear orden en backend
+        const orderResponse = await apiPost('/orders/checkout', {
+            items: itemsPayload
+        });
+        const orderData = orderResponse.data || orderResponse; // según tu helper ok()
+
+
+        const orderId = orderData._id || orderData.id;
+        if (!orderId) {
+            throw new Error('Orden inválida devuelta por el backend');
         }
-        
-        if (!cardName) {
-            showToast('El nombre del titular es requerido', 'error');
-            document.getElementById('cardName').focus();
-            return false;
+
+        // 2) Crear transacción Webpay en backend
+        const payment = await apiPost('/payments/create-transaction', {
+            buyOrder: String(orderId),
+            sessionId: String(currentUser.id || currentUser._id || 'guest'),
+            amount: orderData.total
+        });
+
+        if (!payment || !payment.url || !payment.token) {
+            throw new Error('Respuesta inválida al crear transacción Webpay');
         }
-        
-        if (!/^\d{2}\/\d{2}$/.test(expiry)) {
-            showToast('La fecha de expiración debe tener formato MM/AA', 'error');
-            document.getElementById('expiry').focus();
-            return false;
-        }
-        
-        if (cvv.length < 3) {
-            showToast('El CVV debe tener al menos 3 dígitos', 'error');
-            document.getElementById('cvv').focus();
-            return false;
-        }
-        
-        return true;
-        }
+
+        console.log('✅ Transacción Webpay creada:', payment);
+
+        // 3) Limpiar carrito en el FRONT (el backend lo limpiará definitivamente al confirmar el pago)
+        localStorage.removeItem('ecomarket_cart');
+        localStorage.removeItem('ecomarket_checkout_cart');
+
+        // 4) Crear formulario y redirigir a Webpay con token_ws
+        const webpayForm = document.createElement('form');
+        webpayForm.method = 'POST';
+        webpayForm.action = payment.url;
+
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'token_ws';
+        input.value = payment.token;
+
+        webpayForm.appendChild(input);
+        document.body.appendChild(webpayForm);
+
+        webpayForm.submit();
+    } catch (error) {
+        console.error('❌ Error en proceso de pago:', error);
+        showToast('No se pudo iniciar el pago. Intenta nuevamente.', 'error', 4000);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+}
+
+
 
         // Calcular total del pedido
         function calculateOrderTotal(cartItems) {
@@ -1006,8 +1019,7 @@
             return null;
             }
             
-            const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
-            
+            const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;       
             const paymentMethods = {
             'credit': 'credit-card',
             'transfer': 'bank-transfer',

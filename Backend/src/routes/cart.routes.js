@@ -1,15 +1,15 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
-import { requireAuth } from '../middlewares/auth.middleware.js';
+import { auth } from '../middlewares/auth.middleware.js';
 import { getMyCart, addToCart, updateCartItem, clearCart } from '../controllers/cart.controller.js';
 
 const router = Router();
 
-router.get('/', requireAuth, getMyCart);
+router.get('/', auth, getMyCart);
 
 router.post(
     '/add',
-    requireAuth,
+    auth,
     body('productId').notEmpty(),
     body('quantity').optional().isInt({ gt: 0 }),
     addToCart
@@ -17,12 +17,12 @@ router.post(
 
 router.put(
     '/item',
-    requireAuth,
+    auth,
     body('productId').notEmpty(),
     body('quantity').isInt(),
     updateCartItem
 );
 
-router.delete('/clear', requireAuth, clearCart);
+router.delete('/clear', auth, clearCart);
 
 export default router;
