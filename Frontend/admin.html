@@ -1182,10 +1182,6 @@
                             <label class="form-label">Categoría *</label>
                             <select class="form-control" id="product-category" required>
                                 <option value="">Seleccionar categoría</option>
-                                <option value="frutas">Frutas</option>
-                                <option value="verduras">Verduras</option>
-                                <option value="despensa">Despensa</option>
-                                <option value="ofertas">Ofertas</option>
                             </select>
                         </div>
                     </div>
@@ -1526,34 +1522,40 @@
         // ==============================
 
 
-        async function syncProductsFromBackendToLocalStorage() {    
-            try {
-                const backendProducts = await apiGet("/products");
-            
-                // Adaptamos lo que viene del backend al formato que usa el admin
-                const mapped = backendProducts.map(p => ({
-                    id: p._id,
-                    name: p.name,
-                    // por ahora category será el id o "general" si viene vacío
-                    category: p.category || "general",
-                    description: p.description || "",
-                    price: p.price ?? 0,
-                    originalPrice: p.originalPrice ?? null,
-                    unit: p.unit || "unidad",
-                    stock: p.stock ?? 0,
-                    maxStock: p.maxStock ?? 100,
-                    image: p.imageUrl || "",        // 👈 el admin usa "image"
-                    rating: p.rating ?? 4,
-                    reviews: p.reviews ?? 0,
-                    isNew: !!p.isNew,
-                    isOffer: !!p.isOffer,
-                    available: p.active ?? true
-                }));
-            
-        // Usamos tu función existente para guardar
+async function syncProductsFromBackendToLocalStorage() {    
+    try {
+        const backendProducts = await apiGet("/products");
+    
+        // Adaptamos lo que viene del backend al formato que usa el admin
+        const mapped = backendProducts.map(p => {
+            const categoryId = p.category?._id || p.category || "";
+            const categoryName = p.category?.name || "";
+
+            return {
+                id: p._id,
+                name: p.name,
+                // guardamos id y etiqueta aparte
+                categoryId: categoryId,
+                categoryLabel: categoryName || "general",
+                description: p.description || "",
+                price: p.price ?? 0,
+                originalPrice: p.originalPrice ?? null,
+                unit: p.unit || "unidad",
+                stock: p.stock ?? 0,
+                maxStock: p.maxStock ?? 100,
+                image: p.imageUrl || "",        // el admin usa "image"
+                rating: p.rating ?? 4,
+                reviews: p.reviews ?? 0,
+                isNew: !!p.isNew,
+                isOffer: !!p.isOffer,
+                available: p.active ?? true
+            };
+        });
+    
+        // Guardar en memoria
         saveProducts(mapped);
 
-        // Y refrescamos la UI
+        // Refrescar la UI
         renderProductsList();
         updateStats();
 
@@ -1563,6 +1565,26 @@
         showNotification("Error al cargar productos desde el servidor", "error");
     }
 }
+
+// Cargar categorías desde el backend y llenar el <select> del formulario
+async function loadCategoriesForAdmin() {
+    const select = document.getElementById('product-category');
+    if (!select) return;
+
+    try {
+        const categories = await apiGet('/categories');
+        select.innerHTML = '<option value="">Seleccionar categoría</option>';
+
+        categories.forEach(cat => {
+            select.innerHTML += `<option value="${cat._id}">${cat.name}</option>`;
+        });
+    } catch (error) {
+        console.error('Error cargando categorías:', error);
+        showNotification('No se pudieron cargar las categorías', 'error');
+    }
+}
+
+
 
 
 // Devolver lista actual en memoria (para estadísticas y reportes)
@@ -1591,12 +1613,15 @@ function updateStats() {
     document.getElementById('avg-price').textContent = '$' + avgPrice.toLocaleString('es-CL');
 }
 
-// Renderizar lista de productos (usando datos del backend)
+
+// Renderizar lista de productos en la sección "Productos existentes"
 function renderProductsList() {
     const products = getProducts();
     const container = document.getElementById('products-list');
 
-    if (!products.length) {
+    if (!container) return;
+
+    if (!products || !products.length) {
         container.innerHTML = `
             <div class="text-center text-muted py-5">
                 <i class="bi bi-inbox" style="font-size: 3rem;"></i>
@@ -1606,36 +1631,51 @@ function renderProductsList() {
         return;
     }
 
-    container.innerHTML = products.map(product => `
+    container.innerHTML = products.map(product => {
+        const imageSrc =
+            product.image ||           // viene del mapeo syncProductsFromBackendToLocalStorage
+            product.imageUrl ||        // viene directo del backend o del formulario
+            'https://via.placeholder.com/80x60/008c5a/ffffff?text=Sin+Img';
+
+        const isActive = product.available ?? true;
+        const statusBadgeClass = isActive ? 'bg-success' : 'bg-secondary';
+        const statusText = isActive ? 'Activo' : 'Inactivo';
+        const stock = product.stock ?? 0;
+        const maxStock = product.maxStock ?? 0;
+        const progressPercent = maxStock ? Math.min(100, (stock / maxStock) * 100) : 0;
+
+        return `
         <div class="product-item">
             <div class="row align-items-center">
                 <div class="col-md-2">
-                    <img src="${product.imageUrl || 'https://via.placeholder.com/80x60/008c5a/ffffff?text=Sin+Img'}"
+                    <img src="${imageSrc}"
                             class="img-fluid rounded" alt="${product.name}"
                             style="height: 60px; object-fit: cover;">
                 </div>
                 <div class="col-md-3">
                     <h6 class="mb-1">${product.name}</h6>
-                    <span class="badge bg-secondary">${product.category || 'general'}</span>
+                    <span class="badge bg-secondary">${product.categoryLabel || 'general'}</span>
                 </div>
                 <div class="col-md-2">
-                    <div class="fw-bold text-success">$${(product.price || 0).toLocaleString('es-CL')}</div>
-                    <small class="text-muted">por ${product.unit}</small>
+                    <div class="fw-bold text-success">
+                        $${(product.price || 0).toLocaleString('es-CL')}
+                    </div>
+                    <small class="text-muted">por ${product.unit || 'unidad'}</small>
                 </div>
                 <div class="col-md-2">
                     <div class="d-flex align-items-center">
-                        <span class="me-2">${product.stock}</span>
+                        <span class="me-2">${stock}</span>
                         <div class="progress" style="width: 60px; height: 8px;">
-                            <div class="progress-bar ${product.stock > 5 ? 'bg-success' : 'bg-warning'}"
-                                 style="width: ${product.maxStock ? (product.stock / product.maxStock) * 100 : 0}%">
+                            <div class="progress-bar ${stock > 5 ? 'bg-success' : 'bg-warning'}"
+                                    style="width: ${progressPercent}%">
                             </div>
                         </div>
                     </div>
-                    <small class="text-muted">de ${product.maxStock}</small>
+                    <small class="text-muted">de ${maxStock || '-'}</small>
                 </div>
                 <div class="col-md-1 text-center">
-                    <span class="badge ${product.available ? 'bg-success' : 'bg-secondary'}">
-                        ${product.available ? 'Activo' : 'Inactivo'}
+                    <span class="badge ${statusBadgeClass}">
+                        ${statusText}
                     </span>
                 </div>
                 <div class="col-md-2 text-end">
@@ -1643,15 +1683,23 @@ function renderProductsList() {
                             onclick="editProduct('${product.id}')">
                         <i class="bi bi-pencil"></i>
                     </button>
+                    <button class="btn btn-sm btn-outline-warning me-1"
+                            onclick="toggleProductActive('${product.id}')">
+                        ${isActive
+                            ? '<i class="bi bi-eye-slash"></i>'
+                            : '<i class="bi bi-eye"></i>'}
+                    </button>
                     <button class="btn btn-sm btn-outline-danger"
                             onclick="deleteProduct('${product.id}')">
                         <i class="bi bi-trash"></i>
                     </button>
                 </div>
             </div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 }
+
+
 
 // Limpiar formulario
 function clearForm() {
@@ -1672,7 +1720,7 @@ function editProduct(productId) {
 
     document.getElementById('product-id').value = product.id;
     document.getElementById('product-name').value = product.name;
-    document.getElementById('product-category').value = product.category || '';
+    document.getElementById('product-category').value = product.categoryId || product.category || '';
     document.getElementById('product-description').value = product.description;
     document.getElementById('product-price').value = product.price;
     document.getElementById('product-original-price').value = product.originalPrice || '';
@@ -1680,7 +1728,7 @@ function editProduct(productId) {
     document.getElementById('product-stock').value = product.stock;
     document.getElementById('product-max-stock').value = product.maxStock;
     document.getElementById('product-rating').value = product.rating;
-    document.getElementById('product-image').value = product.imageUrl || '';
+    document.getElementById('product-image').value = product.image || product.imageUrl || '';
     document.getElementById('product-reviews').value = product.reviews;
     document.getElementById('product-is-new').checked = product.isNew;
     document.getElementById('product-available').checked = product.available;
@@ -1708,6 +1756,31 @@ function deleteProduct(productId) {
         }
     );
 }
+
+// Activar / desactivar un producto (campo active en backend)
+async function toggleProductActive(productId) {
+    const product = adminProducts.find(p => p.id === productId);
+    if (!product) return;
+
+    const newActive = !(product.available ?? true);
+
+    try {
+        await apiPut(`/products/${productId}`, { active: newActive });
+        product.available = newActive; // actualizar en memoria
+
+        renderProductsList();
+        updateStats();
+
+        showNotification(
+            newActive ? 'Producto activado correctamente' : 'Producto desactivado correctamente',
+            'success'
+        );
+    } catch (error) {
+        console.error('Error cambiando estado de producto:', error);
+        showNotification('No se pudo cambiar el estado del producto', 'error');
+    }
+}
+
 
 // Restaurar productos por defecto (en backend)
 function resetToDefaults() {
@@ -1809,7 +1882,7 @@ function resetToDefaults() {
                     )
                 );
 
-                await loadProductsFromBackend();
+                await syncProductsFromBackendToLocalStorage();
                 clearForm();
                 showNotification('Productos restaurados en la base de datos', 'info');
             } catch (error) {
@@ -1935,879 +2008,565 @@ document.getElementById('product-form').addEventListener('submit', async functio
             return true;
         }
 
-        // ========================
-        // GESTIÓN DE PEDIDOS
-        // ========================
-        
-        // Obtener pedidos del localStorage
-        function getOrders() {
-            const orders = localStorage.getItem('ecomarket_orders');
-            const parsedOrders = orders ? JSON.parse(orders) : [];
-            console.log('Pedidos cargados:', parsedOrders.length, parsedOrders);
-            return parsedOrders;
-        }
-        
-        // Renderizar lista de pedidos
-        function renderOrdersList() {
-            const orders = getOrders();
-            console.log('Renderizando pedidos:', orders.length);
-            const container = document.getElementById('orders-list');
-            const pendingCount = document.getElementById('pending-orders-count');
+
+
+            // Lista de pedidos cargados desde el backend
+                let adminOrders = [];
+
+            // Cargar productos desde el backend para el panel admin
+            async function loadProductsForAdmin() {
+                try {
+                // Puedes ajustar page/limit si usas paginación
+                const resp = await apiGet('/products?limit=500');
+                const items = resp.items || resp; // por si la API devuelve { items, total, ... }
             
-            // Filtrar pedidos pendientes (no entregados)
-            const pendingOrders = orders.filter(order => order.status !== 'entregado');
-            console.log('Pedidos pendientes:', pendingOrders.length);
-            if (pendingCount) pendingCount.textContent = pendingOrders.length;
-            
-            if (orders.length === 0) {
-                container.innerHTML = '<div class="text-center text-muted py-5">' +
-                    '<i class="bi bi-inbox" style="font-size: 3rem;"></i>' +
-                    '<h5>No hay pedidos registrados</h5>' +
-                    '<p>Los pedidos aparecerán aquí cuando los clientes realicen compras</p>' +
-                    '</div>';
-                return;
-            }
-            
-            let ordersHtml = '';
-            orders.forEach(order => {
-                console.log('Renderizando pedido:', order);
-                console.log('Items del pedido en renderOrdersList:', order.items);
-                
-                let itemsHtml = '';
-                if (order.items && order.items.length > 0) {
-                    order.items.forEach(item => {
-                        console.log('Renderizando item en lista:', item);
-                        
-                        // Mejorar el nombre del producto
-                        let itemName = item.name;
-                        if (!itemName || itemName === 'Producto sin nombre') {
-                            // Mapear productos conocidos por ID si está disponible - Lista completa
-                            const productMap = {
-                                'frutillas': 'Frutillas Frescas Premium',
-                                'lechuga': 'Lechuga Criolla Fresca',
-                                'tomates': 'Tomates Cherry Orgánicos',
-                                'zanahorias': 'Zanahorias Baby Premium',
-                                'manzanas': 'Manzanas Red Delicious',
-                                'bananas': 'Bananas Premium',
-                                'peras': 'Peras Williams',
-                                'apio': 'Apio Fresco Orgánico'
-                            };
-                            itemName = productMap[item.productId] || item.productId || 'Producto del catálogo';
-                        }
-                        
-                        const itemQuantity = parseInt(item.quantity) || 1;
-                        const itemUnit = item.unit || 'unidad';
-                        const itemPrice = parseFloat(item.price) || 0;
-                        
-                        itemsHtml += '<div class="order-item">' +
-                            '<span>' + itemName + ' (' + itemQuantity + ' ' + itemUnit + ')</span>' +
-                            '<span>$' + (itemPrice * itemQuantity).toLocaleString() + '</span>' +
-                            '</div>';
-                    });
-                } else {
-                    itemsHtml = '<div class="order-item"><span>No hay productos</span><span>$0</span></div>';
+                adminProducts = items;
+                renderProductsTable();
+                showNotification('Productos cargados correctamente', 'success');
+                } catch (error) {
+                console.error('Error cargando productos para admin:', error);
+                showNotification('No se pudieron cargar los productos', 'error');
                 }
-                
-                ordersHtml += '<div class="order-card">' +
-                    '<div class="order-status">' +
-                    '<span class="status-badge status-' + order.status + '">' + order.status + '</span>' +
-                    '</div>' +
-                    '<div class="row">' +
-                    '<div class="col-md-3">' +
-                    '<strong>Pedido #' + order.id + '</strong><br>' +
-                    '<small class="text-muted">' + new Date(order.date).toLocaleDateString() + '</small><br>' +
-                    '<small class="text-muted">' + new Date(order.date).toLocaleTimeString() + '</small>' +
-                    '</div>' +
-                    '<div class="col-md-3">' +
-                    '<strong>Cliente:</strong><br>' +
-                    order.customer.name + '<br>' +
-                    '<small class="text-muted">' + order.customer.email + '</small><br>' +
-                    '<small class="text-muted">' + order.customer.phone + '</small>' +
-                    '</div>' +
-                    '<div class="col-md-3">' +
-                    '<strong>Entrega:</strong><br>' +
-                    order.delivery.address + '<br>' +
-                    '<small class="text-muted">' + order.delivery.city + '</small><br>' +
-                    '<small class="text-muted">Pago: ' + getPaymentMethodName(order.payment.method) + '</small>' +
-                    '</div>' +
-                    '<div class="col-md-3 text-end">' +
-                    '<div class="order-total">Total: $' + order.total.toLocaleString() + '</div>' +
-                    '<div class="mt-2">' +
-                    '<button class="btn btn-sm btn-outline-primary me-1" onclick="viewOrderDetails(\'' + order.id + '\')">' +
-                    '<i class="bi bi-eye"></i> Ver' +
-                    '</button>' +
-                    '<div class="btn-group">' +
-                    '<button class="btn btn-sm btn-success dropdown-toggle" data-bs-toggle="dropdown">' +
-                    '<i class="bi bi-gear"></i>' +
-                    '</button>' +
-                    '<ul class="dropdown-menu">' +
-                    '<li><a class="dropdown-item" onclick="updateOrderStatus(\'' + order.id + '\', \'confirmado\')">Confirmar</a></li>' +
-                    '<li><a class="dropdown-item" onclick="updateOrderStatus(\'' + order.id + '\', \'procesando\')">Procesar</a></li>' +
-                    '<li><a class="dropdown-item" onclick="updateOrderStatus(\'' + order.id + '\', \'enviado\')">Enviar</a></li>' +
-                    '<li><a class="dropdown-item" onclick="updateOrderStatus(\'' + order.id + '\', \'entregado\')">Entregar</a></li>' +
-                    '<li><hr class="dropdown-divider"></li>' +
-                    '<li><a class="dropdown-item text-danger" onclick="cancelOrder(\'' + order.id + '\')">Cancelar</a></li>' +
-                    '</ul>' +
-                    '</div>' +
-                    '</div>' +
-                    '</div>' +
-                    '</div>' +
-                    '<div class="order-items mt-3">' +
-                    '<strong>Productos:</strong>' +
-                    itemsHtml +
-                    '</div>' +
-                    '</div>';
-            });
-            
-            container.innerHTML = ordersHtml;
+            }
+
+
+    // ========================
+    // GESTIÓN DE PEDIDOS (BACKEND)
+    // ========================
+
+    // Cargar pedidos desde el backend
+    async function loadOrders() {
+        try {
+            // Aquí podrías leer el filtro de estado si quieres aplicarlo en el backend:
+            const statusFilter = document.getElementById('order-status-filter')?.value || '';
+            const query = statusFilter ? `?status=${encodeURIComponent(statusFilter)}` : '';
+
+            const orders = await apiGet(`/admin/orders${query}`);
+            adminOrders = orders;
+            renderOrdersList();
+            updateReportsData();
+            showNotification('Pedidos cargados correctamente', 'success');
+        } catch (error) {
+            console.error('Error cargando pedidos de backend:', error);
+            showNotification('Error al cargar pedidos desde el servidor', 'error');
         }
-        
-        // Obtener nombre del método de pago
-        function getPaymentMethodName(method) {
-            const methods = {
-                'credit-card': 'Tarjeta de Crédito',
-                'bank-transfer': 'Transferencia Bancaria',
-                'cash-on-delivery': 'Contra Entrega'
-            };
-            return methods[method] || method;
+    }
+
+    // Mapear estado del backend a clase de badge
+    function mapStatusToBadgeClass(status) {
+        switch (status) {
+            case 'CREADO':       return 'status-procesando';
+            case 'PAGADO':       return 'status-confirmado';
+            case 'EN_REPARTO':   return 'status-enviado';
+            case 'ENTREGADO':    return 'status-entregado';
+            case 'CANCELADO':    return 'status-cancelado';
+            default:             return 'status-procesando';
         }
-        
-        // Actualizar estado de pedido
-        // Función helper para formatear el total correctamente
-        function formatOrderTotal(total) {
-            const numericTotal = parseFloat(total) || 0;
-            return '$' + Math.round(numericTotal).toLocaleString('es-CL');
+    }
+
+    // Renderizar lista de pedidos usando adminOrders (backend)
+    function renderOrdersList(filteredList = null) {
+        const orders = filteredList || adminOrders;
+        const container = document.getElementById('orders-list');
+        const pendingCount = document.getElementById('pending-orders-count');
+
+        if (!container) return;
+
+        const pending = orders.filter(o => o.status !== 'ENTREGADO' && o.status !== 'CANCELADO');
+        if (pendingCount) pendingCount.textContent = pending.length;
+
+        if (!orders.length) {
+            container.innerHTML = `
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                    <h5>No hay pedidos registrados</h5>
+                    <p>Los pedidos aparecerán aquí cuando los clientes realicen compras.</p>
+                </div>`;
+            return;
         }
 
-        function updateOrderStatus(orderId, newStatus) {
-            const orders = getOrders();
-            const orderIndex = orders.findIndex(o => o.id === orderId);
-            
-            if (orderIndex !== -1) {
-                const order = orders[orderIndex];
-                order.status = newStatus;
-                order.lastUpdated = new Date().toISOString();
-                
-                // Actualizar en el historial general
-                localStorage.setItem('ecomarket_orders', JSON.stringify(orders));
-                
-                // Actualizar también en el historial específico del usuario
-                const userId = order.customer.id;
-                let userOrders = JSON.parse(localStorage.getItem('ecomarket_user_orders_' + userId)) || [];
-                const userOrderIndex = userOrders.findIndex(o => o.id === orderId);
-                if (userOrderIndex !== -1) {
-                    userOrders[userOrderIndex] = order;
-                    localStorage.setItem('ecomarket_user_orders_' + userId, JSON.stringify(userOrders));
-                }
-                
-                renderOrdersList();
-                updateReportsData();
-                
-                // Mostrar mensaje personalizado según el estado
-                const statusMessages = {
-                    'confirmado': 'Pedido confirmado correctamente',
-                    'procesando': 'Pedido marcado como procesando',
-                    'enviado': 'Pedido marcado como enviado',
-                    'entregado': 'Pedido marcado como entregado',
-                    'cancelado': 'Pedido cancelado'
-                };
-                showNotification(statusMessages[newStatus] || 'Pedido actualizado', 'success');
-            }
+        const html = orders.map(order => {
+            const createdAt = new Date(order.createdAt || Date.now());
+            const user = order.user || {};
+            const items = order.items || [];
+
+            const itemsHtml = items.map(it => {
+                const productName = it.product?.name || 'Producto';
+                const qty = it.quantity || 0;
+                const unitPrice = it.unitPrice ?? it.product?.price ?? 0;
+                return `
+                    <div class="order-item">
+                        <span>${productName} (${qty})</span>
+                        <span>$${(qty * unitPrice).toLocaleString('es-CL')}</span>
+                    </div>
+                `;
+            }).join('') || `
+                <div class="order-item">
+                    <span>Sin productos</span>
+                    <span>$0</span>
+                </div>
+            `;
+
+            return `
+            <div class="order-card">
+                <div class="order-status">
+                    <span class="status-badge ${mapStatusToBadgeClass(order.status)}">
+                        ${order.status}
+                    </span>
+                </div>
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Pedido #${order._id}</strong><br>
+                        <small class="text-muted">${createdAt.toLocaleDateString()}</small><br>
+                        <small class="text-muted">${createdAt.toLocaleTimeString()}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Cliente:</strong><br>
+                        ${user.name || 'Sin nombre'}<br>
+                        <small class="text-muted">${user.email || ''}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Pago:</strong><br>
+                        <small class="text-muted">Ref: ${order.paymentRef || 'N/A'}</small><br>
+                        <small class="text-muted">Estado: ${order.status}</small>
+                    </div>
+                    <div class="col-md-3 text-end">
+                        <div class="order-total">
+                            Total: $${(order.total || 0).toLocaleString('es-CL')}
+                        </div>
+                        <div class="mt-2 mobile-order-actions d-flex justify-content-end gap-1">
+                            <button class="btn btn-sm btn-outline-primary"
+                                    onclick="viewOrderDetails('${order._id}')">
+                                <i class="bi bi-eye"></i> Ver
+                            </button>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-success dropdown-toggle"
+                                        data-bs-toggle="dropdown">
+                                    <i class="bi bi-gear"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item"
+                                           onclick="updateOrderStatus('${order._id}', 'PAGADO')">Marcar como PAGADO</a></li>
+                                    <li><a class="dropdown-item"
+                                           onclick="updateOrderStatus('${order._id}', 'EN_REPARTO')">Marcar EN REPARTO</a></li>
+                                    <li><a class="dropdown-item"
+                                           onclick="updateOrderStatus('${order._id}', 'ENTREGADO')">Marcar ENTREGADO</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger"
+                                           onclick="updateOrderStatus('${order._id}', 'CANCELADO')">Cancelar pedido</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="order-items mt-3">
+                    <strong>Productos:</strong>
+                    ${itemsHtml}
+                </div>
+            </div>`;
+        }).join('');
+
+        container.innerHTML = html;
+    }
+
+    // Actualizar estado de pedido en el backend
+    async function updateOrderStatus(orderId, newStatus) {
+        try {
+            await apiPut(`/admin/orders/${orderId}/status`, { status: newStatus });
+            showNotification('Estado del pedido actualizado', 'success');
+            await loadOrders(); // recargar lista
+        } catch (error) {
+            console.error('Error actualizando estado del pedido:', error);
+            showNotification('No se pudo actualizar el estado del pedido', 'error');
         }
-        
-        // Función para cancelar pedido (alias para updateOrderStatus)
-        function cancelOrder(orderId) {
-            showConfirmation(
-                'Confirmar Cancelación',
-                '¿Estás seguro de que deseas cancelar este pedido?',
-                function() {
-                    updateOrderStatus(orderId, 'cancelado');
-                }
-            );
+    }
+
+    // Ver detalles del pedido (versión simple usando backend)
+    function viewOrderDetails(orderId) {
+        const order = adminOrders.find(o => o._id === orderId);
+        if (!order) {
+            showNotification('Pedido no encontrado', 'error');
+            return;
         }
-        
-        // Ver detalles del pedido
-        function viewOrderDetails(orderId) {
-            console.log('Intentando ver detalles del pedido:', orderId);
-            const orders = getOrders();
-            const order = orders.find(o => o.id === orderId);
-            
-            if (!order) {
-                console.error('Pedido no encontrado:', orderId);
-                showNotification('Pedido no encontrado', 'error');
-                return;
-            }
-            
-            console.log('Pedido encontrado:', order);
-            console.log('Items del pedido en viewOrderDetails:', order.items);
-            
-            let itemsHtml = '';
-            let calculatedTotal = 0;
-            if (order.items && order.items.length > 0) {
-                order.items.forEach((item, index) => {
-                    console.log('Procesando item ' + index + ':', item);
-                    console.log('- Nombre:', item.name, 'Tipo:', typeof item.name);
-                    console.log('- Precio:', item.price, 'Tipo:', typeof item.price);
-                    console.log('- Cantidad:', item.quantity, 'Tipo:', typeof item.quantity);
-                    
-                    const itemPrice = parseFloat(item.price) || 0;
-                    const itemQuantity = parseInt(item.quantity) || 1;
-                    const itemUnit = item.unit || 'unidad';
-                    
-                    // Sumar al total calculado
-                    calculatedTotal += itemPrice * itemQuantity;
-                    
-                    // Mejorar el nombre del producto
-                    let itemName = item.name;
-                    if (!itemName || itemName === 'Producto sin nombre' || itemName === 'Sin nombre') {
-                        // Mapear productos conocidos por ID si está disponible - Lista completa
-                        const productMap = {
-                            'frutillas': 'Frutillas Frescas Premium',
-                            'lechuga': 'Lechuga Criolla Fresca',
-                            'tomates': 'Tomates Cherry Orgánicos',
-                            'zanahorias': 'Zanahorias Baby Premium',
-                            'manzanas': 'Manzanas Red Delicious',
-                            'bananas': 'Bananas Premium',
-                            'peras': 'Peras Williams',
-                            'apio': 'Apio Fresco Orgánico'
-                        };
-                        itemName = productMap[item.productId] || item.productId || 'Producto del catálogo';
-                    }
-                    
-                    console.log('- Valores procesados: nombre=' + itemName + ', precio=' + itemPrice + ', cantidad=' + itemQuantity);
-                    
-                    itemsHtml += '<tr>' +
-                        '<td>' + itemName + '</td>' +
-                        '<td>' + itemQuantity + ' ' + itemUnit + '</td>' +
-                        '<td class="d-none-mobile">$' + itemPrice.toLocaleString() + '</td>' +
-                        '<td>$' + (itemPrice * itemQuantity).toLocaleString() + '</td>' +
-                        '</tr>';
-                });
-            } else {
-                itemsHtml = '<tr><td colspan="3" class="d-block d-sm-none">No hay productos en este pedido</td><td colspan="4" class="d-none d-sm-table-cell">No hay productos en este pedido</td></tr>';
-            }
-            
-            // Usar el total calculado si el total del pedido es 0 o indefinido
-            const finalTotal = order.total && order.total > 0 ? order.total : calculatedTotal;
-            console.log('Total del pedido:', order.total, 'Total calculado:', calculatedTotal, 'Total final:', finalTotal);
-            
-            let lastUpdatedHtml = '';
-            if (order.lastUpdated) {
-                lastUpdatedHtml = '<p><strong>Última Actualización:</strong> ' + new Date(order.lastUpdated).toLocaleString() + '</p>';
-            }
-            
-            const modalHTML = '<div class="modal fade" id="orderDetailsModal" tabindex="-1">' +
-                '<div class="modal-dialog modal-lg">' +
-                '<div class="modal-content">' +
-                '<div class="modal-header">' +
-                '<h5 class="modal-title">Detalles del Pedido #' + order.id + '</h5>' +
-                '<button type="button" class="btn-close" data-bs-dismiss="modal"></button>' +
-                '</div>' +
-                '<div class="modal-body">' +
-                '<div class="row mb-3">' +
-                '<div class="col-md-6">' +
-                '<h6>Información del Cliente</h6>' +
-                '<p><strong>Nombre:</strong> ' + order.customer.name + '<br>' +
-                '<strong>Email:</strong> ' + order.customer.email + '<br>' +
-                '<strong>Teléfono:</strong> ' + order.customer.phone + '</p>' +
-                '</div>' +
-                '<div class="col-md-6">' +
-                '<h6>Información de Entrega</h6>' +
-                '<p><strong>Dirección:</strong> ' + order.delivery.address + '<br>' +
-                '<strong>Ciudad:</strong> ' + order.delivery.city + '<br>' +
-                '<strong>Estado:</strong> <span class="status-badge status-' + order.status + '">' + order.status + '</span></p>' +
-                '</div>' +
-                '</div>' +
-                '<h6>Productos</h6>' +
-                '<div class="table-responsive">' +
-                '<table class="table table-sm">' +
-                '<thead>' +
-                '<tr>' +
-                '<th>Producto</th>' +
-                '<th>Cantidad</th>' +
-                '<th class="d-none-mobile">Precio Unit.</th>' +
-                '<th>Subtotal</th>' +
-                '</tr>' +
-                '</thead>' +
-                '<tbody>' +
-                itemsHtml +
-                '</tbody>' +
-                '<tfoot>' +
-                '<tr class="table-success">' +
-                '<th colspan="2" class="d-block d-sm-none">Total</th>' +
-                '<th colspan="3" class="d-none d-sm-table-cell">Total</th>' +
-                '<th>$' + finalTotal.toLocaleString() + '</th>' +
-                '</tr>' +
-                '</tfoot>' +
-                '</table>' +
-                '</div>' +
-                '<div class="mt-3">' +
-                '<p><strong>Método de Pago:</strong> ' + getPaymentMethodName(order.payment.method) + '</p>' +
-                '<p><strong>Fecha:</strong> ' + new Date(order.date).toLocaleString() + '</p>' +
-                lastUpdatedHtml +
-                '</div>' +
-                '</div>' +
-                '<div class="modal-footer">' +
-                '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>' +
-                '<button type="button" class="btn btn-primary" onclick="printOrder(\'' + order.id + '\')">Imprimir</button>' +
-                '</div>' +
-                '</div>' +
-                '</div>' +
-                '</div>';
-            
-            // Remover modal existente si lo hay
-            const existingModal = document.getElementById('orderDetailsModal');
-            if (existingModal) {
-                existingModal.remove();
-            }
-            
-            // Agregar modal al DOM
-            document.body.insertAdjacentHTML('beforeend', modalHTML);
-            
-            // Mostrar modal
-            try {
-                const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
-                modal.show();
-                console.log('Modal mostrado exitosamente');
-            } catch (error) {
-                console.error('Error mostrando modal:', error);
-                showNotification('Error mostrando detalles del pedido. Revisa la consola para más información.', 'error');
-            }
+
+        const user = order.user || {};
+        const items = order.items || [];
+
+        const itemsRows = items.map(it => {
+            const productName = it.product?.name || 'Producto';
+            const qty = it.quantity || 0;
+            const unitPrice = it.unitPrice ?? it.product?.price ?? 0;
+            return `
+                <tr>
+                    <td>${productName}</td>
+                    <td>${qty}</td>
+                    <td class="d-none-mobile">$${unitPrice.toLocaleString('es-CL')}</td>
+                    <td>$${(qty * unitPrice).toLocaleString('es-CL')}</td>
+                </tr>
+            `;
+        }).join('') || `
+            <tr>
+                <td colspan="4">Sin productos en este pedido</td>
+            </tr>
+        `;
+
+        const createdAt = new Date(order.createdAt || Date.now());
+
+        const modalHTML = `
+        <div class="modal fade" id="orderDetailsModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                <h5 class="modal-title">Detalles del Pedido #${order._id}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                    <h6>Cliente</h6>
+                    <p>
+                        <strong>Nombre:</strong> ${user.name || 'Sin nombre'}<br>
+                        <strong>Email:</strong> ${user.email || ''}<br>
+                    </p>
+                    </div>
+                    <div class="col-md-6">
+                    <h6>Pedido</h6>
+                    <p>
+                        <strong>Estado:</strong> ${order.status}<br>
+                        <strong>Total:</strong> $${(order.total || 0).toLocaleString('es-CL')}<br>
+                        <strong>Fecha:</strong> ${createdAt.toLocaleString()}
+                    </p>
+                    </div>
+                </div>
+                <h6>Productos</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                    <thead>
+                        <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th class="d-none-mobile">Precio Unit.</th>
+                        <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${itemsRows}
+                    </tbody>
+                    </table>
+                </div>
+                </div>
+                <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+            </div>
+        </div>`;
+
+        const existing = document.getElementById('orderDetailsModal');
+        if (existing) existing.remove();
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+        const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
+        modal.show();
+    }
+
+    // Filtros en el front (estado + cliente)
+    function filterOrders() {
+        const statusFilter = document.getElementById('order-status-filter')?.value || '';
+        const customerSearch = (document.getElementById('customer-search')?.value || '').toLowerCase();
+
+        let filtered = [...adminOrders];
+
+        if (statusFilter) {
+            // Aquí usamos los estados del front (confirmado/procesando/enviado/entregado)
+            // mapeados a los estados del backend
+            const mapFrontToBackend = {
+                'confirmado': 'PAGADO',
+                'procesando': 'CREADO',
+                'enviado': 'EN_REPARTO',
+                'entregado': 'ENTREGADO'
+            };
+            const backendStatus = mapFrontToBackend[statusFilter];
+            filtered = filtered.filter(o => o.status === backendStatus);
         }
-        
-        // Cancelar pedido
-        function cancelOrder(orderId) {
-            showConfirmation(
-                'Confirmar Cancelación',
-                '¿Estás seguro de que deseas cancelar este pedido?',
-                function() {
-                    const orders = getOrders();
-                    const updatedOrders = orders.filter(o => o.id !== orderId);
-                    localStorage.setItem('ecomarket_orders', JSON.stringify(updatedOrders));
-                    renderOrdersList();
-                    updateReportsData();
-                    showNotification('Pedido cancelado correctamente', 'success');
-                }
-            );
-        }
-        
-        // Filtrar pedidos
-        function filterOrders() {
-            const statusFilter = document.getElementById('order-status-filter').value;
-            const paymentFilter = document.getElementById('payment-filter').value;
-            const customerSearch = document.getElementById('customer-search').value.toLowerCase();
-            
-            const orders = getOrders();
-            let filteredOrders = orders;
-            
-            if (statusFilter) {
-                filteredOrders = filteredOrders.filter(order => order.status === statusFilter);
-            }
-            
-            if (paymentFilter) {
-                filteredOrders = filteredOrders.filter(order => order.payment.method === paymentFilter);
-            }
-            
-            if (customerSearch) {
-                filteredOrders = filteredOrders.filter(order => 
-                    order.customer.name.toLowerCase().includes(customerSearch) ||
-                    order.customer.email.toLowerCase().includes(customerSearch)
-                );
-            }
-            
-            renderFilteredOrders(filteredOrders);
-        }
-        
-        // Renderizar pedidos filtrados
-        function renderFilteredOrders(filteredOrders) {
-            const container = document.getElementById('orders-list');
-            
-            if (filteredOrders.length === 0) {
-                container.innerHTML = '<div class="text-center text-muted py-3">' +
-                    '<i class="bi bi-search" style="font-size: 2rem;"></i>' +
-                    '<h6>No se encontraron pedidos con esos criterios</h6>' +
-                    '<p>Intenta ajustar los filtros</p>' +
-                    '</div>';
-                return;
-            }
-            
-            // Usar la misma lógica de renderizado pero con los pedidos filtrados
-            let ordersHtml = '';
-            filteredOrders.forEach(order => {
-                let itemsHtml = '';
-                order.items.forEach(item => {
-                    itemsHtml += '<div class="order-item">' +
-                        '<span>' + item.name + ' (' + item.quantity + ' ' + item.unit + ')</span>' +
-                        '<span>$' + (item.price * item.quantity).toLocaleString() + '</span>' +
-                        '</div>';
-                });
-                
-                ordersHtml += '<div class="order-card">' +
-                    '<div class="order-status">' +
-                    '<span class="status-badge status-' + order.status + '">' + order.status + '</span>' +
-                    '</div>' +
-                    '<div class="row">' +
-                    '<div class="col-md-3">' +
-                    '<strong>Pedido #' + order.id + '</strong><br>' +
-                    '<small class="text-muted">' + new Date(order.date).toLocaleDateString() + '</small><br>' +
-                    '<small class="text-muted">' + new Date(order.date).toLocaleTimeString() + '</small>' +
-                    '</div>' +
-                    '<div class="col-md-3">' +
-                    '<strong>Cliente:</strong><br>' +
-                    order.customer.name + '<br>' +
-                    '<small class="text-muted">' + order.customer.email + '</small><br>' +
-                    '<small class="text-muted">' + order.customer.phone + '</small>' +
-                    '</div>' +
-                    '<div class="col-md-3">' +
-                    '<strong>Entrega:</strong><br>' +
-                    order.delivery.address + '<br>' +
-                    '<small class="text-muted">' + order.delivery.city + '</small><br>' +
-                    '<small class="text-muted">Pago: ' + getPaymentMethodName(order.payment.method) + '</small>' +
-                    '</div>' +
-                    '<div class="col-md-3 text-end">' +
-                    '<div class="order-total">Total: $' + order.total.toLocaleString() + '</div>' +
-                    '<div class="mt-2">' +
-                    '<button class="btn btn-sm btn-outline-primary me-1" onclick="viewOrderDetails(\'' + order.id + '\')">' +
-                    '<i class="bi bi-eye"></i> Ver' +
-                    '</button>' +
-                    '<div class="btn-group">' +
-                    '<button class="btn btn-sm btn-success dropdown-toggle" data-bs-toggle="dropdown">' +
-                    '<i class="bi bi-gear"></i>' +
-                    '</button>' +
-                    '<ul class="dropdown-menu">' +
-                    '<li><a class="dropdown-item" onclick="updateOrderStatus(\'' + order.id + '\', \'confirmado\')">Confirmar</a></li>' +
-                    '<li><a class="dropdown-item" onclick="updateOrderStatus(\'' + order.id + '\', \'procesando\')">Procesar</a></li>' +
-                    '<li><a class="dropdown-item" onclick="updateOrderStatus(\'' + order.id + '\', \'enviado\')">Enviar</a></li>' +
-                    '<li><a class="dropdown-item" onclick="updateOrderStatus(\'' + order.id + '\', \'entregado\')">Entregar</a></li>' +
-                    '<li><hr class="dropdown-divider"></li>' +
-                    '<li><a class="dropdown-item text-danger" onclick="cancelOrder(\'' + order.id + '\')">Cancelar</a></li>' +
-                    '</ul>' +
-                    '</div>' +
-                    '</div>' +
-                    '</div>' +
-                    '</div>' +
-                    '<div class="order-items mt-3">' +
-                    '<strong>Productos:</strong>' +
-                    itemsHtml +
-                    '</div>' +
-                    '</div>';
+
+        if (customerSearch) {
+            filtered = filtered.filter(o => {
+                const name = (o.user?.name || '').toLowerCase();
+                const email = (o.user?.email || '').toLowerCase();
+                return name.includes(customerSearch) || email.includes(customerSearch);
             });
-            
-            container.innerHTML = ordersHtml;
         }
-        
-        // Limpiar filtros de pedidos
-        function clearOrderFilters() {
+
+        renderOrdersList(filtered);
+    }
+
+    // Limpiar filtros de pedidos
+    function clearOrderFilters() {
+        if (document.getElementById('order-status-filter')) {
             document.getElementById('order-status-filter').value = '';
+        }
+        if (document.getElementById('payment-filter')) {
             document.getElementById('payment-filter').value = '';
+        }
+        if (document.getElementById('customer-search')) {
             document.getElementById('customer-search').value = '';
-            renderOrdersList();
         }
-        
-        // Actualizar lista de pedidos
-        function refreshOrders() {
-            renderOrdersList();
-            showNotification('Lista de pedidos actualizada', 'info');
-        }
+        renderOrdersList();
+    }
 
-        // Limpiar todos los pedidos
-        function clearAllOrders() {
-            // Mostrar el modal de confirmación
-            const clearModal = new bootstrap.Modal(document.getElementById('clearOrdersModal'));
-            clearModal.show();
-            
-            // Configurar el botón de confirmación
-            document.getElementById('confirmClearOrders').onclick = function() {
-                // Limpiar todos los pedidos del localStorage
-                localStorage.removeItem('ecomarket_orders');
-                
-                // Limpiar también los historiales específicos de usuarios
-                const keys = Object.keys(localStorage);
-                keys.forEach(key => {
-                    if (key.startsWith('ecomarket_user_orders_')) {
-                        localStorage.removeItem(key);
-                    }
-                });
-                
-                renderOrdersList();
-                updateReportsData();
-                showNotification('Todos los pedidos han sido eliminados correctamente', 'success');
-                
-                // Cerrar el modal
-                clearModal.hide();
-            };
-        }
+    // Actualizar lista de pedidos (botón "Actualizar")
+    function refreshOrders() {
+        loadOrders();
+    }
+    
+    // ========================
+    // INFORMES Y ESTADÍSTICAS (BACKEND)
+    // ========================
 
-        // ========================
-        // INFORMES Y ESTADÍSTICAS
-        // ========================
-        
-        // Generar datos de reporte
-        function generateReportData() {
-            const orders = getOrders();
-            const products = getProducts();
-            
-            // Calcular ventas totales
-            const totalSales = orders.reduce((sum, order) => sum + order.total, 0);
-            
-            // Productos más vendidos
-            const productSales = {};
-            orders.forEach(order => {
-                order.items.forEach(item => {
-                    if (!productSales[item.name]) {
-                        productSales[item.name] = { quantity: 0, revenue: 0 };
-                    }
-                    productSales[item.name].quantity += item.quantity;
-                    productSales[item.name].revenue += item.price * item.quantity;
-                });
-            });
-            
-            const topProducts = Object.entries(productSales)
-                .sort((a, b) => b[1].quantity - a[1].quantity)
-                .slice(0, 5);
-            
-            // Clientes top
-            const customerPurchases = {};
-            orders.forEach(order => {
-                const email = order.customer.email;
-                if (!customerPurchases[email]) {
-                    customerPurchases[email] = {
-                        name: order.customer.name,
-                        email: email,
-                        orders: 0,
-                        total: 0
-                    };
+    // Generar datos de reporte desde adminOrders + adminProducts
+    function generateReportData() {
+        const orders = adminOrders || [];
+        const products = getProducts() || [];
+
+        const totalSales = orders.reduce((sum, o) => sum + (o.total || 0), 0);
+
+        // Conteo por producto
+        const productSales = {};
+        orders.forEach(o => {
+            (o.items || []).forEach(it => {
+                const name = it.product?.name || 'Producto';
+                const qty = it.quantity || 0;
+                const unitPrice = it.unitPrice ?? it.product?.price ?? 0;
+                if (!productSales[name]) {
+                    productSales[name] = { quantity: 0, revenue: 0 };
                 }
-                customerPurchases[email].orders++;
-                customerPurchases[email].total += order.total;
-            });
-            
-            const topCustomers = Object.values(customerPurchases)
-                .sort((a, b) => b.total - a.total)
-                .slice(0, 5);
-            
-            // Ventas por categoría
-            const categorySales = {};
-            orders.forEach(order => {
-                order.items.forEach(item => {
-                    const product = products.find(p => p.name === item.name);
-                    if (product) {
-                        const category = product.category;
-                        if (!categorySales[category]) {
-                            categorySales[category] = { quantity: 0, revenue: 0 };
-                        }
-                        categorySales[category].quantity += item.quantity;
-                        categorySales[category].revenue += item.price * item.quantity;
-                    }
-                });
-            });
-            
-            // Pedidos pendientes
-            const pendingDeliveries = orders.filter(order => order.status !== 'entregado').length;
-            
-            return {
-                totalSales,
-                topProducts,
-                topCustomers,
-                categorySales,
-                pendingDeliveries,
-                bestSeller: topProducts.length > 0 ? topProducts[0][0] : 'N/A',
-                topCustomer: topCustomers.length > 0 ? topCustomers[0].name : 'N/A'
-            };
-        }
-        
-        // Actualizar datos de reportes
-        function updateReportsData() {
-            const data = generateReportData();
-            
-            // Actualizar métricas principales
-            document.getElementById('total-sales').textContent = '$' + data.totalSales.toLocaleString();
-            document.getElementById('best-seller').textContent = data.bestSeller;
-            document.getElementById('top-customer').textContent = data.topCustomer;
-            document.getElementById('pending-deliveries').textContent = data.pendingDeliveries;
-            
-            // Renderizar top productos
-            const topProductsList = document.getElementById('top-products-list');
-            if (data.topProducts.length === 0) {
-                topProductsList.innerHTML = '<p class="text-muted">No hay datos disponibles</p>';
-            } else {
-                let productsHtml = '';
-                data.topProducts.forEach((product, index) => {
-                    let rankingClass = '';
-                    if (index === 0) rankingClass = 'gold';
-                    else if (index === 1) rankingClass = 'silver';
-                    else if (index === 2) rankingClass = 'bronze';
-                    
-                    productsHtml += '<div class="ranking-item">' +
-                        '<div class="ranking-number ' + rankingClass + '">' + (index + 1) + '</div>' +
-                        '<div class="flex-grow-1">' +
-                        '<strong>' + product[0] + '</strong><br>' +
-                        '<small class="text-muted">' + product[1].quantity + ' unidades vendidas</small>' +
-                        '</div>' +
-                        '<div class="text-end">' +
-                        '<strong>$' + product[1].revenue.toLocaleString() + '</strong>' +
-                        '</div>' +
-                        '</div>';
-                });
-                topProductsList.innerHTML = productsHtml;
-            }
-            
-            // Renderizar top clientes
-            const topCustomersList = document.getElementById('top-customers-list');
-            if (data.topCustomers.length === 0) {
-                topCustomersList.innerHTML = '<p class="text-muted">No hay datos disponibles</p>';
-            } else {
-                let customersHtml = '';
-                data.topCustomers.forEach((customer, index) => {
-                    let rankingClass = '';
-                    if (index === 0) rankingClass = 'gold';
-                    else if (index === 1) rankingClass = 'silver';
-                    else if (index === 2) rankingClass = 'bronze';
-                    
-                    customersHtml += '<div class="ranking-item">' +
-                        '<div class="ranking-number ' + rankingClass + '">' + (index + 1) + '</div>' +
-                        '<div class="flex-grow-1">' +
-                        '<strong>' + customer.name + '</strong><br>' +
-                        '<small class="text-muted">' + customer.email + '</small><br>' +
-                        '<small class="text-muted">' + customer.orders + ' pedidos</small>' +
-                        '</div>' +
-                        '<div class="text-end">' +
-                        '<strong>$' + customer.total.toLocaleString() + '</strong>' +
-                        '</div>' +
-                        '</div>';
-                });
-                topCustomersList.innerHTML = customersHtml;
-            }
-            
-            // Renderizar estadísticas por categoría
-            const categoryStats = document.getElementById('category-stats');
-            const categories = Object.entries(data.categorySales);
-            const maxRevenue = Math.max(...categories.map(cat => cat[1].revenue));
-            
-            if (categories.length === 0) {
-                categoryStats.innerHTML = '<div class="col-12"><p class="text-muted">No hay datos disponibles</p></div>';
-            } else {
-                let categoriesHtml = '';
-                categories.forEach(([category, stats]) => {
-                    categoriesHtml += '<div class="col-md-6 mb-3">' +
-                        '<div class="category-item">' +
-                        '<div class="flex-grow-1">' +
-                        '<strong class="text-capitalize">' + category + '</strong>' +
-                        '<div class="progress progress-category mt-1">' +
-                        '<div class="progress-bar bg-success" style="width: ' + ((stats.revenue / maxRevenue) * 100) + '%"></div>' +
-                        '</div>' +
-                        '<small class="text-muted">' + stats.quantity + ' productos vendidos</small>' +
-                        '</div>' +
-                        '<div class="text-end ms-3">' +
-                        '<strong>$' + stats.revenue.toLocaleString() + '</strong>' +
-                        '</div>' +
-                        '</div>' +
-                        '</div>';
-                });
-                categoryStats.innerHTML = categoriesHtml;
-            }
-        }
-        
-        // Generar informe
-        function generateReport() {
-            updateReportsData();
-            showNotification('Informe actualizado con los datos más recientes', 'success');
-        }
-        
-        // Exportar informe
-        function exportReport() {
-            const data = generateReportData();
-            const reportData = {
-                fecha: new Date().toISOString(),
-                resumen: {
-                    ventasTotales: data.totalSales,
-                    productoMasVendido: data.bestSeller,
-                    clienteTop: data.topCustomer,
-                    pedidosPendientes: data.pendingDeliveries
-                },
-                topProductos: data.topProducts,
-                topClientes: data.topCustomers,
-                ventasPorCategoria: data.categorySales
-            };
-            
-            const dataStr = JSON.stringify(reportData, null, 2);
-            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-            
-            const exportFileDefaultName = `informe_ecomarket_${new Date().toISOString().split('T')[0]}.json`;
-            
-            const linkElement = document.createElement('a');
-            linkElement.setAttribute('href', dataUri);
-            linkElement.setAttribute('download', exportFileDefaultName);
-            linkElement.click();
-            
-            showNotification('Informe exportado correctamente', 'success');
-        }
-        
-        // Imprimir pedido
-        function printOrder(orderId) {
-            showNotification('Función de impresión temporalmente deshabilitada para evitar errores', 'warning');
-        }
-
-        // Función temporal para generar pedidos de prueba (solo para testing)
-        function generateTestOrders() {
-            const testUser = {
-                id: 'test-user-001',
-                name: 'Usuario Prueba',
-                email: 'usuario@prueba.com'
-            };
-            
-            // Asegurar que el usuario esté logueado
-            localStorage.setItem('ecomarket_current_user', JSON.stringify(testUser));
-            
-            // Productos reales del catálogo - exactamente como están definidos en productMap
-            const availableProducts = [
-                { name: 'Frutillas Frescas Premium', unit: 'kg', price: 1600, id: 'frutillas' },
-                { name: 'Lechuga Criolla Fresca', unit: 'unidad', price: 1200, id: 'lechuga' },
-                { name: 'Tomates Cherry Orgánicos', unit: 'kg', price: 2800, id: 'tomates' },
-                { name: 'Zanahorias Baby Premium', unit: 'kg', price: 1800, id: 'zanahorias' },
-                { name: 'Manzanas Red Delicious', unit: 'kg', price: 2200, id: 'manzanas' },
-                { name: 'Bananas Premium', unit: 'kg', price: 1500, id: 'bananas' },
-                { name: 'Peras Williams', unit: 'kg', price: 2900, id: 'peras' },
-                { name: 'Apio Fresco Orgánico', unit: 'atado', price: 1400, id: 'apio' }
-            ];
-
-            const testOrders = [
-                {
-                    id: 'ORD' + Date.now(),
-                    date: new Date().toISOString(),
-                    status: 'confirmado',
-                    customer: {
-                        id: testUser.id,
-                        name: testUser.name,
-                        email: testUser.email,
-                        phone: '+57 300 123 4567'
-                    },
-                    delivery: {
-                        address: 'Los sonetos 949',
-                        city: 'Maipú',
-                        postal: '12345',
-                        notes: 'Casa color azul'
-                    },
-                    payment: {
-                        method: 'credit-card'
-                    },
-                    items: [
-                        { 
-                            name: availableProducts[0].name, 
-                            quantity: 2, 
-                            unit: availableProducts[0].unit, 
-                            price: availableProducts[0].price,
-                            productId: availableProducts[0].id
-                        },
-                        { 
-                            name: availableProducts[2].name, 
-                            quantity: 1, 
-                            unit: availableProducts[2].unit, 
-                            price: availableProducts[2].price,
-                            productId: availableProducts[2].id
-                        },
-                        { 
-                            name: availableProducts[1].name, 
-                            quantity: 3, 
-                            unit: availableProducts[1].unit, 
-                            price: availableProducts[1].price,
-                            productId: availableProducts[1].id
-                        }
-                    ],
-                    total: 9400, // (1600 * 2) + (2800 * 1) + (1200 * 3) = 3200 + 2800 + 3600
-                    lastUpdated: new Date().toISOString()
-                },
-                {
-                    id: 'ORD' + (Date.now() + 1),
-                    date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Ayer
-                    status: 'procesando',
-                    customer: {
-                        id: testUser.id,
-                        name: testUser.name,
-                        email: testUser.email,
-                        phone: '+57 300 123 4567'
-                    },
-                    delivery: {
-                        address: 'Av. Libertador 2358',
-                        city: 'Santiago',
-                        postal: '54321',
-                        notes: 'Departamento 4B'
-                    },
-                    payment: {
-                        method: 'bank-transfer'
-                    },
-                    items: [
-                        { 
-                            name: availableProducts[3].name, 
-                            quantity: 2, 
-                            unit: availableProducts[3].unit, 
-                            price: availableProducts[3].price,
-                            productId: availableProducts[3].id
-                        },
-                        { 
-                            name: availableProducts[4].name, 
-                            quantity: 1, 
-                            unit: availableProducts[4].unit, 
-                            price: availableProducts[4].price,
-                            productId: availableProducts[4].id
-                        }
-                    ],
-                    total: 5800, // (1800 * 2) + (2200 * 1) = 3600 + 2200
-                    lastUpdated: new Date().toISOString()
-                }
-            ];
-            
-            // Limpiar TODOS los pedidos existentes antes de agregar el nuevo
-            localStorage.removeItem('ecomarket_orders');
-            localStorage.removeItem('ecomarket_user_orders_' + testUser.id);
-            
-            // Ahora guardar el pedido nuevo
-            localStorage.setItem('ecomarket_orders', JSON.stringify(testOrders));
-            
-            // También guardar en historial del usuario
-            localStorage.setItem('ecomarket_user_orders_' + testUser.id, JSON.stringify(testOrders));
-            
-            console.log('Pedido de prueba generado:', testOrders[0]);
-            console.log('Items del pedido:', testOrders[0].items);
-            
-            // Verificar que se guardó correctamente
-            const savedOrders = JSON.parse(localStorage.getItem('ecomarket_orders'));
-            console.log('Pedidos guardados:', savedOrders);
-            console.log('Items del primer pedido guardado:', savedOrders[0].items);
-            
-            renderOrdersList();
-            updateReportsData();
-            showNotification('¡Pedidos de prueba con productos reales generados exitosamente!', 'success');
-        }
-        
-        // Inicialización del panel de administración y eventos
-        document.addEventListener('DOMContentLoaded', async function() {
-            if (!checkAuth()) return;
-        
-            // 1) Traer productos reales de la base y guardarlos en localStorage
-            await syncProductsFromBackendToLocalStorage();
-        
-            // 2) Todo lo que ya tenías
-            renderOrdersList();
-            updateReportsData();
-            window.generateTestOrders = generateTestOrders;
-        
-            var tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-            tooltips.forEach(function(el) {
-                new bootstrap.Tooltip(el);
-            });
-        
-            var collapseElements = document.querySelectorAll('[data-bs-toggle="collapse"]');
-            collapseElements.forEach(function(element) {
-                element.addEventListener('click', function() {
-                    var icon = this.querySelector('.collapse-icon');
-                    if (icon) {
-                        var isExpanded = this.getAttribute('aria-expanded') === 'true';
-                        icon.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
-                    }
-                });
+                productSales[name].quantity += qty;
+                productSales[name].revenue += qty * unitPrice;
             });
         });
+
+        const topProducts = Object.entries(productSales)
+            .sort((a, b) => b[1].quantity - a[1].quantity)
+            .slice(0, 5);
+
+        // Clientes top
+        const customerStats = {};
+        orders.forEach(o => {
+            const email = o.user?.email || 'sin-email';
+            if (!customerStats[email]) {
+                customerStats[email] = {
+                    name: o.user?.name || email,
+                    email,
+                    orders: 0,
+                    total: 0
+                };
+            }
+            customerStats[email].orders += 1;
+            customerStats[email].total += o.total || 0;
+        });
+
+        const topCustomers = Object.values(customerStats)
+            .sort((a, b) => b.total - a.total)
+            .slice(0, 5);
+
+        // Ventas por categoría (usando products mapeados por nombre)
+            const productByName = {};
+            products.forEach(p => { productByName[p.name] = p; });
+
+        const categorySales = {};
+        orders.forEach(o => {
+            (o.items || []).forEach(it => {
+                const name = it.product?.name || 'Producto';
+                const product = productByName[name];
+                if (!product || !(product.categoryLabel || product.category)) return;
+                const cat = product.categoryLabel || product.category;
+                const qty = it.quantity || 0;
+                const unitPrice = it.unitPrice ?? it.product?.price ?? 0;
+
+                if (!categorySales[cat]) {
+                    categorySales[cat] = { quantity: 0, revenue: 0 };
+                }
+                categorySales[cat].quantity += qty;
+                categorySales[cat].revenue += qty * unitPrice;
+            });
+        });
+
+        const pendingDeliveries = orders.filter(o => o.status !== 'ENTREGADO' && o.status !== 'CANCELADO').length;
+
+        return {
+            totalSales,
+            topProducts,
+            topCustomers,
+            categorySales,
+            pendingDeliveries,
+            bestSeller: topProducts[0]?.[0] || 'N/A',
+            topCustomer: topCustomers[0]?.name || 'N/A'
+        };
+    }
+
+    // Actualizar widgets del bloque "Informes y estadísticas"
+    function updateReportsData() {
+        const data = generateReportData();
+
+        const totalSalesEl = document.getElementById('total-sales');
+        const bestSellerEl = document.getElementById('best-seller');
+        const topCustomerEl = document.getElementById('top-customer');
+        const pendingDeliveriesEl = document.getElementById('pending-deliveries');
+
+        if (totalSalesEl) totalSalesEl.textContent = '$' + data.totalSales.toLocaleString('es-CL');
+        if (bestSellerEl) bestSellerEl.textContent = data.bestSeller;
+        if (topCustomerEl) topCustomerEl.textContent = data.topCustomer;
+        if (pendingDeliveriesEl) pendingDeliveriesEl.textContent = data.pendingDeliveries;
+
+        // Top productos
+        const topProductsList = document.getElementById('top-products-list');
+        if (topProductsList) {
+            if (!data.topProducts.length) {
+                topProductsList.innerHTML = '<p class="text-muted">No hay datos disponibles</p>';
+            } else {
+                topProductsList.innerHTML = data.topProducts.map((p, idx) => {
+                    const [name, stats] = p;
+                    const rankClass = idx === 0 ? 'gold' : idx === 1 ? 'silver' : idx === 2 ? 'bronze' : '';
+                    return `
+                        <div class="ranking-item">
+                            <div class="ranking-number ${rankClass}">${idx + 1}</div>
+                            <div class="flex-grow-1">
+                                <strong>${name}</strong><br>
+                                <small class="text-muted">${stats.quantity} unidades vendidas</small>
+                            </div>
+                            <div class="text-end">
+                                <strong>$${stats.revenue.toLocaleString('es-CL')}</strong>
+                            </div>
+                        </div>`;
+                }).join('');
+            }
+        }
+
+        // Top clientes
+        const topCustomersList = document.getElementById('top-customers-list');
+        if (topCustomersList) {
+            if (!data.topCustomers.length) {
+                topCustomersList.innerHTML = '<p class="text-muted">No hay datos disponibles</p>';
+            } else {
+                topCustomersList.innerHTML = data.topCustomers.map((c, idx) => {
+                    const rankClass = idx === 0 ? 'gold' : idx === 1 ? 'silver' : idx === 2 ? 'bronze' : '';
+                    return `
+                        <div class="ranking-item">
+                            <div class="ranking-number ${rankClass}">${idx + 1}</div>
+                            <div class="flex-grow-1">
+                                <strong>${c.name}</strong><br>
+                                <small class="text-muted">${c.email}</small><br>
+                                <small class="text-muted">${c.orders} pedidos</small>
+                            </div>
+                            <div class="text-end">
+                                <strong>$${c.total.toLocaleString('es-CL')}</strong>
+                            </div>
+                        </div>`;
+                }).join('');
+            }
+        }
+
+        // Ventas por categoría
+        const categoryStatsEl = document.getElementById('category-stats');
+        if (categoryStatsEl) {
+            const entries = Object.entries(data.categorySales);
+            if (!entries.length) {
+                categoryStatsEl.innerHTML = '<div class="col-12"><p class="text-muted">No hay datos disponibles</p></div>';
+            } else {
+                const maxRevenue = Math.max(...entries.map(([, stats]) => stats.revenue));
+                categoryStatsEl.innerHTML = entries.map(([cat, stats]) => `
+                    <div class="col-md-6 mb-3">
+                        <div class="category-item">
+                            <div class="flex-grow-1">
+                                <strong class="text-capitalize">${cat}</strong>
+                                <div class="progress progress-category mt-1">
+                                    <div class="progress-bar bg-success"
+                                         style="width: ${(maxRevenue ? (stats.revenue / maxRevenue) * 100 : 0)}%"></div>
+                                </div>
+                                <small class="text-muted">${stats.quantity} productos vendidos</small>
+                            </div>
+                            <div class="text-end ms-3">
+                                <strong>$${stats.revenue.toLocaleString('es-CL')}</strong>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+    }
+
+    // Botones del bloque de informes
+    function generateReport() {
+        updateReportsData();
+        showNotification('Informe actualizado con los datos más recientes', 'success');
+    }
+
+    function exportReport() {
+        const data = generateReportData();
+        const reportData = {
+            fecha: new Date().toISOString(),
+            resumen: {
+                ventasTotales: data.totalSales,
+                productoMasVendido: data.bestSeller,
+                clienteTop: data.topCustomer,
+                pedidosPendientes: data.pendingDeliveries
+            },
+            topProductos: data.topProducts,
+            topClientes: data.topCustomers,
+            ventasPorCategoria: data.categorySales
+        };
+
+        const dataStr = JSON.stringify(reportData, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+        const fileName = `informe_ecomarket_${new Date().toISOString().split('T')[0]}.json`;
+
+        const link = document.createElement('a');
+        link.setAttribute('href', dataUri);
+        link.setAttribute('download', fileName);
+        link.click();
+
+        showNotification('Informe exportado correctamente', 'success');
+    }
+
+
+
+
+
+
+
+        // Inicialización del panel de administración y eventos
+document.addEventListener('DOMContentLoaded', async function() {
+    if (!checkAuth()) return;
+    
+    // 1) Cargar categorías para el formulario
+    await loadCategoriesForAdmin();
+
+    // 2) Traer productos reales de la base y mostrarlos
+    await syncProductsFromBackendToLocalStorage();
+
+    // 3) Cargar pedidos reales desde el backend
+    await loadOrders();
+    updateReportsData();
+
+    // Tooltips
+    var tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    tooltips.forEach(function(el) {
+        new bootstrap.Tooltip(el);
+    });
+
+    // Icono de colapsables
+    var collapseElements = document.querySelectorAll('[data-bs-toggle="collapse"]');
+    collapseElements.forEach(function(element) {
+        element.addEventListener('click', function() {
+            var icon = this.querySelector('.collapse-icon');
+            if (icon) {
+                var isExpanded = this.getAttribute('aria-expanded') === 'true';
+                icon.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
+            }
+        });
+    });
+});
 
 
     </script>

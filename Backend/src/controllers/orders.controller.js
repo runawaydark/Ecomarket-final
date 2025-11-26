@@ -2,16 +2,20 @@ import Order from '../models/order.js';
 import Cart from '../models/cart.js';
 import { badRequest, ok } from '../utils/http.js';
 
-export async function checkout(req, res) {
-    const cart = await Cart.findOne({ user: req.user.id, status: 'ACTIVE' }).populate('items.product', 'price name');
-    if (!cart || cart.items.length === 0) return badRequest(res, 'Carrito vacío');
-
-    const items = cart.items.map(i => ({
-    product: i.product._id,
-    quantity: i.quantity,
-    unitPrice: i.unitPrice
-    }));
-  const total = items.reduce((acc, i) => acc + i.quantity * i.unitPrice, 0);
+    export async function checkout(req, res) {
+        const cart = await Cart.findOne({ user: req.user.id, status: 'ACTIVE' }).populate('items.product', 'price name');
+        if (!cart || cart.items.length === 0) return badRequest(res, 'Carrito vacío');
+    
+    const items = cart.items.map(i => {
+      const unitPrice = i.unitPrice ?? i.product.price;
+      return {
+        product: i.product._id,
+        quantity: i.quantity,
+        unitPrice,
+      };
+    });
+    
+    const total = items.reduce((acc, i) => acc + i.quantity * i.unitPrice, 0);
 
     const order = await Order.create({
     user: req.user.id,

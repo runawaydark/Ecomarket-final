@@ -84,7 +84,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // 6. Crear transacción Webpay en el backend
     try {
-        const payment = await apiAuthPost("/payments/create-transaction", {
+        const payment = await apiPost("/payments/create-transaction", {
         buyOrder,
         sessionId,
         amount: total

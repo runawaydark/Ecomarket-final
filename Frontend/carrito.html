@@ -295,11 +295,59 @@
         let products = [];
         const SHIPPING_COST = 2500;
         const FREE_SHIPPING_THRESHOLD = 15000;
+
+                // Mapa opcional de IDs de categoría -> slug amigable (igual que en catálogo)
+        const CATEGORY_ID_MAP = {
+            "6920d5ab3805202c3b36be72": "frutas",
+            "6920d5ab3805202c3b36be73": "verduras",
+            "6920ff235965d54c277ed825": "despensa",
+        };
+
+        // Cargar productos desde el backend para que el carrito pueda mostrar nombre, precio, etc.
+        async function loadProducts() {
+            try {
+                const backendProducts = await apiGet('/products');
+
+                products = backendProducts.map(p => ({
+                    id: p._id,
+                    name: p.name,
+                    category: (() => {
+                        if (!p.category) return "general";
+
+                        // Caso 1: viene como string (ObjectId)
+                        if (typeof p.category === "string") {
+                            return CATEGORY_ID_MAP[p.category] || "general";
+                        }
+                        // Caso 2: viene como objeto poblado { _id, name }
+                        if (p.category._id && CATEGORY_ID_MAP[p.category._id]) {
+                            return CATEGORY_ID_MAP[p.category._id];
+                        }
+                        if (p.category.name) {
+                            return p.category.name.toLowerCase();
+                        }
+                        return "general";
+                    })(),
+                    description: p.description || "",
+                    price: p.price,
+                    originalPrice: p.originalPrice || null,
+                    unit: p.unit || "unidad",
+                    stock: p.stock || 0,
+                    image: p.imageUrl || "https://via.placeholder.com/300",
+                    isOffer: p.isOffer || false
+                }));
+
+                console.log('📦 Productos cargados para carrito:', products.length);
+            } catch (error) {
+                console.error('❌ Error cargando productos para carrito:', error);
+                showToast('Error cargando productos del carrito', 'error');
+            }
+        }
+
         
         // Inicializar carrito
         document.addEventListener('DOMContentLoaded', async function() {
             await loadCart();
-            loadProducts();
+            await loadProducts();     
             renderCart();
             loadShippingData();
         
@@ -316,14 +364,7 @@
             }
         });
 
-        
-        // Cargar carrito desde backend
-        function loadCart() {
-            const savedCart = localStorage.getItem('ecomarket_cart');
-            cart = savedCart ? JSON.parse(savedCart) : [];
-            console.log('🛒 Carrito cargado desde localStorage:', cart);
-            console.log('📦 Número de productos en carrito:', cart.length);
-        }
+
 
         // Cargar carrito (desde backend si está logueado, si no, desde localStorage)
         async function loadCart() {
