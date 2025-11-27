@@ -49,19 +49,32 @@ export async function checkout(req, res) {
         });
     }
 
-    // 3) Calcular total
-    const total = items.reduce((acc, i) => acc + i.quantity * i.unitPrice, 0);
+// 3) Calcular total
+const total = items.reduce((acc, i) => acc + i.quantity * i.unitPrice, 0);
 
-    // 4) Crear orden con estado por defecto 'CREATED'
-    const order = await Order.create({
-        user: req.user.id,
-        items,
-        total,
-        // status: 'CREATED' y paymentRef vienen del schema por defecto
-    });
+// 3.5) Tomar datos de envío que vengan en el body (opcionales)
+const { shipping } = req.body;
 
-    // OJO: NO tocamos el carrito aquí; se limpia cuando Webpay confirma el pago
-    return ok(res, order);
+const delivery = shipping
+    ? {
+        name: shipping.name || '',
+        phone: shipping.phone || '',
+        address: shipping.address || '',
+        city: shipping.city || '',
+        postal: shipping.postal || '',
+        reference: shipping.reference || ''
+    }
+    : undefined;
+
+// 4) Crear orden con estado por defecto 'CREATED'
+const order = await Order.create({
+    user: req.user.id,
+    items,
+    total,
+    delivery 
+});
+return ok(res, order);
+
 }
 
 
@@ -69,3 +82,41 @@ export async function myOrders(req, res) {
     const orders = await Order.find({ user: req.user.id }).sort({ createdAt: -1 });
     return ok(res, orders);
 }
+
+export async function cancelOrder(req, res) {
+    try {
+    const { id } = req.params;
+
+    if (!id) {
+        return badRequest(res, 'Falta el id del pedido');
+    }
+
+    // Buscamos el pedido del usuario autenticado
+    const order = await Order.findOne({ _id: id, user: req.user.id });
+
+    if (!order) {
+        return badRequest(res, 'Pedido no encontrado');
+    }
+
+    // Si ya está cancelado, devolvemos tal cual
+    if (order.status === 'CANCELED') {
+        return ok(res, order);
+    }
+
+    // Regla simple: sólo dejamos cancelar pedidos no cancelados.
+    // Si quieres bloquear los ya pagados, descomenta esto:
+    //
+    // if (order.status === 'PAID') {
+    //   return badRequest(res, 'No se puede cancelar un pedido pagado');
+    // }
+
+    order.status = 'CANCELED';
+    await order.save();
+
+    return ok(res, order);
+    } catch (err) {
+    console.error('Error al cancelar pedido:', err);
+    return badRequest(res, 'No se pudo cancelar el pedido');
+    }
+}
+

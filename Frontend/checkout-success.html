@@ -165,13 +165,16 @@
         const orderCodeEl = document.getElementById('order-code');
 
         // 1. Verificar token / sesión
-        const token = (typeof getAuthToken === 'function') ? getAuthToken() : null;
-        if (!token) {
-            statusMessage.textContent = 'Tu sesión no está activa. Por favor inicia sesión nuevamente.';
-            notify('Debes iniciar sesión para ver el detalle de tu pedido.', 'error');
-            setTimeout(() => window.location.href = 'login.html', 3000);
-            return;
-        }
+          const token = (typeof getAuthToken === 'function') ? getAuthToken() : null;
+
+          if (!token) {
+              orderCodeEl.textContent = 'No disponible (sesión no activa)';
+              statusMessage.textContent =
+                  'Tu pago fue procesado correctamente. Si quieres ver el detalle de tu pedido, inicia sesión y revisa la sección "Mis pedidos".';
+              notify('Pago recibido. Inicia sesión para ver el detalle del pedido.', 'info');
+              return;
+          }
+
 
         // 2. Obtener la lista de pedidos del usuario y mostrar el último
         try {

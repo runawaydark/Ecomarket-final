@@ -22,29 +22,29 @@ const app = express();
 
 
 
-//  CORS (para que el front en Vercel pueda llamar al backend)
-app.use(cors({
+
+// CORS configurado
+const corsOptions = {
     origin: [
-    "http://localhost:5500",
-    "http://127.0.0.1:5500",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:5500/Frontend/index.html"
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5500/Frontend/index.html"
     ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
     preflightContinue: false,
     optionsSuccessStatus: 200
-    
-}));
+};
 
-// Habilitar preflight
-app.options("*", cors());
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+
 
 
 // middlewares
-app.use(cors());
 app.use(morgan('dev'));
 app.use(helmet());
 app.use(express.json());

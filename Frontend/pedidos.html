@@ -162,15 +162,22 @@
     </div>
 
     <!-- Scripts -->
+
+    <!-- Bootstrap JS (necesario para bootstrap.Modal y demás) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/app.js"></script>
-    <script src="assets/js/footer.js"></script>
+
+    <!-- Tus scripts -->
     <script src="assets/js/api.js"></script>
+    <script src="assets/js/app.js"></script>
+    <script src="assets/js/orders.js"></script>
+    <script src="assets/js/footer.js"></script>
     
     <script>
         let currentUser = null;
         let orders = [];
         let filteredOrders = [];
+        // ...
+
 
         // ========================
         // USAMOS LAS FUNCIONES GLOBALES DE app.js
@@ -243,11 +250,25 @@
                 orders = backendOrders.map(o => {
                     const date = o.createdAt || o.date || new Date().toISOString();
                 
-                    // Mapear estado del backend a los estados que ya usa la UI
+                    // Mapear estado del backend (Mongo/Admin) a los estados que usa la UI
                     const statusMap = {
-                        PAID: 'confirmado'   // por ahora todo lo que venga como PAID lo mostramos como "confirmado"
+                        // estados “base” del backend
+                        CREATED: 'procesando',
+                        PENDING: 'procesando',
+                        PAID: 'confirmado',
+                        CANCELED: 'cancelado',
+                        CANCELLED: 'cancelado',
+                    
+                        // estados que puede usar el panel admin
+                        EN_REPARTO: 'enviado',   // se mostrará como “En Camino”
+                        SHIPPED: 'enviado',
+                        DELIVERED: 'entregado'
                     };
+                    
+                    // si no lo conocemos, por defecto lo dejamos como “confirmado”
                     const status = statusMap[o.status] || 'confirmado';
+
+
                 
                     const items = (o.items || []).map(i => {
                         const productId = (i.product && i.product._id) || i.product || i.productId;
@@ -275,9 +296,21 @@
                         // Campos que tu UI espera para los detalles
                         payment: { method: 'credit-card' }, // de momento fijo, luego lo afinamos
                         delivery: {
-                            address: 'Dirección no informada',
-                            city: ''
+                            // Probamos varias formas habituales en que puede venir la dirección
+                            address:
+                                (o.delivery && (o.delivery.address || o.delivery.street || o.delivery.line1)) ||
+                                (o.shipping && (o.shipping.address || o.shipping.line1)) ||
+                                (o.shippingAddress && (o.shippingAddress.address || o.shippingAddress)) ||
+                                o.address ||
+                                'Dirección no informada',
+                            city:
+                                (o.delivery && (o.delivery.city || o.delivery.commune)) ||
+                                (o.shipping && o.shipping.city) ||
+                                (o.shippingAddress && o.shippingAddress.city) ||
+                                o.city ||
+                                ''
                         },
+                        
                         customer: {
                             id: currentUser.id || currentUser._id,
                             name: currentUser.name || currentUser.email,
@@ -324,7 +357,7 @@
                 month: 'long',
                 day: 'numeric'
             });
-            
+
             const statusClass = {
                 'confirmado': 'bg-warning',
                 'procesando': 'bg-info',
@@ -332,7 +365,7 @@
                 'entregado': 'bg-success',
                 'cancelado': 'bg-danger'
             }[order.status] || 'bg-secondary';
-            
+
             const statusText = {
                 'confirmado': 'Confirmado',
                 'procesando': 'Procesando',
@@ -340,29 +373,25 @@
                 'entregado': 'Entregado',
                 'cancelado': 'Cancelado'
             }[order.status] || order.status;
-
+        
             const itemCount = order.items.reduce((sum, item) => sum + (parseInt(item.quantity) || 0), 0);
-            
-            // Asegurar que el total sea un número válido
             const orderTotal = parseFloat(order.total) || 0;
-            
-            // Obtener método de pago
+
             const paymentText = order.payment ? getPaymentMethodText(order.payment.method) : 
                                 (order.paymentMethod ? getOldPaymentMethodText(order.paymentMethod) : 'No especificado');
-            
-            // Obtener dirección
+
             const addressText = order.delivery ? (order.delivery.address + ', ' + order.delivery.city) :
                                 (order.shipping ? (order.shipping.address + ', ' + order.shipping.city) : 'No especificada');
-
+        
             return `
                 <div class="col-lg-6 col-xl-4">
-                    <div class="card border-0 shadow-sm h-100" style="border-radius: 16px;">
+                    <div class="card border-0 shadow-sm h-100 order-card" data-order-id="${order.id}" style="border-radius: 16px;">
                         <div class="card-header bg-light d-flex justify-content-between align-items-center" style="border-radius: 16px 16px 0 0;">
                             <div>
                                 <h6 class="mb-0 fw-bold">Pedido #${order.id}</h6>
                                 <small class="text-muted">${orderDate}</small>
                             </div>
-                            <span class="badge ${statusClass}">${statusText}</span>
+                            <span class="badge order-status-badge ${statusClass}">${statusText}</span>
                         </div>
                         <div class="card-body p-3">
                             <div class="d-flex align-items-center mb-3">
@@ -372,7 +401,7 @@
                                     <small class="text-muted">Total: <strong>$${orderTotal.toLocaleString()}</strong></small>
                                 </div>
                             </div>
-                            
+
                             <div class="mb-3">
                                 <div class="d-flex align-items-center mb-2">
                                     <i class="bi bi-credit-card text-muted me-2"></i>
@@ -383,13 +412,13 @@
                                     <span class="small">${addressText}</span>
                                 </div>
                             </div>
-                            
+
                             <div class="d-grid gap-2">
                                 <button class="btn btn-outline-success btn-sm" onclick="showOrderDetail('${order.id}')">
                                     <i class="bi bi-eye me-1"></i>Ver detalles
                                 </button>
                                 ${order.status === 'confirmado' ? `
-                                <button class="btn btn-outline-danger btn-sm" onclick="cancelUserOrder('${order.id}')">
+                                <button class="btn btn-outline-danger btn-sm btn-cancel-order" data-order-id="${order.id}">
                                     <i class="bi bi-x-circle me-1"></i>Cancelar pedido
                                 </button>
                                 ` : ''}
@@ -399,7 +428,8 @@
                 </div>
             `;
         }
-        
+
+
         // Obtener texto del método de pago (nueva estructura)
         function getPaymentMethodText(method) {
             const methods = {
@@ -420,67 +450,62 @@
             return methods[method] || method;
         }
         
-        // Cancelar pedido (solo si está confirmado)
-        function cancelUserOrder(orderId) {
-            // Usar la función showConfirmation elegante de app.js con los parámetros correctos
+        // Cancelar pedido (sólo si está confirmado)
+        async function cancelUserOrder(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
+        
+            // Confirmación elegante si existe showConfirmation
+            let doCancel = true;
             if (typeof showConfirmation === 'function') {
-                showConfirmation(
-                    '¿Cancelar pedido?',
-                    'Esta acción no se puede deshacer.',
-                    function() {
-                        // Función de confirmación - cancelar pedido
-                        // Actualizar en historial general
-                        const allOrders = JSON.parse(localStorage.getItem('ecomarket_orders')) || [];
-                        const orderIndex = allOrders.findIndex(o => o.id === orderId);
-                        if (orderIndex !== -1) {
-                            allOrders[orderIndex].status = 'cancelado';
-                            allOrders[orderIndex].lastUpdated = new Date().toISOString();
-                            localStorage.setItem('ecomarket_orders', JSON.stringify(allOrders));
-                        }
-                        
-                        // Actualizar en historial del usuario
-                        let userOrders = JSON.parse(localStorage.getItem('ecomarket_user_orders_' + currentUser.id)) || [];
-                        const userOrderIndex = userOrders.findIndex(o => o.id === orderId);
-                        if (userOrderIndex !== -1) {
-                            userOrders[userOrderIndex].status = 'cancelado';
-                            userOrders[userOrderIndex].lastUpdated = new Date().toISOString();
-                            localStorage.setItem('ecomarket_user_orders_' + currentUser.id, JSON.stringify(userOrders));
-                        }
-                        
-                        // Recargar la lista y mostrar notificación
-                        loadOrders();
-                        showNotification('Pedido cancelado exitosamente', 'success');
-                    },
-                    function() {
-                        // Función de cancelación (opcional)
-                        showNotification('Acción cancelada', 'info', 2000);
-                    }
-                );
+                doCancel = await new Promise(resolve => {
+                    showConfirmation(
+                        '¿Cancelar pedido?',
+                        'Esta acción no se puede deshacer.',
+                        () => resolve(true),
+                        () => resolve(false)
+                    );
+                });
             } else {
-                // Fallback si showConfirmation no está disponible
-                if (confirm('¿Estás seguro de que deseas cancelar este pedido? Esta acción no se puede deshacer.')) {
-                    // ... código de cancelación igual que arriba
-                    const allOrders = JSON.parse(localStorage.getItem('ecomarket_orders')) || [];
-                    const orderIndex = allOrders.findIndex(o => o.id === orderId);
-                    if (orderIndex !== -1) {
-                        allOrders[orderIndex].status = 'cancelado';
-                        allOrders[orderIndex].lastUpdated = new Date().toISOString();
-                        localStorage.setItem('ecomarket_orders', JSON.stringify(allOrders));
-                    }
-                    
-                    let userOrders = JSON.parse(localStorage.getItem('ecomarket_user_orders_' + currentUser.id)) || [];
-                    const userOrderIndex = userOrders.findIndex(o => o.id === orderId);
-                    if (userOrderIndex !== -1) {
-                        userOrders[userOrderIndex].status = 'cancelado';
-                        userOrders[userOrderIndex].lastUpdated = new Date().toISOString();
-                        localStorage.setItem('ecomarket_user_orders_' + currentUser.id, JSON.stringify(userOrders));
-                    }
-                    
-                    loadOrders();
+                doCancel = confirm('¿Estás seguro de que deseas cancelar este pedido? Esta acción no se puede deshacer.');
+            }
+        
+            if (!doCancel) {
+                if (typeof showNotification === 'function') {
+                    showNotification('Acción cancelada', 'info', 2000);
+                }
+                return;
+            }
+        
+            try {
+                const resp = await apiPatch(`/orders/${orderId}/cancel`, {});
+                const updated = resp.data || resp;
+            
+                // Actualizar en el arreglo local
+                const idx = orders.findIndex(o => o.id === orderId);
+                if (idx !== -1) {
+                    orders[idx].status = 'cancelado';
+                    orders[idx].lastUpdated = updated.updatedAt || new Date().toISOString();
+                }
+            
+                // Reaplicar filtros para refrescar cards
+                applyFilters();
+            
+                if (typeof showNotification === 'function') {
+                    showNotification('Pedido cancelado exitosamente', 'success');
+                } else {
                     alert('Pedido cancelado exitosamente');
+                }
+            } catch (err) {
+                console.error('Error cancelando pedido:', err);
+                if (typeof showNotification === 'function') {
+                    showNotification('No se pudo cancelar el pedido. Intenta nuevamente.', 'error');
+                } else {
+                    alert('No se pudo cancelar el pedido.');
                 }
             }
         }
+
 
         // Mostrar detalles del pedido
         function showOrderDetail(orderId) {
@@ -553,7 +578,7 @@
             
             // Obtener método de pago
             const paymentText = order.payment ? getPaymentMethodText(order.payment.method) : 
-                              (order.paymentMethod ? getOldPaymentMethodText(order.paymentMethod) : 'No especificado');
+                                (order.paymentMethod ? getOldPaymentMethodText(order.paymentMethod) : 'No especificado');
 
             const modalContent = `
                 <div class="row">
@@ -692,6 +717,32 @@
         function showToast(message, type = 'success') {
             showNotification(message, type);
         }
+
+        // Inicialización al cargar la página
+        document.addEventListener('DOMContentLoaded', () => {
+            checkGlobalFunctions();
+            updateCartCount();
+        
+            // Actualizar dropdown de usuario si existe función en app.js
+            try {
+                if (typeof updateUserDropdown === 'function') {
+                    updateUserDropdown();
+                } else if (typeof updateNavbar === 'function') {
+                    updateNavbar();
+                }
+            } catch (e) {
+                console.warn('No se pudo actualizar navbar en pedidos:', e);
+            }
+        
+            // Verificar sesión
+            const isAuth = checkUserAuthentication();
+            if (!isAuth) return;
+        
+            // Cargar pedidos y configurar filtros
+            loadOrders();
+            setupFilters();
+        });
+
     </script>
 
     <style>
@@ -819,17 +870,7 @@
         }
     </style>
     
-    <script>
-        // Actualizar menú de usuario según estado de sesión
-        document.addEventListener('DOMContentLoaded', function() {
-            checkGlobalFunctions();
-            checkUserAuthentication();
-            loadOrders();
-            setupFilters();
-            updateCartCount();
-        });
 
-    </script>
     
 </body>
 </html>

@@ -11,11 +11,30 @@ const orderItemSchema = new mongoose.Schema(
 
 const orderSchema = new mongoose.Schema(
     {
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+        index: true
+    },
     items: [orderItemSchema],
     total: { type: Number, required: true, min: 0 },
-    status: { type: String, enum: ['CREATED', 'PAID', 'CANCELED'], default: 'CREATED' },
-    paymentRef: { type: String, default: '' }
+    status: {
+        type: String,
+        enum: ['CREATED', 'PAID', 'CANCELED'],
+        default: 'CREATED'
+    },
+    paymentRef: { type: String, default: '' },
+
+
+    delivery: {
+        name: { type: String, default: '' },
+        phone: { type: String, default: '' },
+        address: { type: String, default: '' },
+        city: { type: String, default: '' },
+        postal: { type: String, default: '' },
+        reference: { type: String, default: '' }
+    }
     },
     { timestamps: true }
 );

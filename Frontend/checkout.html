@@ -937,11 +937,21 @@ async function processPayment() {
             quantity: item.quantity
         }));
         
-        // 1) Crear orden en backend
+        // 1) Crear orden en backend, enviando también los datos de envío
         const orderResponse = await apiPost('/orders/checkout', {
-            items: itemsPayload
+            items: itemsPayload,
+            shipping: {
+            name: shippingData?.name,
+            phone: shippingData?.phone,
+            address: shippingData?.address,
+            city: shippingData?.city,
+            postal: shippingData?.postal,
+            reference: shippingData?.reference
+            }
         });
+
         const orderData = orderResponse.data || orderResponse; // según tu helper ok()
+
 
 
         const orderId = orderData._id || orderData.id;
@@ -1041,10 +1051,8 @@ async function processPayment() {
                 phone: customerPhone
             },
             delivery: {
-                address: shippingData.address,
-                city: shippingData.city,
-                postal: shippingData.postal || '',
-                notes: shippingData.reference || ''
+                address: (o.delivery && o.delivery.address) || 'Dirección no informada',
+                city: (o.delivery && o.delivery.city) || ''
             },
             payment: {
                 method: paymentMethods[selectedPaymentMethod] || selectedPaymentMethod

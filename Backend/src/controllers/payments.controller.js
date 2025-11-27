@@ -17,12 +17,16 @@ const webpayOptions = new Options(
   Environment.Integration                // ambiente sandbox
 );
 
-// URLs base
-const BACKEND_BASE_URL =
-    process.env.BACKEND_BASE_URL || "http://localhost:3000";
 
-const FRONTEND_BASE_URL =
-  process.env.FRONTEND_BASE_URL || "http://localhost:5500/Frontend";
+    // URLs base
+    const BACKEND_BASE_URL =
+        process.env.BACKEND_BASE_URL || "http://localhost:3000";
+
+    // Usa EXACTAMENTE la misma URL que ves en el navegador
+    const FRONTEND_BASE_URL =
+        process.env.FRONTEND_BASE_URL ||
+        "http://127.0.0.1:5500/Ecomarket-final/Frontend";
+
 
 
 // POST /api/payments/create-transaction

@@ -148,10 +148,52 @@ function getAuthToken() {
     return localStorage.getItem("ecomarket_token");
 }
 
+// ==========================
+// MÉTODO PATCH (sin apiRequest)
+// ==========================
+async function apiPatch(endpoint, data = {}) {
+    try {
+        console.log(`📤 PATCH ${endpoint}:`, data);
+
+        const token = (typeof getAuthToken === 'function') ? getAuthToken() : null;
+
+        const headers = { "Content-Type": "application/json" };
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+            method: "PATCH",
+            headers,
+            body: JSON.stringify(data)
+        });
+
+        console.log("📥 Response status:", res.status);
+
+        if (!res.ok) {
+            let msg = `Error API: ${res.status}`;
+            try {
+                const body = await res.json();
+                console.log("Error body:", body);
+                if (body.message) msg = body.message;
+            } catch (_) {}
+            throw new Error(msg);
+        }
+
+        const responseData = await res.json();
+        console.log("✅ Response data:", responseData);
+        return responseData;
+    } catch (error) {
+        console.error("❌ Error en apiPatch:", error);
+        throw error;
+    }
+}
+
+
 // Exponer funciones globales
 window.apiGet = apiGet;
 window.apiPost = apiPost;
 window.apiPut = apiPut;
 window.apiDelete = apiDelete;
+window.apiPatch = apiPatch;
 window.getAuthToken = getAuthToken;
-    
