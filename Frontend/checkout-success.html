@@ -150,7 +150,6 @@
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
-        // Actualizar navbar si la función existe
         try {
             if (typeof updateNavbar === 'function') {
                 updateNavbar();
@@ -164,7 +163,6 @@
         const statusMessage = document.getElementById('status-message');
         const orderCodeEl = document.getElementById('order-code');
 
-        // 1. Verificar token / sesión
           const token = (typeof getAuthToken === 'function') ? getAuthToken() : null;
 
           if (!token) {
@@ -175,12 +173,10 @@
               return;
           }
 
-
-        // 2. Obtener la lista de pedidos del usuario y mostrar el último
         try {
             notify('Confirmando tu pedido en EcoMarket...', 'info', 3000);
 
-            const response = await apiGet('/orders/mine'); // GET /api/orders/mine
+            const response = await apiGet('/orders/mine');
             const orders = response.data || response;
 
             if (!Array.isArray(orders) || orders.length === 0) {
@@ -191,7 +187,7 @@
                 return;
             }
 
-            const lastOrder = orders[0]; // vienen ordenados por fecha desc en el backend
+            const lastOrder = orders[0];
 
             const orderId =
                 lastOrder.paymentRef ||
@@ -213,7 +209,6 @@
 
             notify('Pedido confirmado con éxito.', 'success');
 
-            // 3. Limpiar carrito en el front por si quedó algo
             try {
                 localStorage.removeItem('ecomarket_cart');
                 localStorage.removeItem('ecomarket_checkout_cart');
@@ -224,7 +219,6 @@
                 console.warn('No se pudo limpiar el carrito en localStorage:', e);
             }
 
-            // 4. Redirigir a Mis pedidos
             setTimeout(() => {
                 window.location.href = 'pedidos.html';
             }, 4000);

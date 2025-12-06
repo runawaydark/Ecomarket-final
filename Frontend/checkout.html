@@ -477,7 +477,6 @@ const CATEGORY_ID_MAP = {
     "6920ff235965d54c277ed825": "despensa",
 };
 
-// Cargar productos desde el backend para poder mostrar nombre, precio, etc.
 async function loadProducts() {
     try {
         const backendProducts = await apiGet('/products');
@@ -517,12 +516,7 @@ async function loadProducts() {
     }
 }
 
-
-
-
-    // Inicializar checkout
 document.addEventListener('DOMContentLoaded', async function() {
-    // Validar que el usuario esté logueado
     currentUser = checkUserAuthentication();
     if (!currentUser) return;
 
@@ -533,9 +527,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     updateCartCount();
 });
 
-
-    
-    // Sistema de Notificaciones Elegante
     function showNotification(message, type = 'info', duration = 4000) {
         const container = document.getElementById('notification-container');
         const notificationId = 'notification-' + Date.now();
@@ -595,8 +586,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
     
-    // Función para verificar autenticación
-    // Función para verificar autenticación usando el backend real
     function checkUserAuthentication() {
         const token = typeof getAuthToken === 'function' ? getAuthToken() : null;
         const userStr = localStorage.getItem('ecomarket_user');
@@ -629,8 +618,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-
-    // Inicializar usuarios de prueba
     function initializeUsers() {
         const users = localStorage.getItem('ecomarket_users');
         if (!users) {
@@ -657,9 +644,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }        
 
-        // Cargar datos del checkout
         async function loadCheckoutData() {
-            // 1. Cargar datos de envío desde localStorage
             const savedShipping = localStorage.getItem('ecomarket_shipping');
             shippingData = savedShipping ? JSON.parse(savedShipping) : null;
         
@@ -671,10 +656,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 return;
             }
         
-            // 2. Intentar cargar el carrito REAL desde el backend
             const token = typeof getAuthToken === 'function' ? getAuthToken() : null;
         
-            // Helper para fallback a localStorage
             const loadCartFromLocal = () => {
                 const checkoutCart = localStorage.getItem('ecomarket_checkout_cart');
                 const regularCart = localStorage.getItem('ecomarket_cart');
@@ -685,19 +668,17 @@ document.addEventListener('DOMContentLoaded', async function() {
         
             if (token) {
                 try {
-                    const backendCart = await apiGet('/cart'); // GET /api/cart
+                    const backendCart = await apiGet('/cart');
                 
                     if (backendCart && Array.isArray(backendCart.items) && backendCart.items.length > 0) {
                         cart = backendCart.items.map(item => ({
-                            productId: item.product._id || item.product, // soporta populate o id plano
+                            productId: item.product._id || item.product,
                             quantity: item.quantity,
                             addedAt: item.addedAt || new Date().toISOString()
                         }));
                     
-                        // Guardar también en localStorage por compatibilidad
                         localStorage.setItem('ecomarket_cart', JSON.stringify(cart));
                     } else {
-                        // Carrito vacío en backend → usamos localStorage
                         loadCartFromLocal();
                     }
                 } catch (error) {
@@ -705,11 +686,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                     loadCartFromLocal();
                 }
             } else {
-                // No hay token (no debería pasar porque ya validamos login), pero por si acaso
                 loadCartFromLocal();
             }
         
-            // 3. Validar que efectivamente tengamos productos
             if (!cart || cart.length === 0) {
                 showToast('No hay productos en el carrito', 'warning');
                 setTimeout(() => {
@@ -718,17 +697,12 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         }
 
-        
-
-
-        // Renderizar resumen del checkout
         function renderCheckoutSummary() {
         renderCheckoutItems();
         renderShippingInfo();
         updateCheckoutTotals();
         }
 
-        // Renderizar productos en el checkout
         function renderCheckoutItems() {
         const container = document.getElementById('checkout-items');
         
@@ -770,7 +744,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         container.innerHTML = itemsHTML;
         }
 
-        // Renderizar información de envío
         function renderShippingInfo() {
         const container = document.getElementById('shipping-info');
         
@@ -817,7 +790,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         `;
         }
 
-        // Actualizar totales del checkout
         function updateCheckoutTotals() {
         const subtotal = cart.reduce((sum, item) => {
             const product = products.find(p => p.id === item.productId);
@@ -840,14 +812,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('checkoutTotal').textContent = `$${total.toLocaleString()}`;
         }
 
-        // Configurar manejadores de métodos de pago
-// Configurar manejadores de métodos de pago
 function setupPaymentMethodHandlers() {
     const paymentMethods = document.querySelectorAll('input[name="paymentMethod"]');
     
     paymentMethods.forEach(method => {
         method.addEventListener('change', function() {
-            // Remover clase activa de todas las tarjetas
             document.querySelectorAll('.payment-method-card').forEach(card => {
                 card.classList.remove('active-payment');
             });
@@ -882,20 +851,16 @@ function setupPaymentMethodHandlers() {
         .classList.add('active-payment');
 }
 
-
-        // Formatear inputs de tarjeta
         function formatCardInputs() {
             const cardNumber = document.getElementById('cardNumber');
             const expiry = document.getElementById('expiry');
         
-        // Formatear número de tarjeta
         cardNumber.addEventListener('input', function(e) {
             let value = e.target.value.replace(/\s/g, '');
             let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
             e.target.value = formattedValue;
         });
         
-        // Formatear fecha de expiración
         expiry.addEventListener('input', function(e) {
             let value = e.target.value.replace(/\D/g, '');
             if (value.length >= 2) {
@@ -904,7 +869,6 @@ function setupPaymentMethodHandlers() {
             e.target.value = value;
         });
         
-        // Solo números en CVV
         document.getElementById('cvv').addEventListener('input', function(e) {
             e.target.value = e.target.value.replace(/\D/g, '');
         });
@@ -1013,10 +977,7 @@ async function processPayment() {
             return subtotal + shippingCost;
         }
 
-        // Guardar pedido en historial
-        // Guardar pedido en historial LOCAL (para compatibilidad con pedidos.html)
         function saveOrderToHistory(orderIdFromBackend) {
-          // Cargar productos para obtener información completa
             loadProducts();
         
             const currentUser = JSON.parse(localStorage.getItem('ecomarket_user'));
@@ -1082,8 +1043,6 @@ async function processPayment() {
             return orderId;
         }
 
-
-        // Actualizar contador del carrito
         function updateCartCount() {
         const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
         const cartCountElement = document.getElementById('cart-count');
@@ -1093,7 +1052,6 @@ async function processPayment() {
         }
         }
 
-        // Mostrar modal de éxito
         function showSuccessModal(orderId) {
             document.getElementById('orderNumber').textContent = '#' + orderId;
             const modal = new bootstrap.Modal(document.getElementById('successModal'), {
@@ -1199,7 +1157,6 @@ async function processPayment() {
     </style>
     
     <script>
-        // Actualizar menú de usuario al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(function() {
                 if (typeof updateNavbar === 'function') {

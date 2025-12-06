@@ -319,20 +319,15 @@
     <script src="assets/js/catalog.js"></script>
     
     <script>
-        // IDs de productos destacados (se tomarán del sistema real de productos)
-        // Función para seleccionar productos destacados aleatoriamente con prioridades
         function getFeaturedProducts() {
-            // Obtener todos los productos disponibles
             const allProducts = getProducts();
             
-            // Filtrar solo productos que tengan stock y estén disponibles
             const availableProducts = allProducts.filter(product => 
                 product.available !== false && product.stock > 0
             );
             
-            // Crear arrays de prioridad
-            const highPriority = []; // Ofertas y productos nuevos
-            const normalPriority = []; // Productos regulares
+            const highPriority = [];
+            const normalPriority = [];
             
             availableProducts.forEach(product => {
                 if (product.isOffer || product.isNew) {
@@ -342,7 +337,6 @@
                 }
             });
             
-            // Mezclar ambos arrays aleatoriamente
             const shuffleArray = (array) => {
                 const shuffled = [...array];
                 for (let i = shuffled.length - 1; i > 0; i--) {
@@ -355,27 +349,22 @@
             const shuffledHigh = shuffleArray(highPriority);
             const shuffledNormal = shuffleArray(normalPriority);
             
-            // Seleccionar productos: priorizar ofertas/nuevos pero incluir productos normales
             const selectedProducts = [];
             const targetCount = 4;
             
-            // Tomar hasta 2 productos de alta prioridad
             const highCount = Math.min(2, shuffledHigh.length);
             selectedProducts.push(...shuffledHigh.slice(0, highCount));
             
-            // Completar con productos normales hasta llegar a 4
             const remainingCount = targetCount - selectedProducts.length;
             if (remainingCount > 0) {
                 selectedProducts.push(...shuffledNormal.slice(0, remainingCount));
             }
             
-            // Si no hay suficientes productos normales, usar más de alta prioridad
             if (selectedProducts.length < targetCount && shuffledHigh.length > highCount) {
                 const extraHighCount = Math.min(targetCount - selectedProducts.length, shuffledHigh.length - highCount);
                 selectedProducts.push(...shuffledHigh.slice(highCount, highCount + extraHighCount));
             }
             
-            // Mezclar la selección final para que no siempre aparezcan en el mismo orden
             const finalSelection = shuffleArray(selectedProducts);
             
             console.log('🎲 Productos destacados seleccionados:', finalSelection.map(p => `${p.name} ${p.isOffer ? '(OFERTA)' : ''} ${p.isNew ? '(NUEVO)' : ''}`));
@@ -383,7 +372,6 @@
             return finalSelection;
         }
 
-        // Función para renderizar productos destacados
         function renderFeaturedProducts() {
             const container = document.getElementById('featured-products');
             const featuredProducts = getFeaturedProducts();
@@ -394,19 +382,16 @@
             }
             
             const productsHTML = featuredProducts.map(product => {
-                // Determinar estado del producto usando datos reales
                 let statusBadges = [];
                 let buttonContent = '';
                 let buttonClass = 'btn btn-success btn-sm';
                 let buttonAction = `addToCartFromFeatured('${product.id}')`;
 
-                // Badge de oferta (prioridad máxima)
                 if (product.isOffer && product.originalPrice) {
                     const discountPercent = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
                     statusBadges.push(`<span class="badge offer-badge position-absolute top-0 start-0 m-2" style="z-index: 10;">-${discountPercent}% OFF</span>`);
                 }
 
-                // Badge de stock
                 if (!product.available || product.stock === 0) {
                     statusBadges.push('<span class="badge bg-danger position-absolute top-0 end-0 m-2">Sin stock</span>');
                     buttonContent = '<i class="bi bi-x-circle me-1"></i>No disponible';
@@ -469,42 +454,34 @@
             container.innerHTML = productsHTML;
         }
 
-        // Función para refrescar productos destacados manualmente
         function refreshFeaturedProducts() {
             console.log('🔄 Refrescando productos destacados...');
             
-            // Agregar animación al botón
             const refreshBtn = document.getElementById('refreshFeaturedBtn');
             const originalHTML = refreshBtn.innerHTML;
             refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise me-1 spinner-border spinner-border-sm" role="status"></i> Cargando...';
             refreshBtn.disabled = true;
             
-            // Agregar un pequeño delay para mostrar la animación
             setTimeout(() => {
                 renderFeaturedProducts();
                 
-                // Restaurar el botón
                 refreshBtn.innerHTML = originalHTML;
                 refreshBtn.disabled = false;
                 
-                // Mostrar notificación
                 if (typeof showNotificationLocal === 'function') {
                     showNotificationLocal('¡Productos actualizados!', 'success', 2000);
                 }
             }, 300);
         }
 
-        // Función para agregar al carrito desde productos destacados (implementación independiente)
         function addToCartFromFeatured(productId) {
             try {
                 console.log('Intentando agregar producto al carrito:', productId);
                 
-                // Obtener productos usando la función global y asegurar que estén inicializados
                 let products = [];
                 if (typeof getProducts === 'function') {
                     products = getProducts();
                 } else {
-                    // Fallback: cargar directamente desde localStorage
                     const savedProducts = localStorage.getItem('ecomarket_products');
                     products = savedProducts ? JSON.parse(savedProducts) : [];
                 }
@@ -525,22 +502,17 @@
                     return;
                 }
                 
-                // Obtener carrito actual
                 let cart = JSON.parse(localStorage.getItem('ecomarket_cart')) || [];
                 
-                // Buscar si el producto ya está en el carrito
                 const existingItem = cart.find(item => item.productId === productId);
                 
                 if (existingItem) {
-                    // Verificar si podemos agregar más
                     if (existingItem.quantity >= product.stock) {
                         showNotificationLocal(`Ya tienes el máximo disponible de ${product.name} en tu carrito`, 'warning');
                         return;
                     }
-                    // Aumentar cantidad
                     existingItem.quantity += 1;
                 } else {
-                    // Agregar nuevo producto al carrito
                     cart.push({
                         productId: product.id,
                         name: product.name,
@@ -551,24 +523,19 @@
                     });
                 }
                 
-                // Guardar carrito actualizado
                 localStorage.setItem('ecomarket_cart', JSON.stringify(cart));
                 console.log('💾 Carrito guardado en localStorage:', cart);
                 console.log('🔗 Estructura del carrito:', JSON.stringify(cart, null, 2));
                 
-                // Reducir stock del producto
                 product.stock -= 1;
                 localStorage.setItem('ecomarket_products', JSON.stringify(products));
                 
-                // Mostrar notificación de éxito
                 showNotificationLocal(`¡${product.name} agregado al carrito!`, 'success');
                 
-                // Actualizar contador del carrito si existe
                 if (typeof updateCartCounter === 'function') {
                     updateCartCounter();
                 }
                 
-                // Actualizar la vista de productos destacados para reflejar cambios de stock
                 setTimeout(() => {
                     renderFeaturedProducts();
                 }, 300);
@@ -579,13 +546,11 @@
             }
         }
 
-        // Función para actualizar contador del carrito
         function updateCartCounter() {
             try {
                 const cart = JSON.parse(localStorage.getItem('ecomarket_cart')) || [];
                 const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
                 
-                // Buscar el contador en el navbar
                 const cartBadge = document.querySelector('.cart-count, #cart-count, .badge');
                 if (cartBadge) {
                     cartBadge.textContent = totalItems;
@@ -596,7 +561,6 @@
             }
         }
 
-        // Función para mostrar mensaje de no disponible
         function showNotAvailable(productName) {
             if (typeof showToast === 'function') {
                 showToast(`${productName} no está disponible en este momento`, 'info');
@@ -605,15 +569,12 @@
             }
         }
 
-        // Función para mostrar notificaciones (usar la de app.js si existe)
         function showNotificationLocal(message, type = 'success', duration = 4000) {
-            // Si existe la función global de app.js, usarla
             if (typeof window.showNotification === 'function') {
                 window.showNotification(message, type, duration);
                 return;
             }
 
-            // Fallback: notificación simple pero más visible
             const notification = document.createElement('div');
             notification.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : type === 'warning' ? 'warning' : 'info'} position-fixed shadow-lg`;
             notification.style.cssText = `
@@ -637,9 +598,8 @@
                     </div>
                     <button type="button" class="btn-close btn-close-sm ms-2" aria-label="Cerrar" onclick="this.parentElement.parentElement.remove()"></button>
                 </div>
-            `;
+            ;
             
-            // Agregar estilos de animación si no existen
             if (!document.getElementById('notification-styles')) {
                 const style = document.createElement('style');
                 style.id = 'notification-styles';
@@ -660,7 +620,6 @@
             
             setTimeout(() => {
                 if (notification.parentNode) {
-                    // Animación de salida
                     notification.style.animation = 'slideOutRight 0.3s ease-in forwards';
                     setTimeout(() => {
                         if (notification.parentNode) {
@@ -671,7 +630,6 @@
             }, duration);
         }
 
-        // Función para actualizar contador del carrito
         function updateCartCount() {
             const cart = JSON.parse(localStorage.getItem('ecomarket_cart')) || [];
             const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -683,15 +641,12 @@
             }
         }
 
-        // Función para inicializar productos si no existen
         function initializeProducts() {
-            // Verificar si hay productos en localStorage
             const existingProducts = localStorage.getItem('ecomarket_products');
             if (!existingProducts || existingProducts === '[]') {
                 console.log('🔧 Inicializando productos por defecto...');
-                // Usar la función de catalog.js si está disponible
                 if (typeof getProducts === 'function') {
-                    const products = getProducts(); // Esto debería devolver defaultProducts si no hay productos
+                    const products = getProducts();
                     localStorage.setItem('ecomarket_products', JSON.stringify(products));
                     console.log('✅ Productos inicializados:', products.length, 'productos');
                 } else {
@@ -702,19 +657,14 @@
             }
         }
 
-        // Inicializar cuando se carga la página
         document.addEventListener('DOMContentLoaded', function() {
-            // Inicializar productos si no existen
             initializeProducts();
             
-            // Renderizar productos destacados
             renderFeaturedProducts();
             
-            // Actualizar contador del carrito
             updateCartCount();
         });
 
-        // Escuchar cambios en los productos desde el admin
         window.addEventListener('productsUpdated', function(event) {
             console.log('Productos actualizados desde admin, recargando productos destacados');
             renderFeaturedProducts();

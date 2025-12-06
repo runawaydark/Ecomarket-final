@@ -1,6 +1,3 @@
-// Frontend/assets/js/orders.js
-
-// Utilidades básicas basadas en tu api.js
 function notify(message, type = 'info', duration = 4000) {
     if (typeof showNotification === 'function') {
     showNotification(message, type, duration);

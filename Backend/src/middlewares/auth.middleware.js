@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/user.js';
 
-// Middleware base: autentica al usuario y carga req.user
+// Middleware base autentica al usuario y carga req.user
 export const auth = async (req, res, next) => {
     try {
     const header = req.headers.authorization || '';
@@ -21,7 +21,7 @@ export const auth = async (req, res, next) => {
     }
 };
 
-// Alias por compatibilidad (algunas rutas usan requireAuth)
+// Alias por compatibilidad 
 export const requireAuth = auth;
 
 // Middleware que exige rol ADMIN
@@ -35,8 +35,6 @@ export const requireAdmin = (req, res, next) => {
     next();
 };
 
-// Versión antigua (por si la usa algo), la dejamos como alias
-export const onlyAdmin = requireAdmin;
 
-// Default export usado en algunas rutas antiguas
+export const onlyAdmin = requireAdmin;
 export default { auth, requireAuth, requireAdmin };

@@ -22,7 +22,6 @@ const webpayOptions = new Options(
     const BACKEND_BASE_URL =
         process.env.BACKEND_BASE_URL || "http://localhost:3000";
 
-    // Usa EXACTAMENTE la misma URL que ves en el navegador
     const FRONTEND_BASE_URL =
         process.env.FRONTEND_BASE_URL ||
         "http://127.0.0.1:5500/Ecomarket-final/Frontend";
@@ -34,14 +33,14 @@ export const createTransaction = async (req, res) => {
     try {
     let { buyOrder, sessionId, amount } = req.body;
 
-    // Validaciones básicas
+    // Validaciones
     if (!buyOrder || !sessionId || amount == null) {
         return res
         .status(400)
         .json({ message: 'Faltan datos para crear la transacción Webpay' });
     }
 
-    // Aseguramos tipos y formato que le gustan a Webpay
+    // Asegurar tipos y formato a Webpay
     buyOrder = String(buyOrder).slice(0, 26); // máx 26 chars
     sessionId = String(sessionId).slice(0, 61); // máx 61 chars
     amount = Math.round(Number(amount));
@@ -59,7 +58,7 @@ export const createTransaction = async (req, res) => {
         returnUrl: `${BACKEND_BASE_URL}/api/payments/commit`,
     });
 
-    // Creamos transacción con las opciones de integración (sandbox)
+    // Crear transacción con las opciones de integración (sandbox)
     const tx = new WebpayPlus.Transaction(webpayOptions);
 
     const response = await tx.create(
@@ -69,11 +68,9 @@ export const createTransaction = async (req, res) => {
         `${BACKEND_BASE_URL}/api/payments/commit`
     );
 
-    // Respuesta esperada: { token, url }
     console.log('Transacción Webpay creada OK:', response);
     return res.json(response);
     } catch (error) {
-    // Log bien verboso para ver qué está devolviendo Webpay
     console.error(
         'Error creando transacción Webpay:',
         error.response?.data || error.message || error
@@ -88,7 +85,7 @@ export const createTransaction = async (req, res) => {
 
 
 
-// POST /api/payments/commit  (return_url)
+// POST /api/payments/commit  
 export const commitTransaction = async (req, res) => {
     try {
         const token = req.body.token_ws || req.query.token_ws;
@@ -99,8 +96,7 @@ export const commitTransaction = async (req, res) => {
         console.log("Resultado Webpay:", result);
 
         if (result.response_code === 0) {
-            // Pago OK → actualizar orden y carrito
-            const orderId = result.buy_order; // lo enviamos como buyOrder al crear la transacción
+            const orderId = result.buy_order; 
 
             try {
                 const order = await Order.findById(orderId);
@@ -127,7 +123,6 @@ export const commitTransaction = async (req, res) => {
             // Redirigir al frontend a la página de éxito
             return res.redirect(`${FRONTEND_BASE_URL}/checkout-success.html`);
         } else {
-            // Pago rechazado
             return res.redirect(`${FRONTEND_BASE_URL}/checkout-error.html`);
         }
     } catch (error) {

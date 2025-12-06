@@ -1049,7 +1049,7 @@
                 description: document.getElementById('product-description').value.trim(),
                 price: parseInt(document.getElementById('product-price').value),
                 originalPrice: document.getElementById('product-original-price').value ? 
-                              parseInt(document.getElementById('product-original-price').value) : null,
+                        parseInt(document.getElementById('product-original-price').value) : null,
                 unit: document.getElementById('product-unit').value,
                 stock: parseInt(document.getElementById('product-stock').value),
                 maxStock: parseInt(document.getElementById('product-max-stock').value),
@@ -1108,7 +1108,6 @@
             }
         }
         
-        // Verificar autenticación
         function checkAuth() {
             const isLoggedIn = localStorage.getItem('ecomarket_logged_in') === 'true';
             const userType = localStorage.getItem('ecomarket_user_type');
@@ -1120,18 +1119,12 @@
             }
             return true;
         }
-
-        // ========================
-        // GESTIÓN DE PEDIDOS
-        // ========================
         
-        // Obtener pedidos del localStorage
         function getOrders() {
             const orders = localStorage.getItem('ecomarket_orders');
             return orders ? JSON.parse(orders) : [];
         }
         
-        // Renderizar lista de pedidos
         function renderOrdersList() {
             const orders = getOrders();
             const container = document.getElementById('orders-list');
@@ -1214,7 +1207,6 @@
             container.innerHTML = ordersHtml;
         }
         
-        // Obtener nombre del método de pago
         function getPaymentMethodName(method) {
             const methods = {
                 'credit-card': 'Tarjeta de Crédito',
@@ -1224,7 +1216,6 @@
             return methods[method] || method;
         }
         
-        // Actualizar estado de pedido
         function updateOrderStatus(orderId, newStatus) {
             const orders = getOrders();
             const orderIndex = orders.findIndex(o => o.id === orderId);
@@ -1239,7 +1230,6 @@
             }
         }
         
-        // Ver detalles del pedido
         function viewOrderDetails(orderId) {
             const orders = getOrders();
             const order = orders.find(o => o.id === orderId);
@@ -1333,7 +1323,6 @@
             modal.show();
         }
         
-        // Cancelar pedido
         function cancelOrder(orderId) {
             if (!confirm('¿Estás seguro de que deseas cancelar este pedido?')) return;
             
@@ -1345,7 +1334,6 @@
             alert('Pedido cancelado correctamente');
         }
         
-        // Filtrar pedidos
         function filterOrders() {
             const statusFilter = document.getElementById('order-status-filter').value;
             const paymentFilter = document.getElementById('payment-filter').value;
@@ -1372,7 +1360,6 @@
             renderFilteredOrders(filteredOrders);
         }
         
-        // Renderizar pedidos filtrados
         function renderFilteredOrders(filteredOrders) {
             const container = document.getElementById('orders-list');
             
@@ -1450,7 +1437,6 @@
             container.innerHTML = ordersHtml;
         }
         
-        // Limpiar filtros de pedidos
         function clearOrderFilters() {
             document.getElementById('order-status-filter').value = '';
             document.getElementById('payment-filter').value = '';
@@ -1458,17 +1444,11 @@
             renderOrdersList();
         }
         
-        // Actualizar lista de pedidos
         function refreshOrders() {
             renderOrdersList();
             alert('Lista de pedidos actualizada');
         }
 
-        // ========================
-        // INFORMES Y ESTADÍSTICAS
-        // ========================
-        
-        // Generar datos de reporte
         function generateReportData() {
             const orders = getOrders();
             const products = getProducts();
@@ -1542,7 +1522,6 @@
             };
         }
         
-        // Actualizar datos de reportes
         function updateReportsData() {
             const data = generateReportData();
             
@@ -1634,13 +1613,11 @@
             }
         }
         
-        // Generar informe
         function generateReport() {
             updateReportsData();
             alert('Informe actualizado con los datos más recientes');
         }
         
-        // Exportar informe
         function exportReport() {
             const data = generateReportData();
             const reportData = {
@@ -1669,7 +1646,6 @@
             alert('Informe exportado correctamente');
         }
         
-        // Imprimir pedido
         function printOrder(orderId) {
             const orders = getOrders();
             const order = orders.find(o => o.id === orderId);
@@ -1723,29 +1699,21 @@
             printWindow.print();
         }
 
-        // Los datos de pedidos se cargarán desde localStorage cuando los usuarios hagan compras reales
-
-        // Inicialización
         document.addEventListener('DOMContentLoaded', function() {
-            // Verificar autenticación antes de cargar el panel
             if (!checkAuth()) {
                 return;
             }
-            
-            // El sistema cargará los pedidos reales desde localStorage
             
             renderProductsList();
             updateStats();
             renderOrdersList();
             updateReportsData();
             
-            // Inicializar tooltips
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl);
             });
             
-            // Agregar efectos de animación a las secciones colapsables
             document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(element => {
                 element.addEventListener('click', function() {
                     const icon = this.querySelector('.collapse-icon');
@@ -1755,7 +1723,6 @@
                 });
             });
             
-            // Mostrar información del usuario logueado
             const userEmail = localStorage.getItem('ecomarket_user_email');
             if (userEmail) {
                 console.log('Panel de administración inicializado para:', userEmail);

@@ -113,24 +113,24 @@ const CATEGORY_ID_MAP = {
 };
 
 
-            // Sobrescribir initializeProducts() para cargar desde backend
+
             async function initializeProducts() {
                 try {
-                    backendProducts = await apiGet("/products"); // Llamada real al backend
+                    backendProducts = await apiGet("/products"); 
                 
-                    // Normalizar campos para que coincidan con el sistema actual
+
             backendProducts = backendProducts.map(p => ({
                 id: p._id,
                 name: p.name,
                 category: (() => {
                 if (!p.category) return "general";
             
-                // Caso 1: viene como string (ObjectId como texto)
+                // Caso 1
                 if (typeof p.category === "string") {
                     return CATEGORY_ID_MAP[p.category] || "general";
                 }
             
-                // Caso 2: viene como objeto poblado { _id, name }
+                // Caso 2
                 if (p.category._id && CATEGORY_ID_MAP[p.category._id]) {
                     return CATEGORY_ID_MAP[p.category._id];
                 }
@@ -164,7 +164,7 @@ const CATEGORY_ID_MAP = {
     }
 }
 
-// Sobrescribir getProducts() para devolver los del backend
+
 function getProducts() {
     return backendProducts.length > 0 ? backendProducts : defaultProducts;
 }
@@ -685,7 +685,6 @@ function updatePagination() {
         `;
     }
     
-    // Puntos suspensivos si hay más páginas
     if (totalPages > 5) {
         paginationContainer.innerHTML += `
             <li class="page-item-custom">
@@ -838,8 +837,6 @@ window.addEventListener('productsUpdated', function(event) {
     renderProducts();
     updatePagination();
 });
-
-// Variable removida - ya está declarada en las variables globales
 
 // Función para cambiar vista
 function changeView(viewType) {

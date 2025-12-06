@@ -149,7 +149,7 @@ function getAuthToken() {
 }
 
 // ==========================
-// MÉTODO PATCH (sin apiRequest)
+// // MÉTODO PATCH (sin apiRequest)
 // ==========================
 async function apiPatch(endpoint, data = {}) {
     try {

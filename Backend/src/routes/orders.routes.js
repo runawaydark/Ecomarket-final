@@ -18,7 +18,7 @@ router.get('/mine', auth, myOrders);
 // Cancelar pedido del usuario autenticado
 router.patch('/:id/cancel', auth, cancelOrder);
 
-// Healthcheck opcional
+// Healthcheck
 router.get('/health', (req, res) => {
     res.json({ ok: true, where: 'orders' });
 });

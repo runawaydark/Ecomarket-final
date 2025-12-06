@@ -3,25 +3,22 @@ import Product from "../models/product.js";
 
 const router = Router();
 
-// Mapa nombre de categoría → ID de Mongo (los que viste en Compass)
+// Mapa nombre de categoría
 const CATEGORY_NAME_TO_ID = {
     frutas: "6920d5ab3805202c3b36be72",   
     verduras: "6920d5ab3805202c3b36be73", 
     despensa: "6920ff235965d54c277ed825"
 };
 
-// Convierte lo que llega del front (nombre o id) al ObjectId correcto
 function resolveCategoryId(rawValue) {
     if (!rawValue) return undefined;
 
     const value = rawValue.toString().trim();
-
-  // Si ya viene con formato de ObjectId (24 caracteres hex), lo usamos tal cual
+    // Si viene como ID de MongoDB
     if (/^[0-9a-fA-F]{24}$/.test(value)) {
     return value;
     }
-
-  // Si viene como "Frutas", "Verduras", etc.
+    // Si viene como nombre de categoría
     const key = value.toLowerCase();
     return CATEGORY_NAME_TO_ID[key];
 }
@@ -110,7 +107,7 @@ router.post("/", async (req, res) => {
 });
 
 // =======================
-// PUT /api/products/:id  → actualizar
+// PUT /api/products/:id  
 // =======================
 router.put("/:id", async (req, res) => {
     try {
@@ -174,7 +171,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // =======================
-// DELETE /api/products/:id  → eliminar
+// DELETE /api/products/:id 
 // =======================
 router.delete("/:id", async (req, res) => {
     try {

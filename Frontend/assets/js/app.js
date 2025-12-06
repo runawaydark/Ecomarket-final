@@ -1,5 +1,5 @@
 /*  ============================================
-    ECOMARKET - ARCHIVO PRINCIPAL DE JAVASCRIPT
+    ECOMARKET
     =============================================
 
     TABLA DE CONTENIDO:
@@ -18,7 +18,7 @@
 // =============================================
 
 /**
- * Muestra notificaciones elegantes en la esquina superior derecha
+ * notificaciones en la esquina superior derecha
  * @param {string} message - Mensaje a mostrar
  * @param {string} type - Tipo de notificación (success, error, warning, info)
  * @param {number} duration - Duración en milisegundos
@@ -74,7 +74,7 @@ function showNotification(message, type = 'info', duration = 4000) {
 
     container.appendChild(notification);
 
-    // Agregar estilos de animación si no existen
+    // Agregar estilos de animación
     if (!document.getElementById('notification-styles')) {
         const style = document.createElement('style');
         style.id = 'notification-styles';
@@ -298,7 +298,7 @@ function updateNavbar() {
     const auth = checkAuthStatus();
     const navbar = document.querySelector('.navbar-nav');
     
-    // Para páginas con navbar tradicional (como catálogo)
+    // Para páginas con navbar tradicional
     if (navbar) {
         // Buscar si ya existe el enlace de admin
         let adminLink = navbar.querySelector('.admin-nav-item');
@@ -590,12 +590,12 @@ function loadFooter() {
     const footerContainer = document.getElementById('footer-container');
     
     if (footerContainer) {
-        console.log('✅ Contenedor #footer-container encontrado');
+        console.log('✅ Contenedor #footer-container encontrado yipii');
         console.log('🔄 Insertando HTML del footer...');
         
         try {
             footerContainer.innerHTML = getFooterHTML();
-            console.log('✅ HTML insertado correctamente');
+            console.log('✅ HTML insertado correctamente yeii');
             
             // Verificar que se insertó
             const footer = footerContainer.querySelector('footer');
@@ -603,9 +603,9 @@ function loadFooter() {
                 console.log('✅ Footer element creado exitosamente');
                 // Después de cargar el footer, inicializar los acordeones
                 handleResize();
-                console.log('✅ Footer cargado y configurado completamente');
+                console.log('✅ Footer cargado y configurado completamente gg yipi');
             } else {
-                console.error('❌ Error: Footer element no encontrado después de insertar HTML');
+                console.error('❌ Error: Footer element no encontrado después de insertar HTML busca por q :c');
             }
         } catch (error) {
             console.error('❌ Error al insertar HTML del footer:', error);
@@ -626,17 +626,11 @@ function loadFooter() {
  */
 document.addEventListener("DOMContentLoaded", () => {
     console.log('🚀 DOM Content Loaded - Iniciando app.js');
-    
-    // Cargar el footer si existe un contenedor para él
     loadFooter();
-    
-    // Inicializar acordeones
     handleResize();
-    
-    // Escuchar cambios en el tamaño de ventana
     window.addEventListener('resize', handleResize);
     
-    console.log('✅ Inicialización completa');
+    console.log('✅ Inicialización completa wenisimo');
 });
 
 
@@ -681,9 +675,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 loginForm.classList.add("was-validated");
                 return;
             }
-
-            // Este código ahora es manejado por el formulario específico en login.html
-            // No se ejecuta la notificación de ejemplo aquí
         });
     }
 });
@@ -709,7 +700,7 @@ document.addEventListener("DOMContentLoaded", () => {
         icon.classList.toggle("bi-eye", !show);
         icon.classList.toggle("bi-eye-slash", show);
 
-      // Mantener el cursor al final (algunos navegadores lo mueven)
+      // Mantener el cursor al final
         const v = pwd.value;
         pwd.value = "";
         pwd.value = v;

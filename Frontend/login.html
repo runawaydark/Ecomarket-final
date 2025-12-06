@@ -284,7 +284,6 @@
     
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            // === ELEMENTOS DEL DOM ===
             const loginTab = document.getElementById('loginTab');
             const registerTab = document.getElementById('registerTab');
             const nameField = document.getElementById('nameField');
@@ -299,23 +298,20 @@
 
             let isLoginMode = true;
 
-            // === VALIDACIÓN DINÁMICA DEL EMAIL ===
             emailInput.addEventListener('input', function() {
                 const value = this.value.trim();
                 const lowerValue = value.toLowerCase();
                 
-                // Si está escribiendo "admin", cambiar el placeholder y remover validación de email
                 if (lowerValue === 'admin') {
                     this.placeholder = 'admin (acceso administrativo)';
                     this.classList.remove('is-invalid');
                     this.classList.add('is-valid');
-                    this.setCustomValidity(''); // Limpiar validación personalizada
+                    this.setCustomValidity('');
                 } else if (lowerValue.startsWith('adm') && lowerValue.length < 5) {
                     this.placeholder = 'admin (acceso administrativo)';
                     this.classList.remove('is-invalid', 'is-valid');
                 } else if (value.includes('@')) {
                     this.placeholder = 'correo@ejemplo.com';
-                    // Validar formato de email
                     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                     if (emailRegex.test(value)) {
                         this.classList.remove('is-invalid');
@@ -333,7 +329,6 @@
                 }
             });
 
-            // === VALIDACIÓN ESPECÍFICA PARA MODO REGISTRO ===
             function updateEmailValidationForMode() {
                 if (!isLoginMode && emailInput.value.toLowerCase() === 'admin') {
                     emailInput.classList.remove('is-valid');
@@ -346,13 +341,11 @@
                 }
             }
 
-            // === FUNCIÓN PARA CAMBIAR ENTRE LOGIN Y REGISTRO ===
             function switchMode(isLogin) {
                 isLoginMode = isLogin;
                 console.log('DEBUG: switchMode ->', isLogin ? 'login' : 'register');
                 
                 if (isLogin) {
-                    // Modo Login
                     loginTab.classList.add('active');
                     registerTab.classList.remove('active');
                     nameField.style.display = 'none';
@@ -361,7 +354,6 @@
                     forgotPassword.style.display = 'block';
                     document.title = 'Iniciar Sesión - EcoMarket';
                 } else {
-                    // Modo Registro
                     registerTab.classList.add('active');
                     loginTab.classList.remove('active');
                     nameField.style.display = 'block';
@@ -371,15 +363,12 @@
                     document.title = 'Registrarse - EcoMarket';
                 }
                 
-                // Actualizar validación del email según el modo
                 updateEmailValidationForMode();
             }
 
-            // === EVENTOS DE LOS TABS ===
             loginTab.addEventListener('click', () => switchMode(true));
             registerTab.addEventListener('click', () => switchMode(false));
 
-            // === FUNCIÓN PARA MOSTRAR/OCULTAR CONTRASEÑA ===
             togglePassword.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -396,54 +385,44 @@
                 }
             });
 
-            // === FUNCIÓN PARA VALIDAR EMAIL ===
             function isValidEmailOrAdmin(email) {
-                // Si es "admin", convertir al email real del admin
                 if (email.toLowerCase() === 'admin') {
                     return true;
                 }
-                // Si es el email completo del admin, también es válido
                 if (email.toLowerCase() === 'admin@ecomarket.com') {
                     return true;
                 }
-                // Si no es admin, debe ser un email válido
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 return emailRegex.test(email);
             }
             
-            // === MANEJO DEL FORMULARIO (integrado con backend) ===
-                        authForm.addEventListener('submit', async (e) => {
+            authForm.addEventListener('submit', async (e) => { {
                                 e.preventDefault();
 
                         let email = emailInput.value.trim();
                         const password = passwordInput.value;
                         const name = nameInput.value.trim();
 
-                            // Validación básica
-                                if (!email || !password || (!isLoginMode && !name)) {
+                            if (!email || !password || (!isLoginMode && !name)) {
                                 showNotification('Por favor completa todos los campos obligatorios.', 'warning');
                                 return;
                                 }
 
-                            // Validación mínima de longitud de contraseña
                                 if (password && password.length < 6) {
                                 showNotification('La contraseña debe tener al menos 6 caracteres.', 'warning');
                                 return;
                                 }
                 
-              // En registro NO permitimos "admin"
-                if (!isLoginMode && email.toLowerCase() === 'admin') {
+              if (!isLoginMode && email.toLowerCase() === 'admin') {
                 showNotification('No puedes registrarte con el nombre "admin".', 'warning');
                 return;
                 }
                 
-              // Si es login y escribe "admin", convertir al email del admin
-                if (isLoginMode && email.toLowerCase() === 'admin') {
+              if (isLoginMode && email.toLowerCase() === 'admin') {
                     email = 'admin@ecomarket.com';
                 }
                 
-              // Validar formato de correo (manteniendo tu función de validación)
-                if (!isValidEmailOrAdmin(email)) {
+              if (!isValidEmailOrAdmin(email)) {
                 const msg = isLoginMode
                     ? 'Ingresa un correo válido o usa "admin" solo si tu usuario admin ya existe en el sistema.'
                     : 'Ingresa un correo electrónico válido para el registro.';
@@ -453,13 +432,11 @@
                 
                 try {
                 if (isLoginMode) {
-                  // ===== LOGIN contra backend =====
                     const body = { email, password };
                     const response = await apiPost('/auth/login', body);
                     
                     console.log('Respuesta del servidor:', response);
                     
-                    // El backend devuelve { ok: true, data: { token, user } }
                     const data = response.data || response;
                 
                     if (data.token) {
@@ -468,7 +445,6 @@
                     if (data.user) {
                         localStorage.setItem('ecomarket_user', JSON.stringify(data.user));
                         localStorage.setItem('ecomarket_logged_in', 'true');
-                        // Normalizar el role (el backend usa ADMIN/CUSTOMER en mayúsculas)
                         const normalizedRole = (data.user.role || 'CUSTOMER').toUpperCase();
                         const userType = normalizedRole === 'ADMIN' ? 'admin' : 'user';
                         localStorage.setItem('ecomarket_user_type', userType);
@@ -481,7 +457,6 @@
                     
                     showNotification(`¡Bienvenido ${userName}!`, 'success');
                     
-                    // Actualizar el menú de usuario inmediatamente
                     if (typeof updateNavbar === 'function') {
                         updateNavbar();
                     }
@@ -491,7 +466,6 @@
                     }, 1200);
                     
                 } else {
-                  // ===== REGISTRO contra backend =====
                     const body = { name, email, password };
                     const response = await apiPost('/auth/register', body);
                     
@@ -499,7 +473,6 @@
                     
                     showNotification('Cuenta creada correctamente. Ahora puedes iniciar sesión.', 'success');
                 
-                  // Cambiamos a modo login y dejamos el correo escrito
                     switchMode(true);
                     emailInput.value = email;
                     passwordInput.value = '';
@@ -513,33 +486,27 @@
 
 
 
-            // === MODAL DE RECUPERAR CONTRASEÑA ===
             const forgotPasswordLink = document.getElementById('forgotPassword');
             const resetPasswordForm = document.getElementById('resetPasswordForm');
             const resetConfirmation = document.getElementById('resetConfirmation');
             const forgotPasswordFormDiv = document.getElementById('forgotPasswordForm');
             
-            // Abrir modal al hacer click en "¿Olvidaste tu contraseña?"
             forgotPassword.addEventListener('click', (e) => {
                 e.preventDefault();
                 const modal = new bootstrap.Modal(document.getElementById('forgotPasswordModal'));
                 modal.show();
             });
 
-            // Manejar envío del formulario de recuperación
             resetPasswordForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const email = document.getElementById('resetEmail').value;
                 
-                // Simular envío del correo (aquí iría la llamada al backend)
                 console.log('Enviando correo de recuperación a:', email);
                 
-                // Mostrar confirmación
                 document.getElementById('sentEmailAddress').textContent = email;
                 forgotPasswordFormDiv.style.display = 'none';
                 resetConfirmation.style.display = 'block';
                 
-                // Simular creación del enlace de recuperación
                 const resetToken = generateResetToken();
                 const resetLink = `${window.location.origin}${window.location.pathname.replace('login.html', 'reset-password.html')}?token=${resetToken}&email=${encodeURIComponent(email)}`;
                 
@@ -549,20 +516,17 @@
                 
             });
 
-            // Función para generar token simulado
             function generateResetToken() {
                 return Math.random().toString(36).substring(2, 15) + 
                     Math.random().toString(36).substring(2, 15);
             }
 
-            // Reset modal cuando se cierre
             document.getElementById('forgotPasswordModal').addEventListener('hidden.bs.modal', () => {
                 resetPasswordForm.reset();
                 forgotPasswordFormDiv.style.display = 'block';
                 resetConfirmation.style.display = 'none';
             });
 
-            // === CARGAR FOOTER ===
             setTimeout(() => {
                 const footer = document.querySelector('#footer-container footer');
                 if (!footer && typeof loadFooter === 'function') {
@@ -570,8 +534,6 @@
                 }
             }, 500);
             
-            // === ACTUALIZAR NAVBAR CON ESTADO DE SESIÓN ===
-            // Verificar si el usuario ya está logueado y actualizar el menú
             if (typeof updateNavbar === 'function') {
                 updateNavbar();
             } else if (typeof updateUserDropdown === 'function') {

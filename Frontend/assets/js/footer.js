@@ -80,9 +80,8 @@ function initEcoMarketFooter() {
     }
 }
 
-// Auto-inicialización con múltiples estrategias
-document.addEventListener('DOMContentLoaded', initEcoMarketFooter);
 
+document.addEventListener('DOMContentLoaded', initEcoMarketFooter);
 // Backup - Si DOMContentLoaded ya pasó
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initEcoMarketFooter);

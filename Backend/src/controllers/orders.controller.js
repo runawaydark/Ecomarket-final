@@ -4,7 +4,7 @@ import { badRequest, ok } from '../utils/http.js';
 import Product from '../models/product.js';
 
 export async function checkout(req, res) {
-    // 1) Intentar usar carrito en Mongo (si existiera)
+    //Intentar usar carrito en Mongo
     let cart = await Cart.findOne({ user: req.user.id, status: 'ACTIVE' })
         .populate('items.product', 'price name');
 
@@ -21,7 +21,7 @@ export async function checkout(req, res) {
             };
         });
     } else {
-        // 2) Fallback: usar items enviados por el frontend
+        // Fallback usar items enviados por el frontend
         const bodyItems = Array.isArray(req.body.items) ? req.body.items : [];
 
         if (!bodyItems.length) {
@@ -49,10 +49,10 @@ export async function checkout(req, res) {
         });
     }
 
-// 3) Calcular total
+// Calcular total
 const total = items.reduce((acc, i) => acc + i.quantity * i.unitPrice, 0);
 
-// 3.5) Tomar datos de envío que vengan en el body (opcionales)
+// Tomar datos de envío que vengan en el body (opcionales)
 const { shipping } = req.body;
 
 const delivery = shipping
@@ -66,7 +66,7 @@ const delivery = shipping
     }
     : undefined;
 
-// 4) Crear orden con estado por defecto 'CREATED'
+// Crear orden con estado por defecto 'CREATED'
 const order = await Order.create({
     user: req.user.id,
     items,
@@ -102,13 +102,6 @@ export async function cancelOrder(req, res) {
     if (order.status === 'CANCELED') {
         return ok(res, order);
     }
-
-    // Regla simple: sólo dejamos cancelar pedidos no cancelados.
-    // Si quieres bloquear los ya pagados, descomenta esto:
-    //
-    // if (order.status === 'PAID') {
-    //   return badRequest(res, 'No se puede cancelar un pedido pagado');
-    // }
 
     order.status = 'CANCELED';
     await order.save();
